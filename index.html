@@ -7,25 +7,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
 :root[data-theme="dark"]{
-  --bg:#0A0F1E;
-  --surface:#111827;
-  --surface2:#1A2337;
-  --surface3:#222E45;
-  --border:rgba(255,255,255,0.07);
-  --border2:rgba(255,255,255,0.13);
-  --text:#F0EDE6;
-  --text2:#9BA8BB;
-  --text3:#5C6B82;
-  --gold:#C9A84C;
-  --gold-dim:rgba(201,168,76,0.12);
-  --gold-border:rgba(201,168,76,0.3);
+  --bg:#0A0F1E;--surface:#111827;--surface2:#1A2337;--surface3:#222E45;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#F0EDE6;--text2:#9BA8BB;--text3:#5C6B82;
+  --gold:#C9A84C;--gold-dim:rgba(201,168,76,0.12);--gold-border:rgba(201,168,76,0.3);
   --navy:#1B3A6B;
-  --accent:var(--gold);
-  --accent-text:#0A0F1E;
   --red:#EF4444;--red-bg:rgba(239,68,68,0.12);
   --green:#34D399;--green-bg:rgba(52,211,153,0.12);
   --blue:#60A5FA;--blue-bg:rgba(96,165,250,0.12);
@@ -33,26 +24,14 @@
   --purple:#A78BFA;--purple-bg:rgba(167,139,250,0.12);
   --teal:#2DD4BF;--teal-bg:rgba(45,212,191,0.12);
   --pink:#F472B6;--pink-bg:rgba(244,114,182,0.12);
-  --shadow:0 1px 3px rgba(0,0,0,0.4),0 4px 16px rgba(0,0,0,0.3);
   --shadow-sm:0 1px 2px rgba(0,0,0,0.3);
 }
-
 :root[data-theme="light"]{
-  --bg:#F5F2EB;
-  --surface:#FFFFFF;
-  --surface2:#EEE9DF;
-  --surface3:#E5DED3;
-  --border:rgba(0,0,0,0.08);
-  --border2:rgba(0,0,0,0.14);
-  --text:#0F1E35;
-  --text2:#4A5568;
-  --text3:#8E9BAD;
-  --gold:#A07C2A;
-  --gold-dim:rgba(160,124,42,0.08);
-  --gold-border:rgba(160,124,42,0.25);
+  --bg:#F5F2EB;--surface:#FFFFFF;--surface2:#EEE9DF;--surface3:#E5DED3;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#0F1E35;--text2:#4A5568;--text3:#8E9BAD;
+  --gold:#A07C2A;--gold-dim:rgba(160,124,42,0.08);--gold-border:rgba(160,124,42,0.25);
   --navy:#0F2B5B;
-  --accent:var(--navy);
-  --accent-text:#FFFFFF;
   --red:#DC2626;--red-bg:#FEE2E2;
   --green:#059669;--green-bg:#D1FAE5;
   --blue:#2563EB;--blue-bg:#DBEAFE;
@@ -60,12 +39,47 @@
   --purple:#7C3AED;--purple-bg:#EDE9FE;
   --teal:#0D9488;--teal-bg:#CCFBF1;
   --pink:#BE185D;--pink-bg:#FCE7F3;
-  --shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 16px rgba(0,0,0,0.06);
   --shadow-sm:0 1px 2px rgba(0,0,0,0.06);
 }
 
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s;}
 .shell{display:flex;min-height:100vh;}
+
+/* ── Auth / Loading overlays ── */
+.auth-overlay{
+  position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+}
+.auth-overlay.hidden{display:none;}
+.auth-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:2.5rem 2rem;max-width:340px;width:100%;text-align:center;
+  box-shadow:0 8px 40px rgba(0,0,0,0.4);
+}
+[data-theme="light"] .auth-card{box-shadow:0 8px 40px rgba(0,0,0,0.12);}
+.auth-logo{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--text);}
+.auth-sub{font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-weight:500;margin-top:4px;}
+.auth-desc{font-size:13px;color:var(--text3);margin:1.5rem 0;line-height:1.6;}
+.btn-google{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:11px 20px;border-radius:8px;font-size:13px;font-weight:500;
+  font-family:'Inter',sans-serif;cursor:pointer;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--text);transition:all .15s;
+}
+.btn-google:hover{background:var(--surface3);border-color:var(--gold);}
+.auth-note{font-size:11px;color:var(--text3);margin-top:1rem;}
+
+.loading-overlay{
+  position:fixed;inset:0;z-index:90;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+}
+.loading-overlay.hidden{display:none;}
+.loading-wordmark{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--text);}
+.loading-dots{display:flex;gap:5px;}
+.loading-dots span{width:5px;height:5px;background:var(--gold);border-radius:50%;animation:dot .9s ease-in-out infinite;}
+.loading-dots span:nth-child(2){animation-delay:.15s;}
+.loading-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes dot{0%,80%,100%{opacity:.2;transform:scale(.8);}40%{opacity:1;transform:scale(1);}}
 
 /* ── Sidebar ── */
 .sidebar{
@@ -74,14 +88,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   transition:background .25s,border-color .25s;
 }
 .sidebar-top{padding:1.75rem 1.5rem 1.25rem;}
-.logo-wordmark{
-  font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;
-  color:var(--text);letter-spacing:.01em;line-height:1;
-}
-.logo-sub{
-  font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;
-  font-weight:500;margin-top:5px;
-}
+.logo-wordmark{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);letter-spacing:.01em;line-height:1;}
+.logo-sub{font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-weight:500;margin-top:5px;}
 .phase-pill{
   display:inline-flex;align-items:center;gap:5px;margin-top:12px;
   font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;
@@ -89,22 +97,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   color:var(--gold);padding:4px 10px;border-radius:20px;
 }
 .phase-pill-dot{width:5px;height:5px;background:var(--gold);border-radius:50%;}
-
 .nav-divider{height:1px;background:var(--border);margin:0 1.5rem;}
 .nav-section{padding:.75rem 1rem;}
 .nav-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;font-weight:600;padding:0 .5rem;margin-bottom:.35rem;}
 .nav-item{
   display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
   font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;
-  margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'Inter',sans-serif;
-  font-weight:400;letter-spacing:.01em;
+  margin-bottom:1px;border:none;background:none;width:100%;text-align:left;
+  font-family:'Inter',sans-serif;font-weight:400;letter-spacing:.01em;
 }
 .nav-item:hover{background:var(--surface2);color:var(--text);}
 .nav-item.active{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-border);}
 [data-theme="light"] .nav-item.active{background:rgba(15,43,91,0.08);color:var(--navy);border:1px solid rgba(15,43,91,0.15);}
 .nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7;}
 .nav-item.active svg{opacity:1;}
-
 .sidebar-footer{margin-top:auto;padding:1rem 1.5rem 1.5rem;border-top:1px solid var(--border);}
 .sidebar-footer-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:8px;}
 .display-cur-btns{display:flex;gap:3px;flex-wrap:wrap;}
@@ -114,29 +120,27 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 }
 .dcbtn.active{background:var(--gold);color:#0A0F1E;border-color:var(--gold);font-weight:500;}
 [data-theme="light"] .dcbtn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
-
-/* Theme toggle */
 .theme-toggle{
   display:flex;align-items:center;gap:8px;margin-top:12px;
   font-size:11px;color:var(--text3);cursor:pointer;
   border:none;background:none;font-family:'Inter',sans-serif;padding:0;width:100%;
 }
-.toggle-track{
-  width:32px;height:18px;background:var(--surface3);border-radius:9px;
-  position:relative;transition:background .2s;flex-shrink:0;border:1px solid var(--border2);
-}
-.toggle-thumb{
-  position:absolute;top:2px;left:2px;width:12px;height:12px;
-  background:var(--text3);border-radius:50%;transition:all .2s;
-}
+.toggle-track{width:32px;height:18px;background:var(--surface3);border-radius:9px;position:relative;transition:background .2s;flex-shrink:0;border:1px solid var(--border2);}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:12px;height:12px;background:var(--text3);border-radius:50%;transition:all .2s;}
 [data-theme="light"] .toggle-thumb{left:16px;background:var(--navy);}
 [data-theme="dark"] .toggle-thumb{background:var(--gold);}
+.signout-btn{
+  display:flex;align-items:center;gap:8px;margin-top:10px;
+  font-size:11px;color:var(--text3);cursor:pointer;
+  border:none;background:none;font-family:'Inter',sans-serif;padding:0;width:100%;
+  transition:color .15s;
+}
+.signout-btn:hover{color:var(--text);}
 
 /* ── Main ── */
 .main{margin-left:240px;padding:2.5rem 2.5rem;max-width:1000px;width:100%;}
 .page{display:none;}
 .page.active{display:block;}
-
 .page-header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
 .page-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;color:var(--text);line-height:1.1;}
 .page-title em{font-style:italic;color:var(--gold);}
@@ -144,44 +148,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .page-sub{font-size:12px;color:var(--text3);margin-top:.4rem;letter-spacing:.02em;}
 
 /* ── Cards ── */
-.card{
-  background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:1.5rem;margin-bottom:14px;box-shadow:var(--shadow-sm);
-  transition:background .25s,border-color .25s;
-}
-.card-title{
-  font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);
-  font-weight:600;margin-bottom:1.1rem;
-}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:14px;box-shadow:var(--shadow-sm);transition:background .25s,border-color .25s;}
+.card-title{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);font-weight:600;margin-bottom:1.1rem;}
 
-/* ── Countdown cards ── */
+/* ── Countdown ── */
 .countdown-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px;}
-.cd-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:1.4rem 1.25rem;position:relative;overflow:hidden;
-  box-shadow:var(--shadow-sm);
-}
-.cd-card::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-}
+.cd-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.25rem;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);}
+.cd-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
 .cd-loa::after{background:linear-gradient(90deg,var(--gold),transparent);}
 .cd-mba::after{background:linear-gradient(90deg,var(--blue),transparent);}
 .cd-summer::after{background:linear-gradient(90deg,var(--green),transparent);}
 .cd-preloa::after{background:linear-gradient(90deg,var(--purple),transparent);}
-.cd-num{
-  font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:500;
-  color:var(--text);line-height:1;letter-spacing:-.02em;
-}
+.cd-num{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:500;color:var(--text);line-height:1;letter-spacing:-.02em;}
 .cd-num.passed{font-size:32px;color:var(--gold);}
-.cd-label{font-size:12px;color:var(--text2);margin-top:6px;font-weight:400;}
+.cd-label{font-size:12px;color:var(--text2);margin-top:6px;}
 .cd-date{font-size:10px;color:var(--text3);margin-top:3px;letter-spacing:.02em;}
 
 /* ── Metrics ── */
 .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
-.metric{
-  background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:1.25rem;box-shadow:var(--shadow-sm);
-}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;box-shadow:var(--shadow-sm);}
 .metric-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px;}
 .metric-value{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--text);line-height:1;}
 .metric-sub{font-size:11px;color:var(--text3);margin-top:5px;}
@@ -199,32 +184,20 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold);background:var(
 [data-theme="light"] input:focus,[data-theme="light"] select:focus,[data-theme="light"] textarea:focus{border-color:var(--navy);}
 textarea{resize:vertical;min-height:60px;}
 select option{background:var(--surface2);}
-
 .btn{padding:9px 20px;border-radius:8px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;border:none;font-weight:500;letter-spacing:.03em;}
 .btn-primary{background:var(--gold);color:#0A0F1E;}
 .btn-primary:hover{opacity:.88;transform:translateY(-1px);}
 [data-theme="light"] .btn-primary{background:var(--navy);color:#fff;}
-.btn-danger{
-  background:transparent;border:1px solid var(--border2);color:var(--text3);
-  padding:5px 10px;font-size:11px;border-radius:6px;font-family:'Inter',sans-serif;cursor:pointer;
-  transition:all .15s;
-}
+.btn-danger{background:transparent;border:1px solid var(--border2);color:var(--text3);padding:5px 10px;font-size:11px;border-radius:6px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;}
 .btn-danger:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
-
 .input-with-cur{display:flex;gap:0;}
 .input-with-cur input{border-radius:8px 0 0 8px;border-right:none;}
 .input-with-cur select{border-radius:0 8px 8px 0;width:auto;min-width:70px;}
 
 /* ── Expense rows ── */
-.exp-row{
-  display:flex;align-items:flex-start;justify-content:space-between;
-  padding:13px 0;border-bottom:1px solid var(--border);gap:12px;
-}
+.exp-row{display:flex;align-items:flex-start;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border);gap:12px;}
 .exp-row:last-child{border-bottom:none;}
-.exp-cat{
-  font-size:10px;padding:3px 9px;border-radius:20px;white-space:nowrap;
-  flex-shrink:0;font-weight:500;letter-spacing:.03em;text-transform:uppercase;
-}
+.exp-cat{font-size:10px;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;font-weight:500;letter-spacing:.03em;text-transform:uppercase;}
 .cat-housing{background:var(--blue-bg);color:var(--blue);}
 .cat-food{background:var(--green-bg);color:var(--green);}
 .cat-transport{background:var(--amber-bg);color:var(--amber);}
@@ -240,10 +213,7 @@ select option{background:var(--surface2);}
 /* ── Task rows ── */
 .task-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
 .task-row:last-child{border-bottom:none;}
-.task-check{
-  width:16px;height:16px;margin-top:3px;flex-shrink:0;cursor:pointer;
-  accent-color:var(--gold);
-}
+.task-check{width:16px;height:16px;margin-top:3px;flex-shrink:0;cursor:pointer;accent-color:var(--gold);}
 [data-theme="light"] .task-check{accent-color:var(--navy);}
 .task-done-text{text-decoration:line-through;color:var(--text3);}
 .task-due{font-size:11px;color:var(--text3);margin-top:3px;}
@@ -256,6 +226,9 @@ select option{background:var(--surface2);}
 /* ── Course rows ── */
 .grade-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);gap:12px;}
 .grade-row:last-child{border-bottom:none;}
+.period-group{margin-bottom:1.5rem;}
+.period-heading{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--gold-border);}
+[data-theme="light"] .period-heading{color:var(--navy);border-color:rgba(15,43,91,0.2);}
 
 /* ── Budget bars ── */
 .budget-bar-row{margin-bottom:16px;}
@@ -267,25 +240,21 @@ select option{background:var(--surface2);}
 
 /* ── Phase tabs ── */
 .phase-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
-.ptab{
-  padding:5px 14px;border-radius:20px;font-size:11px;font-family:'Inter',sans-serif;
-  border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;
-  transition:all .12s;font-weight:500;letter-spacing:.03em;
-}
-.ptab:hover{color:var(--text);border-color:var(--border2);}
+.ptab{padding:5px 14px;border-radius:20px;font-size:11px;font-family:'Inter',sans-serif;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;transition:all .12s;font-weight:500;letter-spacing:.03em;}
+.ptab:hover{color:var(--text);}
 .ptab.active{background:var(--gold);color:#0A0F1E;border-color:var(--gold);}
 [data-theme="light"] .ptab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
 
 .empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:13px;letter-spacing:.02em;}
 
-/* ── Period group headings in courses ── */
-.period-group{margin-bottom:1.5rem;}
-.period-heading{
-  font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);
-  font-weight:600;margin-bottom:10px;padding-bottom:6px;
-  border-bottom:1px solid var(--gold-border);
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:200;
+  background:var(--red-bg);border:1px solid var(--red);color:var(--red);
+  font-size:12px;font-family:'Inter',sans-serif;padding:10px 16px;border-radius:8px;
+  opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;
 }
-[data-theme="light"] .period-heading{color:var(--navy);border-color:rgba(15,43,91,0.2);}
+.toast.show{opacity:1;transform:translateY(0);}
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar{width:5px;}
@@ -308,19 +277,41 @@ select option{background:var(--surface2);}
 </style>
 </head>
 <body>
-<div class="shell">
+
+<!-- Login screen -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">Alaa</div>
+    <div class="auth-sub">INSEAD MBA · 2026</div>
+    <div class="auth-desc">Your personal MBA life dashboard — expenses, tasks, courses, and countdowns. Sign in to sync your data across all devices.</div>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+    <div class="auth-note">Your data is private and only visible to you.</div>
+  </div>
+</div>
+
+<!-- Loading screen -->
+<div class="loading-overlay hidden" id="loading-overlay">
+  <div class="loading-wordmark">Alaa</div>
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="shell" id="app" style="display:none;">
   <aside class="sidebar">
     <div class="sidebar-top">
       <div class="logo-wordmark">Alaa</div>
       <div class="logo-sub">INSEAD MBA · 2026</div>
-      <div class="phase-pill" id="current-phase-pill">
+      <div class="phase-pill">
         <span class="phase-pill-dot"></span>
         <span id="current-phase-text">Pre-LOA</span>
       </div>
     </div>
-
     <div class="nav-divider"></div>
-
     <div class="nav-section">
       <div class="nav-label">Navigate</div>
       <button class="nav-item active" onclick="showPage('overview',this)">
@@ -344,7 +335,6 @@ select option{background:var(--surface2);}
         Courses &amp; Grades
       </button>
     </div>
-
     <div class="sidebar-footer">
       <div class="sidebar-footer-label">Display currency</div>
       <div class="display-cur-btns">
@@ -354,9 +344,13 @@ select option{background:var(--surface2);}
         <button class="dcbtn" onclick="setDisplayCur('GBP',this)">GBP</button>
         <button class="dcbtn" onclick="setDisplayCur('AED',this)">AED</button>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <button class="theme-toggle" onclick="toggleTheme()">
         <div class="toggle-track"><div class="toggle-thumb"></div></div>
         <span id="theme-label">Light mode</span>
+      </button>
+      <button class="signout-btn" onclick="signOut()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
       </button>
     </div>
   </aside>
@@ -616,50 +610,138 @@ select option{background:var(--surface2);}
 </div>
 
 <script>
+// ── Supabase init ──
+const SUPA_URL = 'https://otakccqrmrglflamciby.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YWtjY3FybXJnbGZsYW1jaWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTQwNTksImV4cCI6MjA5NjMzMDA1OX0.1wmtuRbH9RXmr5yHwgfhA-h1ibhyRIG-beoBzz-STDo';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── Constants ──
 const TO_USD = { SAR:0.2667, USD:1, EUR:1.0836, GBP:1.2706, AED:0.2723 };
 const SYM = { SAR:'SAR ', USD:'$', EUR:'€', GBP:'£', AED:'AED ' };
 const CATS = { housing:'Housing', food:'Food', transport:'Transport', books:'Books / Supplies', social:'Social / Events', health:'Health', other:'Other' };
 const PHASE_LABEL = { now:'Pre-LOA', loa:'Pre-MBA summer', mba:'MBA start', summer:'Summer break' };
 const PHASE_CLASS = { now:'ph-now', loa:'ph-loa', mba:'ph-mba', summer:'ph-summer' };
 
-let displayCur = 'USD';
+let displayCur = localStorage.getItem('mba-display-cur') || 'USD';
 let taskFilter = 'all';
 let state = { expenses:[], tasks:[], courses:[], budgetUSD:0 };
 
-function toUSD(amount, cur) { return amount * TO_USD[cur]; }
-function fromUSD(usdAmount, cur) { return usdAmount / TO_USD[cur]; }
-function fmt(usdAmount, cur) {
+// Apply saved theme immediately (before auth check, for no flash)
+const savedTheme = localStorage.getItem('mba-theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+
+function toUSD(a, c) { return a * TO_USD[c]; }
+function fromUSD(a, c) { return a / TO_USD[c]; }
+function fmt(usd, cur) {
   cur = cur || displayCur;
-  const v = fromUSD(usdAmount, cur);
+  const v = fromUSD(usd, cur);
   return SYM[cur] + (v >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(2));
 }
 
-function loadState() {
-  try {
-    const s = localStorage.getItem('mba-v3');
-    if (s) state = JSON.parse(s);
-    const dc = localStorage.getItem('mba-display-cur');
-    if (dc) { displayCur = dc; }
-    const theme = localStorage.getItem('mba-theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
-    updateThemeLabel(theme);
-    document.querySelectorAll('.dcbtn').forEach(b => b.classList.toggle('active', b.textContent.trim() === displayCur));
-    if (state.budgetUSD) {
-      document.getElementById('budget-amt').value = fromUSD(state.budgetUSD, displayCur).toFixed(2);
-    }
-  } catch(e) {}
+// ── Auth ──
+async function signInWithGoogle() {
+  const redirectTo = window.location.href.split('#')[0];
+  const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo } });
+  if (error) showToast('Sign-in failed: ' + error.message);
 }
 
-function saveState() {
-  try { localStorage.setItem('mba-v3', JSON.stringify(state)); } catch(e) {}
+async function signOut() {
+  await sb.auth.signOut();
+  state = { expenses:[], tasks:[], courses:[], budgetUSD:0 };
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-overlay').classList.remove('hidden');
+}
+
+// ── Data loading ──
+async function loadAllData() {
+  const [expRes, taskRes, courseRes, settRes] = await Promise.all([
+    sb.from('expenses').select('*').order('created_at', { ascending:false }),
+    sb.from('tasks').select('*').order('created_at', { ascending:true }),
+    sb.from('courses').select('*').order('created_at', { ascending:true }),
+    sb.from('settings').select('*').maybeSingle()
+  ]);
+
+  state.expenses = (expRes.data || []).map(e => ({
+    id: e.id,
+    desc: e.description,
+    usdAmt: e.usd_amt,
+    origAmt: e.orig_amt,
+    origCur: e.orig_cur,
+    cat: e.cat,
+    date: e.date,
+    notes: e.notes || ''
+  }));
+
+  state.tasks = (taskRes.data || []).map(t => ({
+    id: t.id,
+    title: t.title,
+    due: t.due || '',
+    phase: t.phase,
+    notes: t.notes || '',
+    done: t.done
+  }));
+
+  state.courses = (courseRes.data || []).map(c => ({
+    id: c.id,
+    name: c.name,
+    credits: c.credits,
+    period: c.period,
+    grade: c.grade || '',
+    notes: c.notes || ''
+  }));
+
+  if (settRes.data) {
+    state.budgetUSD = settRes.data.budget_usd || 0;
+    displayCur = settRes.data.display_cur || displayCur;
+    const theme = settRes.data.theme || savedTheme;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('mba-theme', theme);
+    updateThemeLabel(theme);
+  }
+
+  if (state.budgetUSD) {
+    document.getElementById('budget-amt').value = fromUSD(state.budgetUSD, displayCur).toFixed(2);
+  }
+  document.querySelectorAll('.dcbtn').forEach(b => b.classList.toggle('active', b.textContent.trim() === displayCur));
+}
+
+async function saveSettings() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  const { error } = await sb.from('settings').upsert({
+    budget_usd: state.budgetUSD,
+    display_cur: displayCur,
+    theme,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'user_id' });
+  if (error) showToast('Could not save settings.');
+}
+
+// ── UI helpers ──
+function showApp() {
+  document.getElementById('auth-overlay').classList.add('hidden');
+  document.getElementById('loading-overlay').classList.add('hidden');
+  document.getElementById('app').style.display = 'flex';
+  updateThemeLabel(document.documentElement.getAttribute('data-theme'));
+}
+
+function showLoading() {
+  document.getElementById('auth-overlay').classList.add('hidden');
+  document.getElementById('loading-overlay').classList.remove('hidden');
+}
+
+function showToast(msg, duration=4000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
 }
 
 function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('mba-theme', next);
   updateThemeLabel(next);
+  saveSettings();
 }
 
 function updateThemeLabel(theme) {
@@ -669,10 +751,11 @@ function updateThemeLabel(theme) {
 
 function setDisplayCur(c, btn) {
   displayCur = c;
-  try { localStorage.setItem('mba-display-cur', c); } catch(e) {}
+  localStorage.setItem('mba-display-cur', c);
   document.querySelectorAll('.dcbtn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (state.budgetUSD) document.getElementById('budget-amt').value = fromUSD(state.budgetUSD, c).toFixed(2);
+  saveSettings();
   render();
 }
 
@@ -699,97 +782,122 @@ function daysUntil(dateStr) {
 
 function currentPhase() {
   const now = new Date(); now.setHours(0,0,0,0);
-  const loaDate = new Date('2026-07-10T00:00:00');
-  const mbaDate = new Date('2026-08-21T00:00:00');
-  const summerDate = new Date('2027-06-01T00:00:00');
-  if (now < loaDate) return 'Pre-LOA';
-  if (now < mbaDate) return 'Pre-MBA summer';
-  if (now < summerDate) return 'MBA';
+  if (now < new Date('2026-07-10T00:00:00')) return 'Pre-LOA';
+  if (now < new Date('2026-08-21T00:00:00')) return 'Pre-MBA summer';
+  if (now < new Date('2027-06-01T00:00:00')) return 'MBA';
   return 'MBA summer';
 }
 
 function greeting() {
   const h = new Date().getHours();
-  if (h < 12) return 'morning';
-  if (h < 17) return 'afternoon';
-  return 'evening';
+  return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
 }
 
-function addExpense() {
+// ── CRUD ──
+async function addExpense() {
   const desc = document.getElementById('exp-desc').value.trim();
   const rawAmt = parseFloat(document.getElementById('exp-amt').value);
   const cur = document.getElementById('exp-cur').value;
   const cat = document.getElementById('exp-cat').value;
   const date = document.getElementById('exp-date').value;
   const notes = document.getElementById('exp-notes').value.trim();
-  if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { alert('Please fill in description, amount, and date.'); return; }
+  if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Please fill in description, amount, and date.'); return; }
   const usdAmt = toUSD(rawAmt, cur);
-  state.expenses.unshift({ id:Date.now(), desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes });
+  const { data, error } = await sb.from('expenses').insert({
+    description: desc, usd_amt: usdAmt, orig_amt: rawAmt,
+    orig_cur: cur, cat, date, notes
+  }).select().single();
+  if (error) { showToast('Could not save expense. Check your connection.'); return; }
+  state.expenses.unshift({ id:data.id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes });
   document.getElementById('exp-desc').value = '';
   document.getElementById('exp-amt').value = '';
   document.getElementById('exp-notes').value = '';
-  saveState(); render();
+  render();
 }
 
-function deleteExpense(id) {
+async function deleteExpense(id) {
   if (!confirm('Delete this expense?')) return;
+  const { error } = await sb.from('expenses').delete().eq('id', id);
+  if (error) { showToast('Could not delete expense.'); return; }
   state.expenses = state.expenses.filter(e => e.id !== id);
-  saveState(); render();
+  render();
 }
 
-function addTask() {
+async function addTask() {
   const title = document.getElementById('task-title').value.trim();
   const due = document.getElementById('task-due').value;
   const phase = document.getElementById('task-phase').value;
   const notes = document.getElementById('task-notes').value.trim();
   if (!title) return;
-  state.tasks.push({ id:Date.now(), title, due, phase, notes, done:false });
+  const { data, error } = await sb.from('tasks').insert({
+    title, due: due || null, phase, notes, done: false
+  }).select().single();
+  if (error) { showToast('Could not save task.'); return; }
+  state.tasks.push({ id:data.id, title, due, phase, notes, done:false });
   document.getElementById('task-title').value = '';
   document.getElementById('task-notes').value = '';
-  saveState(); render();
+  render();
 }
 
-function toggleTask(id) {
+async function toggleTask(id) {
   const t = state.tasks.find(t => t.id === id);
-  if (t) { t.done = !t.done; saveState(); render(); }
+  if (!t) return;
+  const { error } = await sb.from('tasks').update({ done: !t.done }).eq('id', id);
+  if (error) { showToast('Could not update task.'); return; }
+  t.done = !t.done;
+  render();
 }
 
-function deleteTask(id) {
+async function deleteTask(id) {
+  const { error } = await sb.from('tasks').delete().eq('id', id);
+  if (error) { showToast('Could not delete task.'); return; }
   state.tasks = state.tasks.filter(t => t.id !== id);
-  saveState(); render();
+  render();
 }
 
-function addCourse() {
+async function addCourse() {
   const name = document.getElementById('course-name').value.trim();
   const credits = parseFloat(document.getElementById('course-credits').value) || 0;
   const period = document.getElementById('course-period').value;
   const grade = document.getElementById('course-grade').value;
   const notes = document.getElementById('course-notes').value.trim();
   if (!name) return;
-  state.courses.push({ id:Date.now(), name, credits, period, grade, notes });
+  const { data, error } = await sb.from('courses').insert({ name, credits, period, grade, notes }).select().single();
+  if (error) { showToast('Could not save course.'); return; }
+  state.courses.push({ id:data.id, name, credits, period, grade, notes });
   document.getElementById('course-name').value = '';
   document.getElementById('course-credits').value = '';
   document.getElementById('course-notes').value = '';
   document.getElementById('course-grade').value = '';
-  saveState(); render();
+  render();
 }
 
-function updateGrade(id, val) {
+async function updateGrade(id, val) {
   const c = state.courses.find(c => c.id === id);
-  if (c) { c.grade = val; saveState(); }
+  if (!c) return;
+  const { error } = await sb.from('courses').update({ grade: val }).eq('id', id);
+  if (error) { showToast('Could not update grade.'); return; }
+  c.grade = val;
 }
 
-function deleteCourse(id) {
+async function deleteCourse(id) {
+  const { error } = await sb.from('courses').delete().eq('id', id);
+  if (error) { showToast('Could not delete course.'); return; }
   state.courses = state.courses.filter(c => c.id !== id);
-  saveState(); render();
+  render();
 }
 
-function saveBudget() {
+async function saveBudget() {
   const raw = parseFloat(document.getElementById('budget-amt').value);
   const cur = document.getElementById('budget-cur').value;
-  if (!isNaN(raw) && raw > 0) { state.budgetUSD = toUSD(raw, cur); saveState(); render(); }
+  if (!isNaN(raw) && raw > 0) {
+    state.budgetUSD = toUSD(raw, cur);
+    await saveSettings();
+    render();
+  }
 }
 
+// ── Render functions ──
 function renderOverview() {
   const now = new Date();
   document.getElementById('greeting-time').textContent = greeting();
@@ -800,6 +908,7 @@ function renderOverview() {
   for (const [key, dateStr] of Object.entries(dates)) {
     const d = daysUntil(dateStr);
     const el = document.getElementById('cd-' + key);
+    if (!el) continue;
     if (d <= 0) { el.textContent = '✓'; el.classList.add('passed'); }
     else { el.textContent = d; el.classList.remove('passed'); }
   }
@@ -807,7 +916,7 @@ function renderOverview() {
   const total = state.expenses.reduce((s,e) => s+e.usdAmt, 0);
   const mthExp = state.expenses.filter(e => {
     const d = new Date(e.date + 'T00:00:00');
-    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
   });
   const mthTotal = mthExp.reduce((s,e) => s+e.usdAmt, 0);
   document.getElementById('ov-total').textContent = fmt(total);
@@ -817,25 +926,20 @@ function renderOverview() {
   document.getElementById('ov-tasks').textContent = state.tasks.filter(t=>!t.done).length;
   document.getElementById('ov-courses').textContent = state.courses.length;
 
-  const re = document.getElementById('ov-expenses');
-  re.innerHTML = state.expenses.slice(0,5).map(e => `
+  document.getElementById('ov-expenses').innerHTML = state.expenses.slice(0,5).map(e => `
     <div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
         <span class="exp-cat cat-${e.cat}">${CATS[e.cat]}</span>
-        <div>
-          <div class="exp-desc">${e.desc}</div>
-          ${e.notes?`<div class="exp-note">${e.notes}</div>`:''}
-        </div>
+        <div><div class="exp-desc">${e.desc}</div>${e.notes?`<div class="exp-note">${e.notes}</div>`:''}</div>
       </div>
       <div>
         <div class="exp-amount">${fmt(e.usdAmt)}</div>
-        ${e.origCur !== displayCur ? `<div class="exp-amount-sub">${SYM[e.origCur]}${e.origAmt.toLocaleString()} ${e.origCur}</div>` : ''}
+        ${e.origCur!==displayCur?`<div class="exp-amount-sub">${SYM[e.origCur]}${e.origAmt.toLocaleString()} ${e.origCur}</div>`:''}
       </div>
     </div>`).join('') || '<div class="empty">No expenses yet</div>';
 
-  const tl = document.getElementById('ov-tasks-list');
   const upcoming = state.tasks.filter(t=>!t.done).slice(0,5);
-  tl.innerHTML = upcoming.map(t => `
+  document.getElementById('ov-tasks-list').innerHTML = upcoming.map(t => `
     <div class="task-row">
       <span class="phase-badge ${PHASE_CLASS[t.phase]}">${PHASE_LABEL[t.phase]}</span>
       <div style="flex:1;font-size:14px;">${t.title}</div>
@@ -844,20 +948,16 @@ function renderOverview() {
 }
 
 function renderExpenses() {
-  const el = document.getElementById('expense-list');
-  el.innerHTML = state.expenses.map(e => `
+  document.getElementById('expense-list').innerHTML = state.expenses.map(e => `
     <div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
         <span class="exp-cat cat-${e.cat}">${CATS[e.cat]}</span>
-        <div>
-          <div class="exp-desc">${e.desc}</div>
-          <div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}</div>
-        </div>
+        <div><div class="exp-desc">${e.desc}</div><div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <div>
           <div class="exp-amount">${fmt(e.usdAmt)}</div>
-          ${e.origCur !== displayCur ? `<div class="exp-amount-sub">Paid ${SYM[e.origCur]}${e.origAmt.toLocaleString()} ${e.origCur}</div>` : ''}
+          ${e.origCur!==displayCur?`<div class="exp-amount-sub">Paid ${SYM[e.origCur]}${e.origAmt.toLocaleString()} ${e.origCur}</div>`:''}
         </div>
         <button class="btn-danger" onclick="deleteExpense(${e.id})">✕</button>
       </div>
@@ -865,9 +965,8 @@ function renderExpenses() {
 }
 
 function renderTasks() {
-  const el = document.getElementById('task-list');
   const filtered = taskFilter==='all' ? state.tasks : state.tasks.filter(t=>t.phase===taskFilter);
-  el.innerHTML = filtered.map(t => `
+  document.getElementById('task-list').innerHTML = filtered.map(t => `
     <div class="task-row">
       <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask(${t.id})" />
       <div style="flex:1;">
@@ -886,29 +985,26 @@ function renderBudget() {
   Object.keys(CATS).forEach(k => catTotals[k]=0);
   state.expenses.forEach(e => { catTotals[e.cat]=(catTotals[e.cat]||0)+e.usdAmt; });
   const maxCat = Math.max(...Object.values(catTotals),1);
-  const bc = document.getElementById('budget-cats');
   const hasData = Object.values(catTotals).some(v=>v>0);
-  bc.innerHTML = hasData ? Object.entries(catTotals).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
-    <div class="budget-bar-row">
-      <div class="budget-bar-top">
-        <span style="color:var(--text2);font-size:13px;">${CATS[k]}</span>
-        <span style="font-weight:500;font-size:13px;">${fmt(v)}</span>
-      </div>
-      <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${Math.round(v/maxCat*100)}%"></div></div>
-    </div>`).join('') : '<div class="empty">No expense data yet</div>';
+  document.getElementById('budget-cats').innerHTML = hasData
+    ? Object.entries(catTotals).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+        <div class="budget-bar-row">
+          <div class="budget-bar-top"><span style="color:var(--text2);font-size:13px;">${CATS[k]}</span><span style="font-weight:500;font-size:13px;">${fmt(v)}</span></div>
+          <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${Math.round(v/maxCat*100)}%"></div></div>
+        </div>`).join('')
+    : '<div class="empty">No expense data yet</div>';
 
   const monthlyData = {};
   state.expenses.forEach(e => {
     const d = new Date(e.date + 'T00:00:00');
     const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     const label = d.toLocaleString('default',{month:'short',year:'numeric'});
-    if(!monthlyData[key]) monthlyData[key]={label,total:0};
+    if (!monthlyData[key]) monthlyData[key]={label,total:0};
     monthlyData[key].total += e.usdAmt;
   });
   const months = Object.values(monthlyData).sort((a,b)=>a.label>b.label?1:-1);
   const maxM = Math.max(...months.map(m=>m.total),1);
-  const bm = document.getElementById('budget-monthly');
-  bm.innerHTML = months.map(m => {
+  document.getElementById('budget-monthly').innerHTML = months.map(m => {
     const over = state.budgetUSD && m.total > state.budgetUSD;
     return `<div class="budget-bar-row">
       <div class="budget-bar-top">
@@ -924,7 +1020,6 @@ function renderBudget() {
 }
 
 function renderCourses() {
-  const el = document.getElementById('course-list');
   const periods = ['P1','P2','P3','P4','P5','elective'];
   const PNAMES = {P1:'Period 1',P2:'Period 2',P3:'Period 3',P4:'Period 4',P5:'Period 5',elective:'Electives'};
   const GCOLOR = {'A+':'green-bg','A':'green-bg','A-':'green-bg','B+':'blue-bg','B':'blue-bg','B-':'blue-bg','C+':'amber-bg','C':'amber-bg','Pass':'teal-bg','Fail':'red-bg'};
@@ -938,7 +1033,7 @@ function renderCourses() {
             <div style="font-size:14px;">${c.name}</div>
             <div style="font-size:11px;color:var(--text3);">${c.credits?c.credits+' credits':''}${c.notes?' · '+c.notes:''}</div>
           </div>
-          ${c.grade?`<span style="background:var(--${GCOLOR[c.grade]||'surface2'});color:var(--${GTEXT[c.grade]||'text2'});font-size:12px;font-weight:600;padding:3px 12px;border-radius:20px;letter-spacing:.03em;">${c.grade}</span>`:''}
+          ${c.grade?`<span style="background:var(--${GCOLOR[c.grade]||'surface2'});color:var(--${GTEXT[c.grade]||'text2'});font-size:12px;font-weight:600;padding:3px 12px;border-radius:20px;">${c.grade}</span>`:''}
           <select style="width:auto;max-width:130px;font-size:12px;" onchange="updateGrade(${c.id},this.value)">
             <option value="">update grade</option>
             ${['A+','A','A-','B+','B','B-','C+','C','Pass','Fail'].map(g=>`<option value="${g}" ${c.grade===g?'selected':''}>${g}</option>`).join('')}
@@ -946,16 +1041,32 @@ function renderCourses() {
           <button class="btn-danger" onclick="deleteCourse(${c.id})">✕</button>
         </div>`).join('')}
     </div>`).join('');
-  el.innerHTML = html || '<div class="empty">No courses yet. Add your first course above.</div>';
+  document.getElementById('course-list').innerHTML = html || '<div class="empty">No courses yet. Add your first course above.</div>';
 }
 
 function render() { renderOverview(); renderExpenses(); renderTasks(); renderBudget(); renderCourses(); }
 
-const today = new Date().toISOString().split('T')[0];
-document.getElementById('exp-date').value = today;
-document.getElementById('task-due').value = today;
-loadState();
-render();
+// ── Init ──
+const todayStr = new Date().toISOString().split('T')[0];
+document.getElementById('exp-date').value = todayStr;
+document.getElementById('task-due').value = todayStr;
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+    if (session) {
+      showLoading();
+      await loadAllData();
+      render();
+      showApp();
+    } else {
+      document.getElementById('loading-overlay').classList.add('hidden');
+      document.getElementById('auth-overlay').classList.remove('hidden');
+    }
+  } else if (event === 'SIGNED_OUT') {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('auth-overlay').classList.remove('hidden');
+  }
+});
 </script>
 </body>
 </html>
