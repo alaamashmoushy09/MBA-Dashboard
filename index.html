@@ -1,77 +1,230 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MBA Life Dashboard — Alaa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --bg:#F7F5F0;--surface:#FFFFFF;--surface2:#F0EDE6;
-  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
-  --text:#1A1814;--text2:#6B6760;--text3:#9B9890;
-  --accent:#1A1814;
-  --blue:#1B4FD8;--blue-bg:#EEF2FF;
-  --green:#166534;--green-bg:#DCFCE7;
-  --amber:#92400E;--amber-bg:#FEF3C7;
-  --red:#991B1B;--red-bg:#FEE2E2;
-  --purple:#5B21B6;--purple-bg:#EDE9FE;
-  --teal:#0F766E;--teal-bg:#CCFBF1;
-  --pink:#9D174D;--pink-bg:#FCE7F3;
+
+:root[data-theme="dark"]{
+  --bg:#0A0F1E;
+  --surface:#111827;
+  --surface2:#1A2337;
+  --surface3:#222E45;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.13);
+  --text:#F0EDE6;
+  --text2:#9BA8BB;
+  --text3:#5C6B82;
+  --gold:#C9A84C;
+  --gold-dim:rgba(201,168,76,0.12);
+  --gold-border:rgba(201,168,76,0.3);
+  --navy:#1B3A6B;
+  --accent:var(--gold);
+  --accent-text:#0A0F1E;
+  --red:#EF4444;--red-bg:rgba(239,68,68,0.12);
+  --green:#34D399;--green-bg:rgba(52,211,153,0.12);
+  --blue:#60A5FA;--blue-bg:rgba(96,165,250,0.12);
+  --amber:#FBBF24;--amber-bg:rgba(251,191,36,0.12);
+  --purple:#A78BFA;--purple-bg:rgba(167,139,250,0.12);
+  --teal:#2DD4BF;--teal-bg:rgba(45,212,191,0.12);
+  --pink:#F472B6;--pink-bg:rgba(244,114,182,0.12);
+  --shadow:0 1px 3px rgba(0,0,0,0.4),0 4px 16px rgba(0,0,0,0.3);
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.3);
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+:root[data-theme="light"]{
+  --bg:#F5F2EB;
+  --surface:#FFFFFF;
+  --surface2:#EEE9DF;
+  --surface3:#E5DED3;
+  --border:rgba(0,0,0,0.08);
+  --border2:rgba(0,0,0,0.14);
+  --text:#0F1E35;
+  --text2:#4A5568;
+  --text3:#8E9BAD;
+  --gold:#A07C2A;
+  --gold-dim:rgba(160,124,42,0.08);
+  --gold-border:rgba(160,124,42,0.25);
+  --navy:#0F2B5B;
+  --accent:var(--navy);
+  --accent-text:#FFFFFF;
+  --red:#DC2626;--red-bg:#FEE2E2;
+  --green:#059669;--green-bg:#D1FAE5;
+  --blue:#2563EB;--blue-bg:#DBEAFE;
+  --amber:#D97706;--amber-bg:#FEF3C7;
+  --purple:#7C3AED;--purple-bg:#EDE9FE;
+  --teal:#0D9488;--teal-bg:#CCFBF1;
+  --pink:#BE185D;--pink-bg:#FCE7F3;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 16px rgba(0,0,0,0.06);
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.06);
+}
+
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s;}
 .shell{display:flex;min-height:100vh;}
-.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);padding:2rem 1.25rem;display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;}
-.main{margin-left:230px;padding:2.5rem 2rem;max-width:980px;width:100%;}
-.logo{font-family:'DM Serif Display',serif;font-size:19px;color:var(--text);}
-.logo-sub{font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2rem;}
-.nav-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin:1.25rem 0 .5rem;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;font-size:14px;color:var(--text2);cursor:pointer;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:240px;background:var(--surface);border-right:1px solid var(--border);
+  padding:0;display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;
+  transition:background .25s,border-color .25s;
+}
+.sidebar-top{padding:1.75rem 1.5rem 1.25rem;}
+.logo-wordmark{
+  font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;
+  color:var(--text);letter-spacing:.01em;line-height:1;
+}
+.logo-sub{
+  font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;
+  font-weight:500;margin-top:5px;
+}
+.phase-pill{
+  display:inline-flex;align-items:center;gap:5px;margin-top:12px;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;
+  background:var(--gold-dim);border:1px solid var(--gold-border);
+  color:var(--gold);padding:4px 10px;border-radius:20px;
+}
+.phase-pill-dot{width:5px;height:5px;background:var(--gold);border-radius:50%;}
+
+.nav-divider{height:1px;background:var(--border);margin:0 1.5rem;}
+.nav-section{padding:.75rem 1rem;}
+.nav-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;font-weight:600;padding:0 .5rem;margin-bottom:.35rem;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
+  font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;
+  margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'Inter',sans-serif;
+  font-weight:400;letter-spacing:.01em;
+}
 .nav-item:hover{background:var(--surface2);color:var(--text);}
-.nav-item.active{background:var(--accent);color:white;}
-.nav-item svg{width:16px;height:16px;flex-shrink:0;}
-.sidebar-footer{margin-top:auto;padding-top:1.5rem;border-top:1px solid var(--border);}
-.sidebar-footer-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
-.display-cur-btns{display:flex;gap:4px;flex-wrap:wrap;}
-.dcbtn{padding:4px 9px;border-radius:6px;font-size:12px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .12s;}
-.dcbtn.active{background:var(--accent);color:white;border-color:var(--accent);}
+.nav-item.active{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-border);}
+[data-theme="light"] .nav-item.active{background:rgba(15,43,91,0.08);color:var(--navy);border:1px solid rgba(15,43,91,0.15);}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7;}
+.nav-item.active svg{opacity:1;}
+
+.sidebar-footer{margin-top:auto;padding:1rem 1.5rem 1.5rem;border-top:1px solid var(--border);}
+.sidebar-footer-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:8px;}
+.display-cur-btns{display:flex;gap:3px;flex-wrap:wrap;}
+.dcbtn{
+  padding:4px 8px;border-radius:5px;font-size:11px;font-family:'Inter',sans-serif;
+  border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;transition:all .12s;
+}
+.dcbtn.active{background:var(--gold);color:#0A0F1E;border-color:var(--gold);font-weight:500;}
+[data-theme="light"] .dcbtn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+/* Theme toggle */
+.theme-toggle{
+  display:flex;align-items:center;gap:8px;margin-top:12px;
+  font-size:11px;color:var(--text3);cursor:pointer;
+  border:none;background:none;font-family:'Inter',sans-serif;padding:0;width:100%;
+}
+.toggle-track{
+  width:32px;height:18px;background:var(--surface3);border-radius:9px;
+  position:relative;transition:background .2s;flex-shrink:0;border:1px solid var(--border2);
+}
+.toggle-thumb{
+  position:absolute;top:2px;left:2px;width:12px;height:12px;
+  background:var(--text3);border-radius:50%;transition:all .2s;
+}
+[data-theme="light"] .toggle-thumb{left:16px;background:var(--navy);}
+[data-theme="dark"] .toggle-thumb{background:var(--gold);}
+
+/* ── Main ── */
+.main{margin-left:240px;padding:2.5rem 2.5rem;max-width:1000px;width:100%;}
 .page{display:none;}
 .page.active{display:block;}
-.page-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);margin-bottom:.25rem;}
-.page-sub{font-size:13px;color:var(--text3);margin-bottom:2rem;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:16px;}
-.card-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:1rem;}
-.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
-.metric{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.25rem;}
-.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
-.metric-value{font-size:22px;font-weight:500;color:var(--text);line-height:1;}
-.metric-sub{font-size:12px;color:var(--text3);margin-top:4px;}
-.countdown-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
-.cd-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden;}
-.cd-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
-.cd-loa::before{background:#F59E0B;}
-.cd-mba::before{background:#1B4FD8;}
-.cd-summer::before{background:#10B981;}
-.cd-num{font-family:'DM Serif Display',serif;font-size:40px;color:var(--text);line-height:1;}
-.cd-label{font-size:13px;color:var(--text2);margin-top:4px;}
-.cd-date{font-size:11px;color:var(--text3);margin-top:2px;}
+
+.page-header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;color:var(--text);line-height:1.1;}
+.page-title em{font-style:italic;color:var(--gold);}
+[data-theme="light"] .page-title em{color:var(--navy);}
+.page-sub{font-size:12px;color:var(--text3);margin-top:.4rem;letter-spacing:.02em;}
+
+/* ── Cards ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1.5rem;margin-bottom:14px;box-shadow:var(--shadow-sm);
+  transition:background .25s,border-color .25s;
+}
+.card-title{
+  font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);
+  font-weight:600;margin-bottom:1.1rem;
+}
+
+/* ── Countdown cards ── */
+.countdown-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px;}
+.cd-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1.4rem 1.25rem;position:relative;overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.cd-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+}
+.cd-loa::after{background:linear-gradient(90deg,var(--gold),transparent);}
+.cd-mba::after{background:linear-gradient(90deg,var(--blue),transparent);}
+.cd-summer::after{background:linear-gradient(90deg,var(--green),transparent);}
+.cd-preloa::after{background:linear-gradient(90deg,var(--purple),transparent);}
+.cd-num{
+  font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:500;
+  color:var(--text);line-height:1;letter-spacing:-.02em;
+}
+.cd-num.passed{font-size:32px;color:var(--gold);}
+.cd-label{font-size:12px;color:var(--text2);margin-top:6px;font-weight:400;}
+.cd-date{font-size:10px;color:var(--text3);margin-top:3px;letter-spacing:.02em;}
+
+/* ── Metrics ── */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.metric{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1.25rem;box-shadow:var(--shadow-sm);
+}
+.metric-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px;}
+.metric-value{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--text);line-height:1;}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:5px;}
+
+/* ── Forms ── */
 .form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end;}
-.form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px;}
-.form-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
-input[type=text],input[type=number],input[type=date],select,textarea{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);width:100%;outline:none;transition:border .15s;}
-input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+.form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:120px;}
+.form-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  padding:9px 12px;border:1px solid var(--border2);border-radius:8px;
+  font-size:13px;font-family:'Inter',sans-serif;background:var(--surface2);
+  color:var(--text);width:100%;outline:none;transition:border .15s,background .25s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);background:var(--surface);}
+[data-theme="light"] input:focus,[data-theme="light"] select:focus,[data-theme="light"] textarea:focus{border-color:var(--navy);}
 textarea{resize:vertical;min-height:60px;}
-.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;border:none;}
-.btn-primary{background:var(--accent);color:white;}
-.btn-primary:hover{opacity:.85;}
-.btn-danger{background:transparent;border:1px solid #FECACA;color:var(--red);padding:4px 10px;font-size:12px;border-radius:6px;font-family:'DM Sans',sans-serif;cursor:pointer;}
-.btn-danger:hover{background:var(--red-bg);}
-.exp-row{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);gap:12px;}
+select option{background:var(--surface2);}
+
+.btn{padding:9px 20px;border-radius:8px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;border:none;font-weight:500;letter-spacing:.03em;}
+.btn-primary{background:var(--gold);color:#0A0F1E;}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px);}
+[data-theme="light"] .btn-primary{background:var(--navy);color:#fff;}
+.btn-danger{
+  background:transparent;border:1px solid var(--border2);color:var(--text3);
+  padding:5px 10px;font-size:11px;border-radius:6px;font-family:'Inter',sans-serif;cursor:pointer;
+  transition:all .15s;
+}
+.btn-danger:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+
+.input-with-cur{display:flex;gap:0;}
+.input-with-cur input{border-radius:8px 0 0 8px;border-right:none;}
+.input-with-cur select{border-radius:0 8px 8px 0;width:auto;min-width:70px;}
+
+/* ── Expense rows ── */
+.exp-row{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:13px 0;border-bottom:1px solid var(--border);gap:12px;
+}
 .exp-row:last-child{border-bottom:none;}
-.exp-cat{font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.exp-cat{
+  font-size:10px;padding:3px 9px;border-radius:20px;white-space:nowrap;
+  flex-shrink:0;font-weight:500;letter-spacing:.03em;text-transform:uppercase;
+}
 .cat-housing{background:var(--blue-bg);color:var(--blue);}
 .cat-food{background:var(--green-bg);color:var(--green);}
 .cat-transport{background:var(--amber-bg);color:var(--amber);}
@@ -79,62 +232,118 @@ textarea{resize:vertical;min-height:60px;}
 .cat-social{background:var(--pink-bg);color:var(--pink);}
 .cat-health{background:var(--teal-bg);color:var(--teal);}
 .cat-other{background:var(--surface2);color:var(--text2);}
-.exp-note{font-size:12px;color:var(--text3);margin-top:2px;}
-.exp-amount{font-size:15px;font-weight:500;white-space:nowrap;text-align:right;}
-.exp-amount-sub{font-size:11px;color:var(--text3);text-align:right;}
-.task-row{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.exp-desc{font-size:14px;color:var(--text);}
+.exp-note{font-size:11px;color:var(--text3);margin-top:2px;}
+.exp-amount{font-size:15px;font-weight:500;white-space:nowrap;text-align:right;color:var(--text);}
+.exp-amount-sub{font-size:10px;color:var(--text3);text-align:right;margin-top:2px;}
+
+/* ── Task rows ── */
+.task-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
 .task-row:last-child{border-bottom:none;}
-.task-check{width:18px;height:18px;accent-color:var(--accent);margin-top:2px;flex-shrink:0;cursor:pointer;}
+.task-check{
+  width:16px;height:16px;margin-top:3px;flex-shrink:0;cursor:pointer;
+  accent-color:var(--gold);
+}
+[data-theme="light"] .task-check{accent-color:var(--navy);}
 .task-done-text{text-decoration:line-through;color:var(--text3);}
 .task-due{font-size:11px;color:var(--text3);margin-top:3px;}
-.phase-badge{font-size:11px;padding:2px 8px;border-radius:20px;flex-shrink:0;margin-top:2px;}
-.ph-now{background:var(--red-bg);color:var(--red);}
+.phase-badge{font-size:10px;padding:2px 8px;border-radius:20px;flex-shrink:0;font-weight:500;letter-spacing:.03em;text-transform:uppercase;}
+.ph-now{background:var(--purple-bg);color:var(--purple);}
 .ph-loa{background:var(--amber-bg);color:var(--amber);}
 .ph-mba{background:var(--blue-bg);color:var(--blue);}
 .ph-summer{background:var(--green-bg);color:var(--green);}
-.grade-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:12px;}
+
+/* ── Course rows ── */
+.grade-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);gap:12px;}
 .grade-row:last-child{border-bottom:none;}
-.budget-bar-row{margin-bottom:14px;}
-.budget-bar-top{display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px;}
-.budget-bar-bg{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
-.budget-bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .4s;}
+
+/* ── Budget bars ── */
+.budget-bar-row{margin-bottom:16px;}
+.budget-bar-top{display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px;}
+.budget-bar-bg{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;}
+.budget-bar-fill{height:100%;border-radius:2px;background:var(--gold);transition:width .5s cubic-bezier(.4,0,.2,1);}
+[data-theme="light"] .budget-bar-fill{background:var(--navy);}
 .budget-bar-fill.over{background:var(--red);}
-.phase-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
-.ptab{padding:5px 14px;border-radius:20px;font-size:13px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .12s;}
-.ptab.active{background:var(--accent);color:white;border-color:var(--accent);}
-.empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:14px;}
-.input-with-cur{display:flex;gap:0;}
-.input-with-cur input{border-radius:8px 0 0 8px;border-right:none;}
-.input-with-cur select{border-radius:0 8px 8px 0;width:auto;min-width:70px;background:var(--surface2);}
-.note-badge{font-size:11px;background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:20px;margin-left:6px;}
+
+/* ── Phase tabs ── */
+.phase-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.ptab{
+  padding:5px 14px;border-radius:20px;font-size:11px;font-family:'Inter',sans-serif;
+  border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;
+  transition:all .12s;font-weight:500;letter-spacing:.03em;
+}
+.ptab:hover{color:var(--text);border-color:var(--border2);}
+.ptab.active{background:var(--gold);color:#0A0F1E;border-color:var(--gold);}
+[data-theme="light"] .ptab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:13px;letter-spacing:.02em;}
+
+/* ── Period group headings in courses ── */
+.period-group{margin-bottom:1.5rem;}
+.period-heading{
+  font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);
+  font-weight:600;margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid var(--gold-border);
+}
+[data-theme="light"] .period-heading{color:var(--navy);border-color:rgba(15,43,91,0.2);}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ── Mobile ── */
+@media(max-width:720px){
+  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:.75rem;}
+  .main{margin-left:0;padding:1.25rem;}
+  .sidebar-top{padding:.5rem;}
+  .nav-section{display:flex;gap:4px;flex-wrap:wrap;padding:.25rem;}
+  .nav-label{display:none;}
+  .nav-divider{display:none;}
+  .sidebar-footer{margin-top:0;border-top:none;padding:.5rem;}
+  .shell{flex-direction:column;}
+  .countdown-grid{grid-template-columns:1fr 1fr;}
+  .metric-grid{grid-template-columns:1fr 1fr;}
+}
 </style>
 </head>
 <body>
 <div class="shell">
   <aside class="sidebar">
-    <div class="logo">Alaa</div>
-    <div class="logo-sub">INSEAD MBA · 2026</div>
-    <span class="nav-label">Navigation</span>
-    <button class="nav-item active" onclick="showPage('overview',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      Overview
-    </button>
-    <button class="nav-item" onclick="showPage('expenses',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-      Expenses
-    </button>
-    <button class="nav-item" onclick="showPage('budget',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      Budget
-    </button>
-    <button class="nav-item" onclick="showPage('tasks',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      Tasks
-    </button>
-    <button class="nav-item" onclick="showPage('courses',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-      Courses &amp; Grades
-    </button>
+    <div class="sidebar-top">
+      <div class="logo-wordmark">Alaa</div>
+      <div class="logo-sub">INSEAD MBA · 2026</div>
+      <div class="phase-pill" id="current-phase-pill">
+        <span class="phase-pill-dot"></span>
+        <span id="current-phase-text">Pre-LOA</span>
+      </div>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-label">Navigate</div>
+      <button class="nav-item active" onclick="showPage('overview',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </button>
+      <button class="nav-item" onclick="showPage('expenses',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+        Expenses
+      </button>
+      <button class="nav-item" onclick="showPage('budget',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Budget
+      </button>
+      <button class="nav-item" onclick="showPage('tasks',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Tasks
+      </button>
+      <button class="nav-item" onclick="showPage('courses',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Courses &amp; Grades
+      </button>
+    </div>
 
     <div class="sidebar-footer">
       <div class="sidebar-footer-label">Display currency</div>
@@ -145,29 +354,40 @@ textarea{resize:vertical;min-height:60px;}
         <button class="dcbtn" onclick="setDisplayCur('GBP',this)">GBP</button>
         <button class="dcbtn" onclick="setDisplayCur('AED',this)">AED</button>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;">Amounts entered in original currency, displayed in selected currency.</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span id="theme-label">Light mode</span>
+      </button>
     </div>
   </aside>
 
   <main class="main">
+
     <!-- OVERVIEW -->
     <div id="page-overview" class="page active">
-      <div class="page-title">Overview</div>
-      <div class="page-sub" id="today-date"></div>
+      <div class="page-header">
+        <div class="page-title">Good <em id="greeting-time">evening</em>, Alaa.</div>
+        <div class="page-sub" id="today-date"></div>
+      </div>
       <div class="countdown-grid">
         <div class="cd-card cd-loa">
           <div class="cd-num" id="cd-loa">—</div>
-          <div class="cd-label">days to LOA</div>
-          <div class="cd-date">July 1, 2026</div>
+          <div class="cd-label">Days to LOA</div>
+          <div class="cd-date">July 10, 2026</div>
+        </div>
+        <div class="cd-card cd-preloa">
+          <div class="cd-num" id="cd-summer-pre">—</div>
+          <div class="cd-label">Days to pre-MBA summer</div>
+          <div class="cd-date">July 11, 2026</div>
         </div>
         <div class="cd-card cd-mba">
           <div class="cd-num" id="cd-mba">—</div>
-          <div class="cd-label">days to INSEAD</div>
+          <div class="cd-label">Days to INSEAD</div>
           <div class="cd-date">Aug 21, 2026</div>
         </div>
         <div class="cd-card cd-summer">
           <div class="cd-num" id="cd-summer">—</div>
-          <div class="cd-label">days to summer break</div>
+          <div class="cd-label">Days to MBA summer</div>
           <div class="cd-date">June 2027</div>
         </div>
       </div>
@@ -205,8 +425,10 @@ textarea{resize:vertical;min-height:60px;}
 
     <!-- EXPENSES -->
     <div id="page-expenses" class="page">
-      <div class="page-title">Expenses</div>
-      <div class="page-sub">Enter each expense in the currency you actually paid in</div>
+      <div class="page-header">
+        <div class="page-title">Expenses</div>
+        <div class="page-sub">Enter each expense in the currency you actually paid in</div>
+      </div>
       <div class="card">
         <div class="card-title">Add expense</div>
         <div class="form-row">
@@ -214,13 +436,13 @@ textarea{resize:vertical;min-height:60px;}
             <label class="form-label">Description</label>
             <input type="text" id="exp-desc" placeholder="e.g. Apartment deposit" />
           </div>
-          <div class="form-group" style="max-width:200px;">
+          <div class="form-group" style="max-width:210px;">
             <label class="form-label">Amount &amp; currency paid</label>
             <div class="input-with-cur">
               <input type="number" id="exp-amt" placeholder="0" min="0" step="0.01" />
               <select id="exp-cur">
                 <option value="SAR">SAR</option>
-                <option value="USD">USD</option>
+                <option value="USD" selected>USD</option>
                 <option value="EUR">EUR</option>
                 <option value="GBP">GBP</option>
                 <option value="AED">AED</option>
@@ -262,8 +484,10 @@ textarea{resize:vertical;min-height:60px;}
 
     <!-- BUDGET -->
     <div id="page-budget" class="page">
-      <div class="page-title">Budget</div>
-      <div class="page-sub">Set a monthly target and track by category</div>
+      <div class="page-header">
+        <div class="page-title">Budget</div>
+        <div class="page-sub">Set a monthly target and track by category</div>
+      </div>
       <div class="card">
         <div class="card-title">Monthly budget</div>
         <div class="form-row">
@@ -273,7 +497,7 @@ textarea{resize:vertical;min-height:60px;}
               <input type="number" id="budget-amt" placeholder="e.g. 5000" min="0" />
               <select id="budget-cur">
                 <option value="SAR">SAR</option>
-                <option value="USD">USD</option>
+                <option value="USD" selected>USD</option>
                 <option value="EUR">EUR</option>
                 <option value="GBP">GBP</option>
                 <option value="AED">AED</option>
@@ -295,8 +519,10 @@ textarea{resize:vertical;min-height:60px;}
 
     <!-- TASKS -->
     <div id="page-tasks" class="page">
-      <div class="page-title">Tasks</div>
-      <div class="page-sub">Organized by phase of your journey</div>
+      <div class="page-header">
+        <div class="page-title">Tasks</div>
+        <div class="page-sub">Organized by phase of your journey</div>
+      </div>
       <div class="card">
         <div class="card-title">Add task</div>
         <div class="form-row">
@@ -304,7 +530,7 @@ textarea{resize:vertical;min-height:60px;}
             <label class="form-label">Task</label>
             <input type="text" id="task-title" placeholder="e.g. Apply for student visa" />
           </div>
-          <div class="form-group" style="max-width:170px;">
+          <div class="form-group" style="max-width:175px;">
             <label class="form-label">Due date</label>
             <input type="date" id="task-due" />
           </div>
@@ -314,7 +540,7 @@ textarea{resize:vertical;min-height:60px;}
             <label class="form-label">Phase</label>
             <select id="task-phase">
               <option value="now">Now (pre-LOA)</option>
-              <option value="loa">LOA period</option>
+              <option value="loa">Pre-MBA summer</option>
               <option value="mba">MBA start</option>
               <option value="summer">Summer break</option>
             </select>
@@ -329,7 +555,7 @@ textarea{resize:vertical;min-height:60px;}
       <div class="phase-tabs">
         <button class="ptab active" onclick="filterTasks('all',this)">All</button>
         <button class="ptab" onclick="filterTasks('now',this)">Pre-LOA</button>
-        <button class="ptab" onclick="filterTasks('loa',this)">LOA</button>
+        <button class="ptab" onclick="filterTasks('loa',this)">Pre-MBA summer</button>
         <button class="ptab" onclick="filterTasks('mba',this)">MBA start</button>
         <button class="ptab" onclick="filterTasks('summer',this)">Summer break</button>
       </div>
@@ -338,8 +564,10 @@ textarea{resize:vertical;min-height:60px;}
 
     <!-- COURSES -->
     <div id="page-courses" class="page">
-      <div class="page-title">Courses &amp; Grades</div>
-      <div class="page-sub">Track your INSEAD modules and academic progress</div>
+      <div class="page-header">
+        <div class="page-title">Courses &amp; Grades</div>
+        <div class="page-sub">Track your INSEAD modules and academic progress</div>
+      </div>
       <div class="card">
         <div class="card-title">Add course</div>
         <div class="form-row">
@@ -383,18 +611,17 @@ textarea{resize:vertical;min-height:60px;}
       </div>
       <div class="card"><div id="course-list"></div></div>
     </div>
+
   </main>
 </div>
 
 <script>
-// Exchange rates to USD (base currency for storage)
 const TO_USD = { SAR:0.2667, USD:1, EUR:1.0836, GBP:1.2706, AED:0.2723 };
 const SYM = { SAR:'SAR ', USD:'$', EUR:'€', GBP:'£', AED:'AED ' };
 const CATS = { housing:'Housing', food:'Food', transport:'Transport', books:'Books / Supplies', social:'Social / Events', health:'Health', other:'Other' };
-const PHASE_LABEL = { now:'Pre-LOA', loa:'LOA', mba:'MBA start', summer:'Summer break' };
+const PHASE_LABEL = { now:'Pre-LOA', loa:'Pre-MBA summer', mba:'MBA start', summer:'Summer break' };
 const PHASE_CLASS = { now:'ph-now', loa:'ph-loa', mba:'ph-mba', summer:'ph-summer' };
 
-// All monetary values stored internally in USD
 let displayCur = 'USD';
 let taskFilter = 'all';
 let state = { expenses:[], tasks:[], courses:[], budgetUSD:0 };
@@ -413,6 +640,9 @@ function loadState() {
     if (s) state = JSON.parse(s);
     const dc = localStorage.getItem('mba-display-cur');
     if (dc) { displayCur = dc; }
+    const theme = localStorage.getItem('mba-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    updateThemeLabel(theme);
     document.querySelectorAll('.dcbtn').forEach(b => b.classList.toggle('active', b.textContent.trim() === displayCur));
     if (state.budgetUSD) {
       document.getElementById('budget-amt').value = fromUSD(state.budgetUSD, displayCur).toFixed(2);
@@ -422,6 +652,19 @@ function loadState() {
 
 function saveState() {
   try { localStorage.setItem('mba-v3', JSON.stringify(state)); } catch(e) {}
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('mba-theme', next);
+  updateThemeLabel(next);
+}
+
+function updateThemeLabel(theme) {
+  const lbl = document.getElementById('theme-label');
+  if (lbl) lbl.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
 }
 
 function setDisplayCur(c, btn) {
@@ -450,8 +693,26 @@ function filterTasks(f, btn) {
 
 function daysUntil(dateStr) {
   const now = new Date(); now.setHours(0,0,0,0);
-  const t = new Date(dateStr); t.setHours(0,0,0,0);
+  const t = new Date(dateStr + 'T00:00:00'); t.setHours(0,0,0,0);
   return Math.ceil((t - now) / 86400000);
+}
+
+function currentPhase() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const loaDate = new Date('2026-07-10T00:00:00');
+  const mbaDate = new Date('2026-08-21T00:00:00');
+  const summerDate = new Date('2027-06-01T00:00:00');
+  if (now < loaDate) return 'Pre-LOA';
+  if (now < mbaDate) return 'Pre-MBA summer';
+  if (now < summerDate) return 'MBA';
+  return 'MBA summer';
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  return 'evening';
 }
 
 function addExpense() {
@@ -531,13 +792,23 @@ function saveBudget() {
 
 function renderOverview() {
   const now = new Date();
+  document.getElementById('greeting-time').textContent = greeting();
   document.getElementById('today-date').textContent = now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const cdLoa = daysUntil('2026-07-01'), cdMba = daysUntil('2026-08-21'), cdSummer = daysUntil('2027-06-01');
-  document.getElementById('cd-loa').textContent = cdLoa > 0 ? cdLoa : '✓';
-  document.getElementById('cd-mba').textContent = cdMba > 0 ? cdMba : '✓';
-  document.getElementById('cd-summer').textContent = cdSummer > 0 ? cdSummer : '✓';
+  document.getElementById('current-phase-text').textContent = currentPhase();
+
+  const dates = { loa:'2026-07-10', 'summer-pre':'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' };
+  for (const [key, dateStr] of Object.entries(dates)) {
+    const d = daysUntil(dateStr);
+    const el = document.getElementById('cd-' + key);
+    if (d <= 0) { el.textContent = '✓'; el.classList.add('passed'); }
+    else { el.textContent = d; el.classList.remove('passed'); }
+  }
+
   const total = state.expenses.reduce((s,e) => s+e.usdAmt, 0);
-  const mthExp = state.expenses.filter(e => { const d=new Date(e.date); return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear(); });
+  const mthExp = state.expenses.filter(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  });
   const mthTotal = mthExp.reduce((s,e) => s+e.usdAmt, 0);
   document.getElementById('ov-total').textContent = fmt(total);
   document.getElementById('ov-total-sub').textContent = 'all time · ' + displayCur;
@@ -545,29 +816,31 @@ function renderOverview() {
   document.getElementById('ov-month-name').textContent = now.toLocaleString('default',{month:'long'}) + ' · ' + displayCur;
   document.getElementById('ov-tasks').textContent = state.tasks.filter(t=>!t.done).length;
   document.getElementById('ov-courses').textContent = state.courses.length;
+
   const re = document.getElementById('ov-expenses');
   re.innerHTML = state.expenses.slice(0,5).map(e => `
     <div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
         <span class="exp-cat cat-${e.cat}">${CATS[e.cat]}</span>
         <div>
-          <div style="font-size:14px;">${e.desc}</div>
+          <div class="exp-desc">${e.desc}</div>
           ${e.notes?`<div class="exp-note">${e.notes}</div>`:''}
         </div>
       </div>
       <div>
         <div class="exp-amount">${fmt(e.usdAmt)}</div>
-        ${e.origCur !== displayCur ? `<div class="exp-amount-sub">${SYM[e.origCur]}${e.origAmt.toLocaleString()}</div>` : ''}
+        ${e.origCur !== displayCur ? `<div class="exp-amount-sub">${SYM[e.origCur]}${e.origAmt.toLocaleString()} ${e.origCur}</div>` : ''}
       </div>
     </div>`).join('') || '<div class="empty">No expenses yet</div>';
+
   const tl = document.getElementById('ov-tasks-list');
   const upcoming = state.tasks.filter(t=>!t.done).slice(0,5);
   tl.innerHTML = upcoming.map(t => `
     <div class="task-row">
       <span class="phase-badge ${PHASE_CLASS[t.phase]}">${PHASE_LABEL[t.phase]}</span>
       <div style="flex:1;font-size:14px;">${t.title}</div>
-      ${t.due?`<span style="font-size:12px;color:var(--text3);">${t.due}</span>`:''}
-    </div>`).join('') || '<div class="empty">All caught up!</div>';
+      ${t.due?`<span style="font-size:11px;color:var(--text3);">${t.due}</span>`:''}
+    </div>`).join('') || '<div class="empty">All caught up</div>';
 }
 
 function renderExpenses() {
@@ -577,12 +850,12 @@ function renderExpenses() {
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
         <span class="exp-cat cat-${e.cat}">${CATS[e.cat]}</span>
         <div>
-          <div style="font-size:14px;">${e.desc}</div>
+          <div class="exp-desc">${e.desc}</div>
           <div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
-        <div style="text-align:right;">
+        <div>
           <div class="exp-amount">${fmt(e.usdAmt)}</div>
           ${e.origCur !== displayCur ? `<div class="exp-amount-sub">Paid ${SYM[e.origCur]}${e.origAmt.toLocaleString()} ${e.origCur}</div>` : ''}
         </div>
@@ -618,29 +891,30 @@ function renderBudget() {
   bc.innerHTML = hasData ? Object.entries(catTotals).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
     <div class="budget-bar-row">
       <div class="budget-bar-top">
-        <span style="color:var(--text2);">${CATS[k]}</span>
-        <span style="font-weight:500;">${fmt(v)}</span>
+        <span style="color:var(--text2);font-size:13px;">${CATS[k]}</span>
+        <span style="font-weight:500;font-size:13px;">${fmt(v)}</span>
       </div>
       <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${Math.round(v/maxCat*100)}%"></div></div>
     </div>`).join('') : '<div class="empty">No expense data yet</div>';
+
   const monthlyData = {};
   state.expenses.forEach(e => {
-    const d=new Date(e.date);
-    const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-    const label=d.toLocaleString('default',{month:'short',year:'numeric'});
+    const d = new Date(e.date + 'T00:00:00');
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const label = d.toLocaleString('default',{month:'short',year:'numeric'});
     if(!monthlyData[key]) monthlyData[key]={label,total:0};
-    monthlyData[key].total+=e.usdAmt;
+    monthlyData[key].total += e.usdAmt;
   });
-  const months=Object.values(monthlyData).sort((a,b)=>a.label>b.label?1:-1);
-  const maxM=Math.max(...months.map(m=>m.total),1);
-  const bm=document.getElementById('budget-monthly');
-  bm.innerHTML=months.map(m=>{
-    const over=state.budgetUSD&&m.total>state.budgetUSD;
+  const months = Object.values(monthlyData).sort((a,b)=>a.label>b.label?1:-1);
+  const maxM = Math.max(...months.map(m=>m.total),1);
+  const bm = document.getElementById('budget-monthly');
+  bm.innerHTML = months.map(m => {
+    const over = state.budgetUSD && m.total > state.budgetUSD;
     return `<div class="budget-bar-row">
       <div class="budget-bar-top">
-        <span style="color:var(--text2);">${m.label}</span>
+        <span style="color:var(--text2);font-size:13px;">${m.label}</span>
         <div>
-          <span style="font-weight:500;${over?'color:var(--red)':''}">${fmt(m.total)}</span>
+          <span style="font-weight:500;font-size:13px;${over?'color:var(--red)':''}">${fmt(m.total)}</span>
           ${state.budgetUSD?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${Math.round(m.total/state.budgetUSD*100)}% of budget</span>`:''}
         </div>
       </div>
@@ -650,36 +924,36 @@ function renderBudget() {
 }
 
 function renderCourses() {
-  const el=document.getElementById('course-list');
-  const periods=['P1','P2','P3','P4','P5','elective'];
-  const PNAMES={P1:'Period 1',P2:'Period 2',P3:'Period 3',P4:'Period 4',P5:'Period 5',elective:'Electives'};
-  const GCOLOR={'A+':'green-bg','A':'green-bg','A-':'green-bg','B+':'blue-bg','B':'blue-bg','B-':'blue-bg','C+':'amber-bg','C':'amber-bg','Pass':'teal-bg','Fail':'red-bg'};
-  const GTEXT={'A+':'green','A':'green','A-':'green','B+':'blue','B':'blue','B-':'blue','C+':'amber','C':'amber','Pass':'teal','Fail':'red'};
-  const html=periods.filter(p=>state.courses.some(c=>c.period===p)).map(p=>`
-    <div style="margin-bottom:1.25rem;">
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px;">${PNAMES[p]}</div>
+  const el = document.getElementById('course-list');
+  const periods = ['P1','P2','P3','P4','P5','elective'];
+  const PNAMES = {P1:'Period 1',P2:'Period 2',P3:'Period 3',P4:'Period 4',P5:'Period 5',elective:'Electives'};
+  const GCOLOR = {'A+':'green-bg','A':'green-bg','A-':'green-bg','B+':'blue-bg','B':'blue-bg','B-':'blue-bg','C+':'amber-bg','C':'amber-bg','Pass':'teal-bg','Fail':'red-bg'};
+  const GTEXT = {'A+':'green','A':'green','A-':'green','B+':'blue','B':'blue','B-':'blue','C+':'amber','C':'amber','Pass':'teal','Fail':'red'};
+  const html = periods.filter(p=>state.courses.some(c=>c.period===p)).map(p=>`
+    <div class="period-group">
+      <div class="period-heading">${PNAMES[p]}</div>
       ${state.courses.filter(c=>c.period===p).map(c=>`
         <div class="grade-row">
           <div style="flex:1;">
             <div style="font-size:14px;">${c.name}</div>
-            <div style="font-size:12px;color:var(--text3);">${c.credits?c.credits+' credits':''}${c.notes?' · '+c.notes:''}</div>
+            <div style="font-size:11px;color:var(--text3);">${c.credits?c.credits+' credits':''}${c.notes?' · '+c.notes:''}</div>
           </div>
-          ${c.grade?`<span style="background:var(--${GCOLOR[c.grade]||'surface2'});color:var(--${GTEXT[c.grade]||'text2'});font-size:13px;font-weight:500;padding:3px 12px;border-radius:20px;">${c.grade}</span>`:''}
-          <select style="width:auto;max-width:130px;" onchange="updateGrade(${c.id},this.value)">
+          ${c.grade?`<span style="background:var(--${GCOLOR[c.grade]||'surface2'});color:var(--${GTEXT[c.grade]||'text2'});font-size:12px;font-weight:600;padding:3px 12px;border-radius:20px;letter-spacing:.03em;">${c.grade}</span>`:''}
+          <select style="width:auto;max-width:130px;font-size:12px;" onchange="updateGrade(${c.id},this.value)">
             <option value="">update grade</option>
             ${['A+','A','A-','B+','B','B-','C+','C','Pass','Fail'].map(g=>`<option value="${g}" ${c.grade===g?'selected':''}>${g}</option>`).join('')}
           </select>
           <button class="btn-danger" onclick="deleteCourse(${c.id})">✕</button>
         </div>`).join('')}
     </div>`).join('');
-  el.innerHTML=html||'<div class="empty">No courses yet. Add your first course above.</div>';
+  el.innerHTML = html || '<div class="empty">No courses yet. Add your first course above.</div>';
 }
 
 function render() { renderOverview(); renderExpenses(); renderTasks(); renderBudget(); renderCourses(); }
 
-const today=new Date().toISOString().split('T')[0];
-document.getElementById('exp-date').value=today;
-document.getElementById('task-due').value=today;
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('exp-date').value = today;
+document.getElementById('task-due').value = today;
 loadState();
 render();
 </script>
