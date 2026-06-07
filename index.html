@@ -652,45 +652,47 @@ async function signOut() {
   document.getElementById('auth-overlay').classList.remove('hidden');
 }
 
-// ── Direct REST helpers (bypasses SDK auth lock) ──
-async function apiHeaders() {
-  const { data: { session } } = await sb.auth.getSession();
+// ── Direct REST helpers (bypasses SDK auth lock entirely) ──
+function getToken() {
+  try {
+    const raw = localStorage.getItem('sb-otakccqrmrglflamciby-auth-token');
+    return JSON.parse(raw)?.access_token ?? SUPA_KEY;
+  } catch { return SUPA_KEY; }
+}
+
+function apiHeaders() {
   return {
     'apikey': SUPA_KEY,
-    'Authorization': `Bearer ${session?.access_token ?? SUPA_KEY}`,
+    'Authorization': `Bearer ${getToken()}`,
     'Content-Type': 'application/json',
     'Prefer': 'return=representation'
   };
 }
 
 async function apiGet(table, qs) {
-  const h = await apiHeaders();
-  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${qs}`, { headers: h });
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${qs}`, { headers: apiHeaders() });
   if (!r.ok) throw new Error(`${table}: ${r.status}`);
   return r.json();
 }
 
 async function apiPost(table, body) {
-  const h = await apiHeaders();
-  const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, { method:'POST', headers: h, body: JSON.stringify(body) });
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, { method:'POST', headers: apiHeaders(), body: JSON.stringify(body) });
   if (!r.ok) throw new Error(`${table} insert: ${r.status}`);
   return r.json();
 }
 
 async function apiPatch(table, id, body) {
-  const h = await apiHeaders();
-  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers: h, body: JSON.stringify(body) });
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers: apiHeaders(), body: JSON.stringify(body) });
   if (!r.ok) throw new Error(`${table} update: ${r.status}`);
 }
 
 async function apiDelete(table, id) {
-  const h = await apiHeaders();
-  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, { method:'DELETE', headers: h });
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, { method:'DELETE', headers: apiHeaders() });
   if (!r.ok) throw new Error(`${table} delete: ${r.status}`);
 }
 
 async function apiUpsert(table, body) {
-  const h = { ...await apiHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' };
+  const h = { ...apiHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' };
   const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, { method:'POST', headers: h, body: JSON.stringify(body) });
   if (!r.ok) throw new Error(`${table} upsert: ${r.status}`);
 }
@@ -1105,15 +1107,14 @@ async function bootApp() {
   }
 }
 
-// Use getSession() for initial load — more reliable than onAuthStateChange on refresh
-sb.auth.getSession().then(({ data: { session } }) => {
-  if (session) {
-    bootApp();
-  } else {
-    document.getElementById('loading-overlay').classList.add('hidden');
-    document.getElementById('auth-overlay').classList.remove('hidden');
-  }
-});
+// Check session directly from localStorage — no SDK lock involvement
+const _hasSession = !!getToken() && getToken() !== SUPA_KEY;
+if (_hasSession) {
+  bootApp();
+} else {
+  document.getElementById('loading-overlay').classList.add('hidden');
+  document.getElementById('auth-overlay').classList.remove('hidden');
+}
 
 // Handle Google OAuth redirect and sign-out
 sb.auth.onAuthStateChange((event, session) => {
