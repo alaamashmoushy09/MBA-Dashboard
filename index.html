@@ -309,6 +309,60 @@ select option{background:var(--surface2);}
 .toast.show{opacity:1;transform:translateY(0);}
 .toast.success{background:var(--green-bg);border-color:var(--green);color:var(--green);}
 
+/* ── Right panel ── */
+.right-panel{display:none;width:280px;background:var(--surface);border-left:1px solid var(--border);position:fixed;right:0;top:0;height:100vh;overflow-y:auto;padding:1.5rem 1.25rem;flex-direction:column;gap:14px;}
+.rp-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1rem;}
+.rp-label{font-size:9px;text-transform:uppercase;letter-spacing:.13em;color:var(--text3);font-weight:600;margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center;}
+.rp-weather-main{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.rp-weather-icon{font-size:32px;line-height:1;}
+.rp-weather-temp{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:500;color:var(--text);line-height:1;}
+.rp-weather-desc{font-size:12px;color:var(--text2);margin-top:2px;}
+.rp-weather-loc{font-size:10px;color:var(--text3);margin-top:4px;display:flex;align-items:center;gap:5px;}
+.rp-weather-loc input{font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:3px 7px;color:var(--text);font-family:'Inter',sans-serif;flex:1;}
+.rp-ring-wrap{display:flex;align-items:center;gap:14px;}
+.rp-ring-text{flex:1;}
+.rp-ring-spent{font-size:13px;font-weight:500;color:var(--text);}
+.rp-ring-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.rp-next-item{padding:7px 0;border-bottom:1px solid var(--border);}
+.rp-next-item:last-child{border-bottom:none;}
+.rp-next-title{font-size:13px;color:var(--text);}
+.rp-next-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.rp-qe-row{display:flex;gap:6px;margin-bottom:7px;}
+.rp-qe-row input,.rp-qe-row select{font-size:12px;padding:7px 9px;}
+@media(min-width:1200px){
+  .right-panel{display:flex;}
+  .main{margin-right:300px;}
+}
+
+/* ── Checklist ── */
+.checklist-group{margin-bottom:1.5rem;}
+.checklist-group-title{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--gold-border);}
+[data-theme="light"] .checklist-group-title{color:var(--navy);border-color:rgba(15,43,91,0.2);}
+.checklist-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.checklist-item:last-child{border-bottom:none;}
+.checklist-item input[type=checkbox]{width:15px;height:15px;margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--gold);}
+[data-theme="light"] .checklist-item input[type=checkbox]{accent-color:var(--navy);}
+.checklist-item-text{font-size:14px;color:var(--text);transition:color .15s;}
+.checklist-item-text.done{text-decoration:line-through;color:var(--text3);}
+.checklist-progress-bar{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-bottom:4px;}
+.checklist-progress-fill{height:100%;border-radius:2px;background:var(--gold);transition:width .4s ease;}
+[data-theme="light"] .checklist-progress-fill{background:var(--navy);}
+
+/* ── Custom milestones on timeline ── */
+.journey-custom-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;border:2px solid var(--bg);}
+.journey-custom-label{position:absolute;bottom:14px;transform:translateX(-50%);font-size:9px;white-space:nowrap;letter-spacing:.02em;font-weight:500;}
+.ms-type-academic{background:var(--blue);}
+.ms-type-travel{background:var(--amber);}
+.ms-type-personal{background:var(--pink);}
+.ms-type-other{background:var(--text3);}
+.ms-label-academic{color:var(--blue);}
+.ms-label-travel{color:var(--amber);}
+.ms-label-personal{color:var(--pink);}
+.ms-label-other{color:var(--text3);}
+.ms-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.ms-row:last-child{border-bottom:none;}
+.ms-type-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;text-transform:uppercase;letter-spacing:.03em;flex-shrink:0;}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -408,6 +462,10 @@ select option{background:var(--surface2);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Networking
       </button>
+      <button class="nav-item" onclick="showPage('checklist',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+        Pre-MBA Checklist
+      </button>
       <button class="nav-item" onclick="showPage('courses',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         Courses &amp; Grades
@@ -433,6 +491,58 @@ select option{background:var(--surface2);}
     </div>
   </aside>
 
+  <!-- Right panel (desktop ≥1200px) -->
+  <aside class="right-panel" id="right-panel">
+    <div class="rp-card">
+      <div class="rp-label">
+        <span>Weather</span>
+        <button class="btn-icon" onclick="toggleWeatherEdit()" title="Change location" style="padding:2px 4px;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+      <div id="rp-weather-body"><div style="font-size:12px;color:var(--text3);">Loading weather…</div></div>
+      <div class="rp-weather-loc" id="rp-loc-edit" style="display:none;">
+        <input id="rp-loc-input" placeholder="City, Country" onkeydown="if(event.key==='Enter')saveWeatherLocation();if(event.key==='Escape')toggleWeatherEdit()" />
+        <button class="btn-icon" onclick="saveWeatherLocation()" style="padding:3px 6px;font-size:11px;color:var(--gold);">✓</button>
+      </div>
+      <div class="rp-weather-loc" id="rp-loc-display">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="rp-loc-text">Fontainebleau, France</span>
+      </div>
+    </div>
+    <div class="rp-card">
+      <div class="rp-label">This month</div>
+      <div id="rp-budget-ring"></div>
+    </div>
+    <div class="rp-card">
+      <div class="rp-label">Next up</div>
+      <div id="rp-next-up"></div>
+    </div>
+    <div class="rp-card">
+      <div class="rp-label">Quick expense</div>
+      <div class="rp-qe-row">
+        <input type="text" id="rp-exp-desc" placeholder="Description" style="flex:2;" />
+      </div>
+      <div class="rp-qe-row">
+        <input type="number" id="rp-exp-amt" placeholder="Amount" min="0" step="0.01" style="flex:1;" />
+        <select id="rp-exp-cur" style="width:auto;">
+          <option value="SAR">SAR</option><option value="USD" selected>USD</option>
+          <option value="EUR">EUR</option><option value="GBP">GBP</option><option value="AED">AED</option>
+        </select>
+      </div>
+      <div class="rp-qe-row">
+        <select id="rp-exp-cat" style="flex:1;">
+          <option value="housing">Housing</option><option value="food">Food</option>
+          <option value="transport">Transport</option><option value="travel">Travel</option>
+          <option value="books">Books</option><option value="social">Social</option>
+          <option value="health">Health</option><option value="other">Other</option>
+        </select>
+        <input type="date" id="rp-exp-date" style="flex:1;" />
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:8px;" onclick="quickAddExpense()">Add expense</button>
+    </div>
+  </aside>
+
   <!-- Mobile bottom nav -->
   <nav class="bottom-nav">
     <button class="bnav-item active" id="bnav-overview" onclick="showPage('overview',null);setBnavActive('bnav-overview')">
@@ -454,6 +564,10 @@ select option{background:var(--surface2);}
     <button class="bnav-item" id="bnav-network" onclick="showPage('network',null);setBnavActive('bnav-network')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
       Network
+    </button>
+    <button class="bnav-item" id="bnav-checklist" onclick="showPage('checklist',null);setBnavActive('bnav-checklist')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
+      Checklist
     </button>
     <button class="bnav-item" id="bnav-courses" onclick="showPage('courses',null);setBnavActive('bnav-courses')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
@@ -514,7 +628,7 @@ select option{background:var(--surface2);}
         </div>
       </div>
 
-      <!-- MBA Journey progress bar -->
+      <!-- MBA Journey progress bar + milestones -->
       <div class="journey-bar-wrap">
         <div class="journey-bar-card">
           <div class="journey-bar-title">
@@ -523,6 +637,27 @@ select option{background:var(--surface2);}
           </div>
           <div class="journey-track" id="journey-track">
             <div class="journey-fill" id="journey-fill" style="width:0%"></div>
+          </div>
+          <div style="margin-top:8px;">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:600;margin-bottom:8px;">Add milestone</div>
+            <div class="form-row" style="margin-bottom:6px;">
+              <div class="form-group" style="flex:2;">
+                <input type="text" id="ms-name" placeholder="e.g. Graduation ceremony" style="font-size:12px;padding:7px 10px;" />
+              </div>
+              <div class="form-group" style="max-width:160px;">
+                <input type="date" id="ms-date" style="font-size:12px;padding:7px 10px;" />
+              </div>
+              <div class="form-group" style="max-width:140px;">
+                <select id="ms-type" style="font-size:12px;padding:7px 10px;">
+                  <option value="academic">Academic</option>
+                  <option value="travel">Travel</option>
+                  <option value="personal">Personal</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" style="padding:7px 14px;font-size:12px;align-self:flex-end;" onclick="addMilestone()">Add</button>
+            </div>
+            <div id="ms-list"></div>
           </div>
         </div>
       </div>
@@ -816,6 +951,24 @@ select option{background:var(--surface2);}
       <div class="card"><div id="course-list"></div></div>
     </div>
 
+    <!-- CHECKLIST -->
+    <div id="page-checklist" class="page">
+      <div class="page-header">
+        <div class="page-header-text">
+          <div class="page-title">Pre-MBA Checklist</div>
+          <div class="page-sub">Everything to sort before August 21, 2026</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:13px;color:var(--text2);" id="cl-progress-text"></span>
+          <span style="font-size:11px;color:var(--text3);" id="cl-pct-text"></span>
+        </div>
+        <div class="checklist-progress-bar"><div class="checklist-progress-fill" id="cl-progress-fill" style="width:0%"></div></div>
+      </div>
+      <div id="checklist-body"></div>
+    </div>
+
   </main>
 </div>
 
@@ -840,7 +993,8 @@ let countersAnimated = false;
 let state = {
   expenses:[], tasks:[], courses:[], budgetUSD:0, network:[],
   keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' },
-  calendarEvents: null
+  milestones:[], checklist:[], weatherLocation:'Fontainebleau, France',
+  calendarEvents: null, weatherData: null
 };
 
 // Apply saved theme immediately
@@ -883,7 +1037,7 @@ async function signInWithGoogle() {
 
 async function signOut() {
   await sb.auth.signOut();
-  state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, calendarEvents:null };
+  state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, milestones:[], checklist:[], weatherLocation:'Fontainebleau, France', calendarEvents:null, weatherData:null };
   countersAnimated = false;
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-overlay').classList.remove('hidden');
@@ -1005,6 +1159,9 @@ async function loadAllData() {
       try {
         const kd = typeof sett.key_dates === 'string' ? JSON.parse(sett.key_dates) : sett.key_dates;
         state.keyDates = { ...state.keyDates, ...kd };
+        if (Array.isArray(kd.milestones)) state.milestones = kd.milestones;
+        if (Array.isArray(kd.checklist)) state.checklist = kd.checklist;
+        if (kd.weatherLocation) state.weatherLocation = kd.weatherLocation;
       } catch {}
     }
   }
@@ -1022,7 +1179,7 @@ async function saveSettings() {
       budget_usd: state.budgetUSD,
       display_cur: displayCur,
       theme,
-      key_dates: JSON.stringify(state.keyDates),
+      key_dates: JSON.stringify({ ...state.keyDates, milestones: state.milestones, checklist: state.checklist, weatherLocation: state.weatherLocation }),
       updated_at: new Date().toISOString()
     });
   } catch { showToast('Could not save settings.'); }
@@ -1211,7 +1368,7 @@ function renderJourneyBar() {
   ];
 
   const track = document.getElementById('journey-track');
-  track.querySelectorAll('.journey-milestone,.journey-today,.journey-start-label,.journey-end-label,.journey-milestone-label').forEach(el => el.remove());
+  track.querySelectorAll('.journey-milestone,.journey-today,.journey-start-label,.journey-end-label,.journey-milestone-label,.journey-custom-dot,.journey-custom-label').forEach(el => el.remove());
 
   milestones.forEach(m => {
     const mPct = Math.max(0, Math.min((m.date - JOURNEY_START) / total * 100, 100));
@@ -1222,6 +1379,25 @@ function renderJourneyBar() {
     lbl.className = 'journey-milestone-label';
     lbl.style.left = mPct.toFixed(1) + '%';
     lbl.textContent = m.label;
+    track.appendChild(dot);
+    track.appendChild(lbl);
+  });
+
+  // Custom milestones
+  state.milestones.forEach(m => {
+    const d = new Date(m.date + 'T00:00:00');
+    const mPct = Math.max(0, Math.min((d - JOURNEY_START) / total * 100, 100));
+    const past = d < now;
+    const dot = document.createElement('div');
+    dot.className = `journey-custom-dot ms-type-${m.type}`;
+    dot.style.left = mPct.toFixed(1) + '%';
+    dot.style.opacity = past ? '0.4' : '1';
+    dot.title = m.name;
+    const lbl = document.createElement('div');
+    lbl.className = `journey-custom-label ms-label-${m.type}`;
+    lbl.style.left = mPct.toFixed(1) + '%';
+    lbl.style.opacity = past ? '0.4' : '1';
+    lbl.textContent = m.name.length > 12 ? m.name.slice(0,11)+'…' : m.name;
     track.appendChild(dot);
     track.appendChild(lbl);
   });
@@ -1262,6 +1438,218 @@ function exportCSV() {
   const a = document.createElement('a');
   a.href = url; a.download = 'mba-expenses.csv'; a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── Weather ──
+const WEATHER_ICONS = {113:'☀️',116:'⛅',119:'☁️',122:'☁️',143:'🌫️',176:'🌦️',179:'🌨️',182:'🌧️',185:'🌧️',200:'⛈️',227:'❄️',230:'❄️',248:'🌫️',260:'🌫️',263:'🌦️',266:'🌦️',281:'🌧️',284:'🌧️',293:'🌦️',296:'🌦️',299:'🌧️',302:'🌧️',305:'🌧️',308:'🌧️',311:'🌨️',314:'🌨️',317:'🌨️',320:'🌨️',323:'🌨️',326:'🌨️',329:'❄️',332:'❄️',335:'❄️',338:'❄️',350:'🌧️',353:'🌦️',356:'🌧️',359:'🌧️',362:'🌨️',365:'🌨️',368:'🌨️',371:'❄️',374:'🌧️',377:'🌧️',386:'⛈️',389:'⛈️',392:'⛈️',395:'❄️'};
+async function fetchWeather() {
+  const loc = state.weatherLocation || 'Fontainebleau, France';
+  try {
+    const r = await fetch(`https://wttr.in/${encodeURIComponent(loc)}?format=j1`);
+    if (!r.ok) { state.weatherData = null; return; }
+    const data = await r.json();
+    const c = data.current_condition?.[0];
+    if (!c) { state.weatherData = null; return; }
+    state.weatherData = { code: parseInt(c.weatherCode), tempC: c.temp_C, tempF: c.temp_F, humidity: c.humidity, desc: c.weatherDesc?.[0]?.value || '' };
+  } catch { state.weatherData = null; }
+}
+function renderWeather() {
+  const el = document.getElementById('rp-weather-body');
+  const locEl = document.getElementById('rp-loc-text');
+  if (locEl) locEl.textContent = state.weatherLocation;
+  if (!el) return;
+  if (!state.weatherData) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);">Weather unavailable</div>'; return; }
+  const d = state.weatherData;
+  const icon = WEATHER_ICONS[d.code] || '🌤️';
+  el.innerHTML = `<div class="rp-weather-main"><span class="rp-weather-icon">${icon}</span><span class="rp-weather-temp">${d.tempC}°C</span></div><div class="rp-weather-desc">${d.desc}</div><div style="font-size:11px;color:var(--text3);margin-top:3px;">Humidity ${d.humidity}%</div>`;
+}
+function toggleWeatherEdit() {
+  const editEl = document.getElementById('rp-loc-edit');
+  const dispEl = document.getElementById('rp-loc-display');
+  if (!editEl || !dispEl) return;
+  const isEdit = editEl.style.display !== 'none';
+  editEl.style.display = isEdit ? 'none' : 'flex';
+  dispEl.style.display = isEdit ? 'flex' : 'none';
+  if (!isEdit) { document.getElementById('rp-loc-input').value = state.weatherLocation; document.getElementById('rp-loc-input').focus(); }
+}
+async function saveWeatherLocation() {
+  const val = document.getElementById('rp-loc-input').value.trim();
+  if (!val) return;
+  state.weatherLocation = val;
+  toggleWeatherEdit();
+  await fetchWeather();
+  renderWeather();
+  saveSettings();
+}
+
+// ── Budget ring ──
+function renderBudgetRing() {
+  const el = document.getElementById('rp-budget-ring');
+  if (!el) return;
+  const now = new Date();
+  const mthTotal = state.expenses.filter(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  }).reduce((s,e)=>s+e.usdAmt,0);
+  if (!state.budgetUSD) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--text3);">No budget set. <button onclick="showPage('budget',null)" style="color:var(--gold);background:none;border:none;cursor:pointer;font-size:12px;font-family:inherit;">Set one →</button></div>`;
+    return;
+  }
+  const pct = Math.min(mthTotal / state.budgetUSD * 100, 100);
+  const R = 36, C = 2 * Math.PI * R;
+  const dash = (pct / 100) * C;
+  const over = mthTotal > state.budgetUSD;
+  const color = over ? 'var(--red)' : 'var(--gold)';
+  el.innerHTML = `<div class="rp-ring-wrap">
+    <svg width="84" height="84" viewBox="0 0 84 84">
+      <circle cx="42" cy="42" r="${R}" fill="none" stroke="var(--surface3)" stroke-width="6"/>
+      <circle cx="42" cy="42" r="${R}" fill="none" stroke="${color}" stroke-width="6" stroke-dasharray="${dash.toFixed(1)} ${C.toFixed(1)}" stroke-dashoffset="${(C/4).toFixed(1)}" stroke-linecap="round" style="transition:stroke-dasharray .5s ease;"/>
+      <text x="42" y="47" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="16" fill="var(--text)">${Math.round(pct)}%</text>
+    </svg>
+    <div class="rp-ring-text">
+      <div class="rp-ring-spent">${fmt(mthTotal)}</div>
+      <div class="rp-ring-sub">of ${fmt(state.budgetUSD)} budget</div>
+      <div class="rp-ring-sub" style="margin-top:4px;${over?'color:var(--red);font-weight:500;':''}">${over?'Over by '+fmt(mthTotal-state.budgetUSD):fmt(state.budgetUSD-mthTotal)+' left'}</div>
+    </div>
+  </div>`;
+}
+
+// ── Next up ──
+function renderNextUp() {
+  const el = document.getElementById('rp-next-up');
+  if (!el) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const nextTask = state.tasks.filter(t=>!t.done&&t.due).sort((a,b)=>a.due>b.due?1:-1)[0];
+  const nextMs = state.milestones.filter(m=>new Date(m.date+'T00:00:00')>=today).sort((a,b)=>a.date>b.date?1:-1)[0];
+  let html = '';
+  if (nextTask) {
+    const d = daysUntil(nextTask.due);
+    html += `<div class="rp-next-item"><div class="rp-next-title">${nextTask.title}</div><div class="rp-next-sub">Task · due in ${d} day${d===1?'':'s'}</div></div>`;
+  }
+  if (nextMs) {
+    const d = daysUntil(nextMs.date);
+    html += `<div class="rp-next-item"><div class="rp-next-title">${nextMs.name}</div><div class="rp-next-sub">${nextMs.type.charAt(0).toUpperCase()+nextMs.type.slice(1)} milestone · in ${d} day${d===1?'':'s'}</div></div>`;
+  }
+  el.innerHTML = html || '<div style="font-size:12px;color:var(--text3);">Nothing upcoming</div>';
+}
+
+// ── Quick expense ──
+async function quickAddExpense() {
+  const desc = document.getElementById('rp-exp-desc').value.trim();
+  const rawAmt = parseFloat(document.getElementById('rp-exp-amt').value);
+  const cur = document.getElementById('rp-exp-cur').value;
+  const cat = document.getElementById('rp-exp-cat').value;
+  const date = document.getElementById('rp-exp-date').value;
+  if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Fill in description, amount, and date.'); return; }
+  const usdAmt = toUSD(rawAmt, cur);
+  try {
+    const rows = await apiPost('expenses', { description:desc, usd_amt:usdAmt, orig_amt:rawAmt, orig_cur:cur, cat, date, notes:'' });
+    state.expenses.unshift({ id:rows[0].id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes:'' });
+    document.getElementById('rp-exp-desc').value = '';
+    document.getElementById('rp-exp-amt').value = '';
+    showToast('Expense added ✓', 2500, true);
+    render();
+  } catch { showToast('Could not save expense.'); }
+}
+
+// ── Milestones ──
+function addMilestone() {
+  const name = document.getElementById('ms-name').value.trim();
+  const date = document.getElementById('ms-date').value;
+  const type = document.getElementById('ms-type').value;
+  if (!name || !date) { showToast('Name and date required.'); return; }
+  state.milestones.push({ id: Date.now(), name, date, type });
+  state.milestones.sort((a,b)=>a.date>b.date?1:-1);
+  document.getElementById('ms-name').value = '';
+  saveSettings();
+  renderJourneyBar();
+  renderMilestoneList();
+  renderNextUp();
+}
+function deleteMilestone(id) {
+  state.milestones = state.milestones.filter(m=>m.id!==id);
+  saveSettings();
+  renderJourneyBar();
+  renderMilestoneList();
+  renderNextUp();
+}
+function renderMilestoneList() {
+  const el = document.getElementById('ms-list');
+  if (!el) return;
+  if (!state.milestones.length) { el.innerHTML = ''; return; }
+  const TYPE_BG = { academic:'var(--blue-bg)', travel:'var(--amber-bg)', personal:'var(--pink-bg)', other:'var(--surface3)' };
+  const TYPE_C  = { academic:'var(--blue)',    travel:'var(--amber)',    personal:'var(--pink)',    other:'var(--text2)' };
+  el.innerHTML = state.milestones.map(m=>`
+    <div class="ms-row">
+      <span class="ms-type-badge" style="background:${TYPE_BG[m.type]};color:${TYPE_C[m.type]};">${m.type}</span>
+      <div style="flex:1;font-size:13px;color:var(--text);">${m.name}</div>
+      <span style="font-size:11px;color:var(--text3);">${m.date}</span>
+      <button class="btn-danger" onclick="deleteMilestone(${m.id})">✕</button>
+    </div>`).join('');
+}
+
+// ── Pre-MBA Checklist ──
+const CHECKLIST_ITEMS = [
+  { cat:'Documents & Visas', items:[
+    { id:'visa-1', text:'Passport valid for full program + 6 months' },
+    { id:'visa-2', text:'Student visa applied (if required for France)' },
+    { id:'visa-3', text:'International health insurance arranged' },
+  ]},
+  { cat:'INSEAD Enrollment', items:[
+    { id:'ins-1', text:'Enrollment forms & deposit submitted' },
+    { id:'ins-2', text:'Tuition financing confirmed (loan / savings)' },
+    { id:'ins-3', text:'Pre-MBA online courses completed' },
+    { id:'ins-4', text:'Student ID & portal access set up' },
+  ]},
+  { cat:'Housing', items:[
+    { id:'hou-1', text:'Accommodation in Fontainebleau secured' },
+    { id:'hou-2', text:'Lease / booking confirmed' },
+    { id:'hou-3', text:'Move-in logistics planned' },
+  ]},
+  { cat:'Finance', items:[
+    { id:'fin-1', text:'MBA loan approved & disbursement scheduled' },
+    { id:'fin-2', text:'Monthly budget set on dashboard' },
+    { id:'fin-3', text:'French bank account plan (N26, Revolut, or local)' },
+    { id:'fin-4', text:'Emergency fund allocated' },
+  ]},
+  { cat:'Practical', items:[
+    { id:'pra-1', text:'Laptop ready (MBA-spec)' },
+    { id:'pra-2', text:'Mobile plan for France arranged' },
+    { id:'pra-3', text:'Transport from CDG to Fontainebleau planned' },
+    { id:'pra-4', text:'Shipping / storage for belongings arranged' },
+    { id:'pra-5', text:'Utilities / internet for accommodation set up' },
+  ]},
+];
+function toggleChecklistItem(id) {
+  const idx = state.checklist.indexOf(id);
+  if (idx === -1) state.checklist.push(id);
+  else state.checklist.splice(idx, 1);
+  saveSettings();
+  renderChecklist();
+}
+function renderChecklist() {
+  const total = CHECKLIST_ITEMS.reduce((s,g)=>s+g.items.length,0);
+  const done = state.checklist.length;
+  const pct = Math.round(done/total*100);
+  const prog = document.getElementById('cl-progress-fill');
+  if (prog) prog.style.width = pct + '%';
+  const ptxt = document.getElementById('cl-progress-text');
+  if (ptxt) ptxt.textContent = `${done} of ${total} complete`;
+  const ppct = document.getElementById('cl-pct-text');
+  if (ppct) ppct.textContent = pct + '%';
+  const body = document.getElementById('checklist-body');
+  if (!body) return;
+  body.innerHTML = CHECKLIST_ITEMS.map(g=>`
+    <div class="card checklist-group">
+      <div class="checklist-group-title">${g.cat}</div>
+      ${g.items.map(item=>{
+        const checked = state.checklist.includes(item.id);
+        return `<div class="checklist-item">
+          <input type="checkbox" ${checked?'checked':''} onchange="toggleChecklistItem('${item.id}')" />
+          <span class="checklist-item-text${checked?' done':''}">${item.text}</span>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
 }
 
 // ── CRUD: Expenses ──
@@ -1522,6 +1910,7 @@ function renderOverview() {
   });
 
   renderJourneyBar();
+  renderMilestoneList();
 
   const total = state.expenses.reduce((s,e) => s+e.usdAmt, 0);
   const mthExp = state.expenses.filter(e => {
@@ -1707,6 +2096,11 @@ function renderCourses() {
   document.getElementById('course-list').innerHTML = html || '<div class="empty">No courses yet. Add your first course above.</div>';
 }
 
+function renderRightPanel() {
+  renderWeather();
+  renderBudgetRing();
+  renderNextUp();
+}
 function render() {
   renderOverview();
   renderExpenses();
@@ -1714,12 +2108,15 @@ function render() {
   renderNetwork();
   renderBudget();
   renderCourses();
+  renderChecklist();
+  renderRightPanel();
 }
 
 // ── Init ──
 const todayStr = new Date().toISOString().split('T')[0];
 document.getElementById('exp-date').value = todayStr;
 document.getElementById('task-due').value = todayStr;
+document.getElementById('rp-exp-date').value = todayStr;
 
 let appReady = false;
 
@@ -1734,7 +2131,7 @@ async function bootApp() {
       Promise.all([fetchCurrencyRates(), loadAllData()]),
       timeout
     ]);
-    await fetchCalendarEvents();
+    await Promise.all([fetchCalendarEvents(), fetchWeather()]);
     appReady = true;
     render();
     showApp();
@@ -1760,7 +2157,7 @@ sb.auth.onAuthStateChange((event, session) => {
   } else if (event === 'SIGNED_OUT') {
     appReady = false;
     countersAnimated = false;
-    state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, calendarEvents:null };
+    state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, milestones:[], checklist:[], weatherLocation:'Fontainebleau, France', calendarEvents:null, weatherData:null };
     document.getElementById('app').style.display = 'none';
     document.getElementById('auth-overlay').classList.remove('hidden');
   }
