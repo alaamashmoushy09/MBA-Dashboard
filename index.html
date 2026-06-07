@@ -1009,7 +1009,7 @@ select option{background:var(--surface2);}
 // ── Supabase init ──
 const SUPA_URL = 'https://otakccqrmrglflamciby.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YWtjY3FybXJnbGZsYW1jaWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTQwNTksImV4cCI6MjA5NjMzMDA1OX0.1wmtuRbH9RXmr5yHwgfhA-h1ibhyRIG-beoBzz-STDo';
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { flowType: 'implicit' } });
 
 // ── Constants ──
 let TO_USD = { SAR:0.2667, USD:1, EUR:1.0836, GBP:1.2706, AED:0.2723 };
