@@ -870,6 +870,10 @@ select option{background:var(--surface2);}
             <label class="form-label">Due date</label>
             <input type="date" id="task-due" />
           </div>
+          <div class="form-group" style="max-width:130px;">
+            <label class="form-label">Time (optional)</label>
+            <input type="time" id="task-time" />
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group" style="max-width:200px;">
@@ -1036,6 +1040,7 @@ const PHASE_CLASS = { now:'ph-now', loa:'ph-loa', mba:'ph-mba', summer:'ph-summe
 let displayCur = localStorage.getItem('mba-display-cur') || 'USD';
 let taskFilter = 'all';
 let editingTaskId = null;
+let showCompleted = false;
 let editingNetworkId = null;
 let countersAnimated = false;
 let state = {
@@ -1114,15 +1119,27 @@ async function checkCalendarConnection() {
   renderCalConnectHint();
 }
 
-async function createCalendarEvent(title, dateStr, notes) {
+async function createCalendarEvent(title, dateStr, notes, timeStr) {
   const pt = getProviderToken();
   if (!pt || !dateStr) return null;
+  const { notes: cleanNotes } = parseTaskTime(notes || '');
+  let startObj, endObj;
+  if (timeStr) {
+    const startDT = dateStr + 'T' + timeStr + ':00';
+    const endDate = new Date(startDT); endDate.setHours(endDate.getHours() + 1);
+    const endDT = endDate.toISOString().slice(0,16) + ':00';
+    startObj = { dateTime: startDT, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+    endObj   = { dateTime: endDT,   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+  } else {
+    startObj = { date: dateStr };
+    endObj   = { date: dateStr };
+  }
   try {
     const body = {
       summary: title,
-      description: notes || '',
-      start: { date: dateStr },
-      end: { date: dateStr }
+      description: cleanNotes || '',
+      start: startObj,
+      end: endObj
     };
     const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
@@ -1825,14 +1842,25 @@ async function deleteExpense(id) {
 }
 
 // ── CRUD: Tasks (with edit) ──
+function parseTaskTime(notes) {
+  if (!notes) return { time: '', notes: '' };
+  const m = notes.match(/\[⏰([^\]]+)\](.*)$/s);
+  return m ? { time: m[1].trim(), notes: notes.replace(/\s*\[⏰[^\]]+\].*$/s,'').trim() } : { time: '', notes };
+}
+function buildTaskNotes(notes, time) {
+  const base = notes.trim();
+  return time ? (base ? base + ' [⏰' + time + ']' : '[⏰' + time + ']') : base;
+}
 function startEditTask(id) {
   const t = state.tasks.find(t => t.id === id);
   if (!t) return;
   editingTaskId = id;
+  const { time, notes } = parseTaskTime(t.notes);
   document.getElementById('task-title').value = t.title;
   document.getElementById('task-due').value = t.due;
+  document.getElementById('task-time').value = time;
   document.getElementById('task-phase').value = t.phase;
-  document.getElementById('task-notes').value = t.notes;
+  document.getElementById('task-notes').value = notes;
   document.getElementById('task-form-title').textContent = 'Edit task';
   document.getElementById('task-submit-btn').textContent = 'Update task';
   document.getElementById('task-cancel-btn').style.display = '';
@@ -1843,6 +1871,7 @@ function cancelEditTask() {
   editingTaskId = null;
   document.getElementById('task-title').value = '';
   document.getElementById('task-due').value = todayStr;
+  document.getElementById('task-time').value = '';
   document.getElementById('task-phase').value = 'now';
   document.getElementById('task-notes').value = '';
   document.getElementById('task-form-title').textContent = 'Add task';
@@ -1853,8 +1882,10 @@ function cancelEditTask() {
 async function submitTask() {
   const title = document.getElementById('task-title').value.trim();
   const due = document.getElementById('task-due').value;
+  const time = document.getElementById('task-time').value;
   const phase = document.getElementById('task-phase').value;
-  const notes = document.getElementById('task-notes').value.trim();
+  const rawNotes = document.getElementById('task-notes').value.trim();
+  const notes = buildTaskNotes(rawNotes, time);
   if (!title) return;
   if (editingTaskId !== null) {
     try {
@@ -1870,9 +1901,10 @@ async function submitTask() {
       const row = rows[0];
       state.tasks.push({ id:row.id, title, due, phase, notes, done:false });
       document.getElementById('task-title').value = '';
+      document.getElementById('task-time').value = '';
       document.getElementById('task-notes').value = '';
       if (due) {
-        const calId = await createCalendarEvent(title, due, notes);
+        const calId = await createCalendarEvent(title, due, notes, time);
         if (calId) { storeCalEventId(row.id, calId); showToast('Task saved + added to Google Calendar ✓', 3000, true); }
         else if (getProviderToken()) showToast('Task saved. Calendar sync failed.');
         else showToast('Task saved. Click "Connect Google Calendar" below to enable sync.');
@@ -1898,9 +1930,11 @@ async function deleteTask(id) {
     await apiDelete('tasks', id);
     if (calMap[id]) { await deleteCalendarEvent(calMap[id]); removeCalEventId(id); }
     state.tasks = state.tasks.filter(t => t.id !== id);
+    fetchCalendarEvents().then(() => renderOverview());
     render();
   } catch { showToast('Could not delete task.'); }
 }
+function toggleCompleted() { showCompleted = !showCompleted; renderTasks(); }
 
 // ── CRUD: Networking ──
 function startEditNetwork(id) {
@@ -2140,13 +2174,15 @@ function renderTasks() {
   const pending = filtered.filter(t=>!t.done);
   const done = filtered.filter(t=>t.done);
   function taskRow(t) {
+    const { time, notes: cleanNotes } = parseTaskTime(t.notes);
+    const dueDisplay = t.due ? (' · ' + new Date(t.due+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + (time ? ' at ' + (() => { const [h,m]=time.split(':'); const h12=+h%12||12; return h12+':'+m+' '+(+h<12?'AM':'PM'); })() : '')) : '';
     return `<div class="task-row">
       <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask(${t.id})" />
       <div style="flex:1;">
         <div style="font-size:14px;" class="${t.done?'task-done-text':''}">${t.title}</div>
         <div class="task-due">
           <span class="phase-badge ${PHASE_CLASS[t.phase]}">${PHASE_LABEL[t.phase]}</span>
-          ${t.due?' · Due '+t.due:''}${t.notes?' · '+t.notes:''}
+          ${dueDisplay}${cleanNotes?' · '+cleanNotes:''}
         </div>
       </div>
       ${!t.done?`<button class="btn-icon" onclick="startEditTask(${t.id})" title="Edit">
@@ -2159,11 +2195,12 @@ function renderTasks() {
   if (pending.length) html += pending.map(taskRow).join('');
   else html += '<div class="empty">No pending tasks in this phase</div>';
   if (done.length) {
-    html += `<div style="margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+    html += `<div onclick="toggleCompleted()" style="margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      <span style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--green);font-weight:600;">Completed (${done.length})</span>
+      <span style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--green);font-weight:600;">${showCompleted?'Hide':'Show'} completed (${done.length})</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="margin-left:auto;transform:${showCompleted?'rotate(180deg)':'rotate(0deg)'};transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
     </div>`;
-    html += done.map(taskRow).join('');
+    if (showCompleted) html += done.map(taskRow).join('');
   }
   document.getElementById('task-list').innerHTML = html;
   renderCalConnectHint();
