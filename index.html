@@ -872,7 +872,9 @@ select option{background:var(--surface2);}
           </div>
           <div class="form-group" style="max-width:130px;">
             <label class="form-label">Time (optional)</label>
-            <input type="time" id="task-time" step="900" />
+            <select id="task-time">
+              <option value="">— no time —</option>
+            </select>
           </div>
         </div>
         <div class="form-row">
@@ -2335,6 +2337,21 @@ const todayStr = new Date().toISOString().split('T')[0];
 document.getElementById('exp-date').value = todayStr;
 document.getElementById('task-due').value = todayStr;
 document.getElementById('rp-exp-date').value = todayStr;
+
+// Populate time select with 15-min intervals
+(function() {
+  const sel = document.getElementById('task-time');
+  for (let h = 0; h < 24; h++) {
+    for (let m of [0, 15, 30, 45]) {
+      const hh = String(h).padStart(2,'0'), mm = String(m).padStart(2,'0');
+      const h12 = h % 12 || 12, ampm = h < 12 ? 'AM' : 'PM';
+      const opt = document.createElement('option');
+      opt.value = hh + ':' + mm;
+      opt.textContent = h12 + ':' + mm + ' ' + ampm;
+      sel.appendChild(opt);
+    }
+  }
+})();
 
 let appReady = false;
 
