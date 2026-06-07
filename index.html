@@ -472,10 +472,6 @@ select option{background:var(--surface2);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Networking
       </button>
-      <button class="nav-item" onclick="showPage('checklist',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
-        Pre-MBA Checklist
-      </button>
       <button class="nav-item" onclick="showPage('courses',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         Courses &amp; Grades
@@ -586,10 +582,6 @@ select option{background:var(--surface2);}
     <button class="bnav-item" id="bnav-network" onclick="showPage('network',null);setBnavActive('bnav-network')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
       Network
-    </button>
-    <button class="bnav-item" id="bnav-checklist" onclick="showPage('checklist',null);setBnavActive('bnav-checklist')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg>
-      Checklist
     </button>
     <button class="bnav-item" id="bnav-courses" onclick="showPage('courses',null);setBnavActive('bnav-courses')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
@@ -893,9 +885,10 @@ select option{background:var(--surface2);}
             <input type="text" id="task-notes" placeholder="Any details..." />
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-primary" id="task-submit-btn" onclick="submitTask()">Add task</button>
           <button class="btn btn-secondary" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">Cancel</button>
+          <span id="cal-connect-hint" style="font-size:11px;color:var(--text3);margin-left:4px;"></span>
         </div>
       </div>
       <div class="phase-tabs">
@@ -1008,23 +1001,6 @@ select option{background:var(--surface2);}
       <div class="card"><div id="course-list"></div></div>
     </div>
 
-    <!-- CHECKLIST -->
-    <div id="page-checklist" class="page">
-      <div class="page-header">
-        <div class="page-header-text">
-          <div class="page-title">Pre-MBA Checklist</div>
-          <div class="page-sub">Everything to sort before August 21, 2026</div>
-        </div>
-      </div>
-      <div class="card" style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-size:13px;color:var(--text2);" id="cl-progress-text"></span>
-          <span style="font-size:11px;color:var(--text3);" id="cl-pct-text"></span>
-        </div>
-        <div class="checklist-progress-bar"><div class="checklist-progress-fill" id="cl-progress-fill" style="width:0%"></div></div>
-      </div>
-      <div id="checklist-body"></div>
-    </div>
 
   </main>
 </div>
@@ -1240,6 +1216,34 @@ async function saveSettings() {
       updated_at: new Date().toISOString()
     });
   } catch { showToast('Could not save settings.'); }
+}
+
+// ── Google Calendar event ID map (localStorage, device-specific) ──
+function getCalMap() { try { return JSON.parse(localStorage.getItem('mba-cal-map')||'{}'); } catch { return {}; } }
+function saveCalMap(m) { localStorage.setItem('mba-cal-map', JSON.stringify(m)); }
+function storeCalEventId(taskId, calEventId) { const m=getCalMap(); m[taskId]=calEventId; saveCalMap(m); }
+function removeCalEventId(taskId) { const m=getCalMap(); delete m[taskId]; saveCalMap(m); }
+async function deleteCalendarEvent(calEventId) {
+  const pt = getProviderToken();
+  if (!pt || !calEventId) return;
+  try {
+    await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(calEventId)}`, {
+      method:'DELETE', headers:{'Authorization':`Bearer ${pt}`}
+    });
+  } catch {}
+}
+function renderCalConnectHint() {
+  const el = document.getElementById('cal-connect-hint');
+  if (!el) return;
+  if (getProviderToken()) {
+    el.innerHTML = '<span style="color:var(--green);">● Calendar connected</span>';
+  } else {
+    el.innerHTML = '<button onclick="reconnectCalendar()" style="background:none;border:none;cursor:pointer;font-size:11px;font-family:inherit;color:var(--amber);">⚠ Connect Google Calendar</button>';
+  }
+}
+async function reconnectCalendar() {
+  const redirectTo = window.location.href.split('#')[0];
+  await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo, scopes:'https://www.googleapis.com/auth/calendar.events' } });
 }
 
 // ── Google Calendar ──
@@ -1722,69 +1726,6 @@ function renderMilestoneCards() {
 }
 function renderMilestoneList() { renderMilestoneCards(); }
 
-// ── Pre-MBA Checklist ──
-const CHECKLIST_ITEMS = [
-  { cat:'Documents & Visas', items:[
-    { id:'visa-1', text:'Passport valid for full program + 6 months' },
-    { id:'visa-2', text:'Student visa applied (if required for France)' },
-    { id:'visa-3', text:'International health insurance arranged' },
-  ]},
-  { cat:'INSEAD Enrollment', items:[
-    { id:'ins-1', text:'Enrollment forms & deposit submitted' },
-    { id:'ins-2', text:'Tuition financing confirmed (loan / savings)' },
-    { id:'ins-3', text:'Pre-MBA online courses completed' },
-    { id:'ins-4', text:'Student ID & portal access set up' },
-  ]},
-  { cat:'Housing', items:[
-    { id:'hou-1', text:'Accommodation in Fontainebleau secured' },
-    { id:'hou-2', text:'Lease / booking confirmed' },
-    { id:'hou-3', text:'Move-in logistics planned' },
-  ]},
-  { cat:'Finance', items:[
-    { id:'fin-1', text:'MBA loan approved & disbursement scheduled' },
-    { id:'fin-2', text:'Monthly budget set on dashboard' },
-    { id:'fin-3', text:'French bank account plan (N26, Revolut, or local)' },
-    { id:'fin-4', text:'Emergency fund allocated' },
-  ]},
-  { cat:'Practical', items:[
-    { id:'pra-1', text:'Laptop ready (MBA-spec)' },
-    { id:'pra-2', text:'Mobile plan for France arranged' },
-    { id:'pra-3', text:'Transport from CDG to Fontainebleau planned' },
-    { id:'pra-4', text:'Shipping / storage for belongings arranged' },
-    { id:'pra-5', text:'Utilities / internet for accommodation set up' },
-  ]},
-];
-function toggleChecklistItem(id) {
-  const idx = state.checklist.indexOf(id);
-  if (idx === -1) state.checklist.push(id);
-  else state.checklist.splice(idx, 1);
-  saveSettings();
-  renderChecklist();
-}
-function renderChecklist() {
-  const total = CHECKLIST_ITEMS.reduce((s,g)=>s+g.items.length,0);
-  const done = state.checklist.length;
-  const pct = Math.round(done/total*100);
-  const prog = document.getElementById('cl-progress-fill');
-  if (prog) prog.style.width = pct + '%';
-  const ptxt = document.getElementById('cl-progress-text');
-  if (ptxt) ptxt.textContent = `${done} of ${total} complete`;
-  const ppct = document.getElementById('cl-pct-text');
-  if (ppct) ppct.textContent = pct + '%';
-  const body = document.getElementById('checklist-body');
-  if (!body) return;
-  body.innerHTML = CHECKLIST_ITEMS.map(g=>`
-    <div class="card checklist-group">
-      <div class="checklist-group-title">${g.cat}</div>
-      ${g.items.map(item=>{
-        const checked = state.checklist.includes(item.id);
-        return `<div class="checklist-item">
-          <input type="checkbox" ${checked?'checked':''} onchange="toggleChecklistItem('${item.id}')" />
-          <span class="checklist-item-text${checked?' done':''}">${item.text}</span>
-        </div>`;
-      }).join('')}
-    </div>`).join('');
-}
 
 // ── CRUD: Expenses ──
 async function addExpense() {
@@ -1865,9 +1806,9 @@ async function submitTask() {
       document.getElementById('task-notes').value = '';
       if (due) {
         const calId = await createCalendarEvent(title, due, notes);
-        if (calId) showToast('Task saved and added to Google Calendar ✓', 3000, true);
-        else if (getProviderToken()) showToast('Task saved. Calendar sync failed — try again.');
-        else showToast('Task saved. Sign out and back in to enable calendar sync.');
+        if (calId) { storeCalEventId(row.id, calId); showToast('Task saved + added to Google Calendar ✓', 3000, true); }
+        else if (getProviderToken()) showToast('Task saved. Calendar sync failed.');
+        else showToast('Task saved. Click "Connect Google Calendar" below to enable sync.');
       }
       render();
     } catch { showToast('Could not save task.'); }
@@ -1886,7 +1827,9 @@ async function toggleTask(id) {
 
 async function deleteTask(id) {
   try {
+    const calMap = getCalMap();
     await apiDelete('tasks', id);
+    if (calMap[id]) { await deleteCalendarEvent(calMap[id]); removeCalEventId(id); }
     state.tasks = state.tasks.filter(t => t.id !== id);
     render();
   } catch { showToast('Could not delete task.'); }
@@ -2127,8 +2070,10 @@ function renderExpenses() {
 
 function renderTasks() {
   const filtered = taskFilter==='all' ? state.tasks : state.tasks.filter(t=>t.phase===taskFilter);
-  document.getElementById('task-list').innerHTML = filtered.map(t => `
-    <div class="task-row">
+  const pending = filtered.filter(t=>!t.done);
+  const done = filtered.filter(t=>t.done);
+  function taskRow(t) {
+    return `<div class="task-row">
       <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask(${t.id})" />
       <div style="flex:1;">
         <div style="font-size:14px;" class="${t.done?'task-done-text':''}">${t.title}</div>
@@ -2137,11 +2082,24 @@ function renderTasks() {
           ${t.due?' · Due '+t.due:''}${t.notes?' · '+t.notes:''}
         </div>
       </div>
-      <button class="btn-icon" onclick="startEditTask(${t.id})" title="Edit task">
+      ${!t.done?`<button class="btn-icon" onclick="startEditTask(${t.id})" title="Edit">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      </button>
+      </button>`:''}
       <button class="btn-danger" onclick="deleteTask(${t.id})">✕</button>
-    </div>`).join('') || '<div class="empty">No tasks in this phase yet</div>';
+    </div>`;
+  }
+  let html = '';
+  if (pending.length) html += pending.map(taskRow).join('');
+  else html += '<div class="empty">No pending tasks in this phase</div>';
+  if (done.length) {
+    html += `<div style="margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--green);font-weight:600;">Completed (${done.length})</span>
+    </div>`;
+    html += done.map(taskRow).join('');
+  }
+  document.getElementById('task-list').innerHTML = html;
+  renderCalConnectHint();
 }
 
 function renderNetwork() {
@@ -2242,7 +2200,6 @@ function render() {
   renderNetwork();
   renderBudget();
   renderCourses();
-  renderChecklist();
   renderRightPanel();
 }
 
