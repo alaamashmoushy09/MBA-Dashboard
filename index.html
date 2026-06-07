@@ -1056,25 +1056,45 @@ const todayStr = new Date().toISOString().split('T')[0];
 document.getElementById('exp-date').value = todayStr;
 document.getElementById('task-due').value = todayStr;
 
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-    if (session) {
-      showLoading();
-      try {
-        await loadAllData();
-        render();
-        showApp();
-      } catch (err) {
-        console.error('Failed to load data:', err);
-        showToast('Could not load your data. Please refresh and try again.');
-        document.getElementById('loading-overlay').classList.add('hidden');
-        document.getElementById('auth-overlay').classList.remove('hidden');
-      }
-    } else {
-      document.getElementById('loading-overlay').classList.add('hidden');
-      document.getElementById('auth-overlay').classList.remove('hidden');
-    }
+let appReady = false;
+
+async function bootApp() {
+  if (appReady) return;
+  showLoading();
+  // Add a 15-second timeout so spinner never hangs forever
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Connection timed out. Please refresh.')), 15000)
+  );
+  try {
+    await Promise.race([loadAllData(), timeout]);
+    appReady = true;
+    render();
+    showApp();
+  } catch (err) {
+    console.error('Failed to load data:', err);
+    showToast(err.message || 'Could not load your data. Please refresh and try again.');
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('auth-overlay').classList.remove('hidden');
+  }
+}
+
+// Use getSession() for initial load — more reliable than onAuthStateChange on refresh
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    bootApp();
+  } else {
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('auth-overlay').classList.remove('hidden');
+  }
+});
+
+// Handle Google OAuth redirect and sign-out
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    bootApp();
   } else if (event === 'SIGNED_OUT') {
+    appReady = false;
+    state = { expenses:[], tasks:[], courses:[], budgetUSD:0 };
     document.getElementById('app').style.display = 'none';
     document.getElementById('auth-overlay').classList.remove('hidden');
   }
