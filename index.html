@@ -1084,6 +1084,20 @@ function getProviderToken() {
   } catch { return null; }
 }
 
+let calendarConnected = null; // null=unknown, true=ok, false=disconnected
+
+async function checkCalendarConnection() {
+  const pt = getProviderToken();
+  if (!pt) { calendarConnected = false; renderCalConnectHint(); return; }
+  try {
+    const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary', {
+      headers: { 'Authorization': `Bearer ${pt}` }
+    });
+    calendarConnected = r.ok;
+  } catch { calendarConnected = false; }
+  renderCalConnectHint();
+}
+
 async function createCalendarEvent(title, dateStr, notes) {
   const pt = getProviderToken();
   if (!pt || !dateStr) return null;
@@ -1099,7 +1113,13 @@ async function createCalendarEvent(title, dateStr, notes) {
       headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
+    if (r.status === 401 || r.status === 403) {
+      calendarConnected = false;
+      renderCalConnectHint();
+      return null;
+    }
     if (!r.ok) return null;
+    calendarConnected = true;
     const ev = await r.json();
     return ev.id || null;
   } catch { return null; }
@@ -1235,10 +1255,13 @@ async function deleteCalendarEvent(calEventId) {
 function renderCalConnectHint() {
   const el = document.getElementById('cal-connect-hint');
   if (!el) return;
-  if (getProviderToken()) {
+  if (calendarConnected === true) {
     el.innerHTML = '<span style="color:var(--green);">● Calendar connected</span>';
+  } else if (calendarConnected === false) {
+    el.innerHTML = '<button onclick="reconnectCalendar()" style="background:none;border:none;cursor:pointer;font-size:11px;font-family:inherit;color:var(--amber);">⚠ Reconnect Google Calendar</button>';
   } else {
-    el.innerHTML = '<button onclick="reconnectCalendar()" style="background:none;border:none;cursor:pointer;font-size:11px;font-family:inherit;color:var(--amber);">⚠ Connect Google Calendar</button>';
+    // null = still checking
+    el.innerHTML = '<span style="color:var(--text3);font-size:11px;">Checking calendar…</span>';
   }
 }
 async function reconnectCalendar() {
@@ -2222,7 +2245,7 @@ async function bootApp() {
       Promise.all([fetchCurrencyRates(), loadAllData()]),
       timeout
     ]);
-    await Promise.all([fetchCalendarEvents(), fetchWeather()]);
+    await Promise.all([fetchCalendarEvents(), fetchWeather(), checkCalendarConnection()]);
     appReady = true;
     render();
     showApp();
