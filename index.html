@@ -1017,17 +1017,21 @@ select option{background:var(--surface2);}
 const SUPA_URL = 'https://otakccqrmrglflamciby.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YWtjY3FybXJnbGZsYW1jaWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTQwNTksImV4cCI6MjA5NjMzMDA1OX0.1wmtuRbH9RXmr5yHwgfhA-h1ibhyRIG-beoBzz-STDo';
 
-// Capture provider_token from URL hash BEFORE Supabase clears it
+// Restore calendar token from localStorage if still within its 1-hour lifetime
 let _providerToken = (function() {
   try {
     const h = window.location.hash;
     if (h) {
       const p = new URLSearchParams(h.startsWith('#') ? h.slice(1) : h);
       const pt = p.get('provider_token');
-      if (pt) { sessionStorage.setItem('mba-pt', pt); return pt; }
+      if (pt) return pt;
     }
   } catch {}
-  return sessionStorage.getItem('mba-pt') || null;
+  try {
+    const stored = JSON.parse(localStorage.getItem('mba-cal-token') || 'null');
+    if (stored && stored.token && Date.now() < stored.expiry) return stored.token;
+  } catch {}
+  return null;
 })();
 
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { flowType: 'implicit' } });
@@ -1311,13 +1315,13 @@ let _calTokenRenewTimer = null;
 function _onGisToken(response, silent) {
   if (response.access_token) {
     _providerToken = response.access_token;
-    sessionStorage.setItem('mba-pt', response.access_token);
+    const expiry = Date.now() + ((response.expires_in || 3600) - 60) * 1000;
+    try { localStorage.setItem('mba-cal-token', JSON.stringify({ token: response.access_token, expiry })); } catch {}
     calendarConnected = true;
     renderCalConnectHint();
-    // Schedule silent renewal 5 min before expiry (tokens last 3600s)
-    const ms = ((response.expires_in || 3600) - 300) * 1000;
+    // Schedule silent renewal before expiry
     clearTimeout(_calTokenRenewTimer);
-    _calTokenRenewTimer = setTimeout(_silentRefreshCalendar, ms);
+    _calTokenRenewTimer = setTimeout(_silentRefreshCalendar, ((response.expires_in || 3600) - 300) * 1000);
     if (!silent) showToast('Google Calendar connected ✓', 3000, true);
   } else if (!silent) {
     calendarConnected = false;
