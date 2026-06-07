@@ -85,7 +85,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* ── Sidebar ── */
 .sidebar{
-  width:240px;background:var(--surface);border-right:1px solid var(--border);
+  width:260px;background:var(--surface);border-right:1px solid var(--border);
   padding:0;display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;
   transition:background .25s,border-color .25s;
 }
@@ -151,7 +151,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .signout-btn:hover{color:var(--text);}
 
 /* ── Main ── */
-.main{margin-left:240px;padding:2.5rem 2.5rem;max-width:1000px;width:100%;}
+.main{margin-left:260px;padding:2.5rem 2.5rem;max-width:1100px;width:100%;}
 .page{display:none;}
 .page.active{display:block;}
 .page-header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;}
@@ -186,12 +186,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .journey-bar-wrap{margin-bottom:20px;}
 .journey-bar-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.5rem;box-shadow:var(--shadow-sm);}
 .journey-bar-title{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);font-weight:600;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;}
-.journey-track{position:relative;height:6px;background:var(--surface3);border-radius:3px;margin:28px 0 32px;}
+.journey-track{position:relative;height:6px;background:var(--surface3);border-radius:3px;margin:36px 0 36px;}
 .journey-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--amber));transition:width .6s ease;}
 .journey-today{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--gold);border-radius:50%;border:2px solid var(--bg);animation:pulse 1.8s ease-in-out infinite;}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.5);}50%{box-shadow:0 0 0 6px rgba(201,168,76,0);}}
 .journey-milestone{position:absolute;top:50%;transform:translate(-50%,-50%);width:8px;height:8px;background:var(--surface3);border:2px solid var(--border2);border-radius:50%;}
-.journey-milestone-label{position:absolute;top:14px;transform:translateX(-50%);font-size:9px;color:var(--text3);white-space:nowrap;letter-spacing:.03em;}
+.journey-milestone-label{position:absolute;top:14px;transform:translateX(-50%);font-size:9px;color:var(--text3);white-space:nowrap;letter-spacing:.03em;pointer-events:none;}
 .journey-start-label{position:absolute;left:0;top:14px;font-size:9px;color:var(--text3);letter-spacing:.03em;}
 .journey-end-label{position:absolute;right:0;top:14px;font-size:9px;color:var(--text3);letter-spacing:.03em;}
 
@@ -310,7 +310,7 @@ select option{background:var(--surface2);}
 .toast.success{background:var(--green-bg);border-color:var(--green);color:var(--green);}
 
 /* ── Right panel ── */
-.right-panel{display:none;width:280px;background:var(--surface);border-left:1px solid var(--border);position:fixed;right:0;top:0;height:100vh;overflow-y:auto;padding:1.5rem 1.25rem;flex-direction:column;gap:14px;}
+.right-panel{display:none;width:310px;background:var(--surface);border-left:1px solid var(--border);position:fixed;right:0;top:0;height:100vh;overflow-y:auto;padding:1.5rem 1.25rem;flex-direction:column;gap:14px;}
 .rp-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1rem;}
 .rp-label{font-size:9px;text-transform:uppercase;letter-spacing:.13em;color:var(--text3);font-weight:600;margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center;}
 .rp-weather-main{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
@@ -318,7 +318,12 @@ select option{background:var(--surface2);}
 .rp-weather-temp{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:500;color:var(--text);line-height:1;}
 .rp-weather-desc{font-size:12px;color:var(--text2);margin-top:2px;}
 .rp-weather-loc{font-size:10px;color:var(--text3);margin-top:4px;display:flex;align-items:center;gap:5px;}
-.rp-weather-loc input{font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:3px 7px;color:var(--text);font-family:'Inter',sans-serif;flex:1;}
+.rp-loc-edit-wrap{position:relative;margin-top:6px;}
+.rp-loc-edit-wrap input{font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:4px 8px;color:var(--text);font-family:'Inter',sans-serif;width:100%;}
+.rp-autocomplete{position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;overflow:hidden;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,0.3);display:none;}
+.rp-autocomplete-item{padding:8px 11px;font-size:12px;cursor:pointer;color:var(--text);border-bottom:1px solid var(--border);}
+.rp-autocomplete-item:last-child{border-bottom:none;}
+.rp-autocomplete-item:hover{background:var(--surface3);}
 .rp-ring-wrap{display:flex;align-items:center;gap:14px;}
 .rp-ring-text{flex:1;}
 .rp-ring-spent{font-size:13px;font-weight:500;color:var(--text);}
@@ -329,9 +334,14 @@ select option{background:var(--surface2);}
 .rp-next-sub{font-size:11px;color:var(--text3);margin-top:2px;}
 .rp-qe-row{display:flex;gap:6px;margin-bottom:7px;}
 .rp-qe-row input,.rp-qe-row select{font-size:12px;padding:7px 9px;}
-@media(min-width:1200px){
+/* mobile panel cards — shown only on phones */
+.mobile-panel{display:none;}
+@media(min-width:1100px){
   .right-panel{display:flex;}
-  .main{margin-right:300px;}
+  .main{margin-right:330px;}
+}
+@media(max-width:720px){
+  .mobile-panel{display:block;}
 }
 
 /* ── Checklist ── */
@@ -501,9 +511,21 @@ select option{background:var(--surface2);}
         </button>
       </div>
       <div id="rp-weather-body"><div style="font-size:12px;color:var(--text3);">Loading weather…</div></div>
-      <div class="rp-weather-loc" id="rp-loc-edit" style="display:none;">
-        <input id="rp-loc-input" placeholder="City, Country" onkeydown="if(event.key==='Enter')saveWeatherLocation();if(event.key==='Escape')toggleWeatherEdit()" />
-        <button class="btn-icon" onclick="saveWeatherLocation()" style="padding:3px 6px;font-size:11px;color:var(--gold);">✓</button>
+      <div id="rp-loc-edit" style="display:none;">
+        <div class="rp-loc-edit-wrap">
+          <input id="rp-loc-input" placeholder="Type a city…" autocomplete="off"
+            oninput="fetchLocationSuggestions(this.value)"
+            onkeydown="if(event.key==='Enter'){saveWeatherLocation();}if(event.key==='Escape'){toggleWeatherEdit();}" />
+          <div class="rp-autocomplete" id="rp-autocomplete"></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button class="btn-icon" onclick="useMyLocation()" style="font-size:11px;color:var(--text2);gap:4px;padding:4px 8px;border:1px solid var(--border2);border-radius:6px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            Locate me
+          </button>
+          <button class="btn-icon" onclick="saveWeatherLocation()" style="font-size:11px;color:var(--gold);padding:4px 8px;border:1px solid var(--gold-border);border-radius:6px;">✓ Save</button>
+          <button class="btn-icon" onclick="toggleWeatherEdit()" style="font-size:11px;color:var(--text3);padding:4px 8px;border:1px solid var(--border2);border-radius:6px;">✕</button>
+        </div>
       </div>
       <div class="rp-weather-loc" id="rp-loc-display">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -627,6 +649,41 @@ select option{background:var(--surface2);}
           </div>
         </div>
       </div>
+
+      <!-- Mobile-only panel (weather + quick expense) -->
+      <div class="mobile-panel">
+        <div class="card" style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="card-title" style="margin-bottom:0;">Weather</div>
+            <button class="btn-icon" onclick="toggleWeatherEditMobile()" style="padding:2px 4px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+          <div id="mob-weather-body"><div style="font-size:12px;color:var(--text3);">Loading…</div></div>
+          <div id="mob-loc-edit" style="display:none;margin-top:8px;">
+            <div style="position:relative;">
+              <input id="mob-loc-input" type="text" placeholder="Type a city…" autocomplete="off"
+                oninput="fetchLocationSuggestions(this.value,'mob')"
+                onkeydown="if(event.key==='Enter'){saveWeatherLocationMobile();}if(event.key==='Escape'){toggleWeatherEditMobile();}" />
+              <div class="rp-autocomplete" id="mob-autocomplete"></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <button class="btn-icon" onclick="useMyLocation()" style="font-size:11px;color:var(--text2);gap:4px;padding:4px 8px;border:1px solid var(--border2);border-radius:6px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                Locate me
+              </button>
+              <button class="btn-icon" onclick="saveWeatherLocationMobile()" style="font-size:11px;color:var(--gold);padding:4px 8px;border:1px solid var(--gold-border);border-radius:6px;">✓ Save</button>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px;display:flex;align-items:center;gap:4px;" id="mob-loc-display">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="mob-loc-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom milestone cards -->
+      <div id="custom-milestones-grid" class="countdown-grid" style="display:none;margin-bottom:10px;"></div>
 
       <!-- MBA Journey progress bar + milestones -->
       <div class="journey-bar-wrap">
@@ -1370,7 +1427,8 @@ function renderJourneyBar() {
   const track = document.getElementById('journey-track');
   track.querySelectorAll('.journey-milestone,.journey-today,.journey-start-label,.journey-end-label,.journey-milestone-label,.journey-custom-dot,.journey-custom-label').forEach(el => el.remove());
 
-  milestones.forEach(m => {
+  // Fixed milestones — stagger labels above/below to avoid overlap
+  milestones.forEach((m, i) => {
     const mPct = Math.max(0, Math.min((m.date - JOURNEY_START) / total * 100, 100));
     const dot = document.createElement('div');
     dot.className = 'journey-milestone';
@@ -1378,12 +1436,15 @@ function renderJourneyBar() {
     const lbl = document.createElement('div');
     lbl.className = 'journey-milestone-label';
     lbl.style.left = mPct.toFixed(1) + '%';
+    // alternate above (bottom: 14px) and below (top: 14px) to avoid overlap
+    if (i % 2 === 0) { lbl.style.top = '14px'; lbl.style.bottom = 'auto'; }
+    else { lbl.style.bottom = '14px'; lbl.style.top = 'auto'; lbl.style.transform = 'translateX(-50%)'; }
     lbl.textContent = m.label;
     track.appendChild(dot);
     track.appendChild(lbl);
   });
 
-  // Custom milestones
+  // Custom milestones — dots only on timeline (names shown in cards above)
   state.milestones.forEach(m => {
     const d = new Date(m.date + 'T00:00:00');
     const mPct = Math.max(0, Math.min((d - JOURNEY_START) / total * 100, 100));
@@ -1393,13 +1454,7 @@ function renderJourneyBar() {
     dot.style.left = mPct.toFixed(1) + '%';
     dot.style.opacity = past ? '0.4' : '1';
     dot.title = m.name;
-    const lbl = document.createElement('div');
-    lbl.className = `journey-custom-label ms-label-${m.type}`;
-    lbl.style.left = mPct.toFixed(1) + '%';
-    lbl.style.opacity = past ? '0.4' : '1';
-    lbl.textContent = m.name.length > 12 ? m.name.slice(0,11)+'…' : m.name;
     track.appendChild(dot);
-    track.appendChild(lbl);
   });
 
   const todayDot = document.createElement('div');
@@ -1453,33 +1508,99 @@ async function fetchWeather() {
     state.weatherData = { code: parseInt(c.weatherCode), tempC: c.temp_C, tempF: c.temp_F, humidity: c.humidity, desc: c.weatherDesc?.[0]?.value || '' };
   } catch { state.weatherData = null; }
 }
+function weatherHTML(d) {
+  if (!d) return '<div style="font-size:12px;color:var(--text3);">Weather unavailable</div>';
+  const icon = WEATHER_ICONS[d.code] || '🌤️';
+  return `<div class="rp-weather-main"><span class="rp-weather-icon">${icon}</span><span class="rp-weather-temp">${d.tempC}°C</span></div><div class="rp-weather-desc">${d.desc}</div><div style="font-size:11px;color:var(--text3);margin-top:3px;">Humidity ${d.humidity}%</div>`;
+}
 function renderWeather() {
   const el = document.getElementById('rp-weather-body');
   const locEl = document.getElementById('rp-loc-text');
   if (locEl) locEl.textContent = state.weatherLocation;
-  if (!el) return;
-  if (!state.weatherData) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);">Weather unavailable</div>'; return; }
-  const d = state.weatherData;
-  const icon = WEATHER_ICONS[d.code] || '🌤️';
-  el.innerHTML = `<div class="rp-weather-main"><span class="rp-weather-icon">${icon}</span><span class="rp-weather-temp">${d.tempC}°C</span></div><div class="rp-weather-desc">${d.desc}</div><div style="font-size:11px;color:var(--text3);margin-top:3px;">Humidity ${d.humidity}%</div>`;
+  if (el) el.innerHTML = weatherHTML(state.weatherData);
+  // also update mobile weather
+  const mel = document.getElementById('mob-weather-body');
+  const mlocEl = document.getElementById('mob-loc-text');
+  if (mlocEl) mlocEl.textContent = state.weatherLocation;
+  if (mel) mel.innerHTML = weatherHTML(state.weatherData);
 }
 function toggleWeatherEdit() {
   const editEl = document.getElementById('rp-loc-edit');
   const dispEl = document.getElementById('rp-loc-display');
   if (!editEl || !dispEl) return;
   const isEdit = editEl.style.display !== 'none';
-  editEl.style.display = isEdit ? 'none' : 'flex';
+  editEl.style.display = isEdit ? 'none' : 'block';
   dispEl.style.display = isEdit ? 'flex' : 'none';
-  if (!isEdit) { document.getElementById('rp-loc-input').value = state.weatherLocation; document.getElementById('rp-loc-input').focus(); }
+  if (!isEdit) { const inp = document.getElementById('rp-loc-input'); inp.value = state.weatherLocation; inp.focus(); }
+}
+function toggleWeatherEditMobile() {
+  const editEl = document.getElementById('mob-loc-edit');
+  const dispEl = document.getElementById('mob-loc-display');
+  if (!editEl || !dispEl) return;
+  const isEdit = editEl.style.display !== 'none';
+  editEl.style.display = isEdit ? 'none' : 'block';
+  dispEl.style.display = isEdit ? 'flex' : 'none';
+  if (!isEdit) { const inp = document.getElementById('mob-loc-input'); inp.value = state.weatherLocation; inp.focus(); }
+}
+let _acTimer = null;
+async function fetchLocationSuggestions(query, source='rp') {
+  const dropId = source === 'mob' ? 'mob-autocomplete' : 'rp-autocomplete';
+  const drop = document.getElementById(dropId);
+  if (!drop) return;
+  if (query.length < 2) { drop.style.display = 'none'; return; }
+  clearTimeout(_acTimer);
+  _acTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`, { headers:{'Accept-Language':'en'} });
+      const results = await r.json();
+      if (!results.length) { drop.style.display = 'none'; return; }
+      drop.style.display = 'block';
+      drop.innerHTML = results.map(res => {
+        const parts = res.display_name.split(',');
+        const short = parts.slice(0,3).join(',').trim();
+        return `<div class="rp-autocomplete-item" onmousedown="event.preventDefault();applyLocation('${short.replace(/'/g,"\\'")}','${source}')">${short}</div>`;
+      }).join('');
+    } catch { drop.style.display = 'none'; }
+  }, 280);
+}
+function applyLocation(name, source) {
+  const inp = document.getElementById(source === 'mob' ? 'mob-loc-input' : 'rp-loc-input');
+  if (inp) inp.value = name;
+  const drop = document.getElementById(source === 'mob' ? 'mob-autocomplete' : 'rp-autocomplete');
+  if (drop) drop.style.display = 'none';
 }
 async function saveWeatherLocation() {
   const val = document.getElementById('rp-loc-input').value.trim();
   if (!val) return;
   state.weatherLocation = val;
+  document.getElementById('rp-autocomplete').style.display = 'none';
   toggleWeatherEdit();
-  await fetchWeather();
-  renderWeather();
-  saveSettings();
+  await fetchWeather(); renderWeather(); saveSettings();
+}
+async function saveWeatherLocationMobile() {
+  const val = document.getElementById('mob-loc-input').value.trim();
+  if (!val) return;
+  state.weatherLocation = val;
+  document.getElementById('mob-autocomplete').style.display = 'none';
+  toggleWeatherEditMobile();
+  await fetchWeather(); renderWeather(); saveSettings();
+}
+async function useMyLocation() {
+  if (!navigator.geolocation) { showToast('Geolocation not supported by this browser.'); return; }
+  showToast('Getting your location…', 3000);
+  navigator.geolocation.getCurrentPosition(async pos => {
+    try {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, { headers:{'Accept-Language':'en'} });
+      const data = await r.json();
+      const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
+      const country = data.address?.country || '';
+      state.weatherLocation = city && country ? `${city}, ${country}` : city || 'Unknown';
+      ['rp-loc-edit','mob-loc-edit'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display='none'; });
+      ['rp-loc-display','mob-loc-display'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display='flex'; });
+      await fetchWeather(); renderWeather(); saveSettings();
+    } catch { showToast('Could not determine your location.'); }
+  }, () => showToast('Location permission denied.'));
 }
 
 // ── Budget ring ──
@@ -1563,30 +1684,43 @@ function addMilestone() {
   document.getElementById('ms-name').value = '';
   saveSettings();
   renderJourneyBar();
-  renderMilestoneList();
+  renderMilestoneCards();
   renderNextUp();
 }
 function deleteMilestone(id) {
   state.milestones = state.milestones.filter(m=>m.id!==id);
   saveSettings();
   renderJourneyBar();
-  renderMilestoneList();
+  renderMilestoneCards();
   renderNextUp();
 }
-function renderMilestoneList() {
-  const el = document.getElementById('ms-list');
-  if (!el) return;
-  if (!state.milestones.length) { el.innerHTML = ''; return; }
-  const TYPE_BG = { academic:'var(--blue-bg)', travel:'var(--amber-bg)', personal:'var(--pink-bg)', other:'var(--surface3)' };
-  const TYPE_C  = { academic:'var(--blue)',    travel:'var(--amber)',    personal:'var(--pink)',    other:'var(--text2)' };
-  el.innerHTML = state.milestones.map(m=>`
-    <div class="ms-row">
-      <span class="ms-type-badge" style="background:${TYPE_BG[m.type]};color:${TYPE_C[m.type]};">${m.type}</span>
-      <div style="flex:1;font-size:13px;color:var(--text);">${m.name}</div>
-      <span style="font-size:11px;color:var(--text3);">${m.date}</span>
-      <button class="btn-danger" onclick="deleteMilestone(${m.id})">✕</button>
-    </div>`).join('');
+function renderMilestoneCards() {
+  const grid = document.getElementById('custom-milestones-grid');
+  if (!grid) return;
+  if (!state.milestones.length) { grid.style.display = 'none'; return; }
+  grid.style.display = '';
+  const TYPE_C = { academic:'blue', travel:'amber', personal:'pink', other:'text2' };
+  const TYPE_AFTER = { academic:'cd-mba', travel:'cd-loa', personal:'cd-preloa', other:'cd-summer' };
+  grid.innerHTML = state.milestones.map(m => {
+    const d = daysUntil(m.date);
+    const past = d <= 0;
+    const tc = TYPE_C[m.type] || 'text2';
+    return `<div class="cd-card ${TYPE_AFTER[m.type]||''}">
+      <div class="cd-num${past?' passed':''}">${past?'✓':d}</div>
+      <div class="cd-label">${m.name}</div>
+      <div class="cd-date-row" style="justify-content:space-between;">
+        <span class="cd-date">${m.date}</span>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:9px;padding:1px 7px;border-radius:10px;background:var(--${tc}-bg);color:var(--${tc});text-transform:uppercase;letter-spacing:.05em;font-weight:500;">${m.type}</span>
+          <button class="cd-edit-btn" onclick="deleteMilestone(${m.id})" title="Remove" style="color:var(--red);">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
+function renderMilestoneList() { renderMilestoneCards(); }
 
 // ── Pre-MBA Checklist ──
 const CHECKLIST_ITEMS = [
@@ -1910,7 +2044,7 @@ function renderOverview() {
   });
 
   renderJourneyBar();
-  renderMilestoneList();
+  renderMilestoneCards();
 
   const total = state.expenses.reduce((s,e) => s+e.usdAmt, 0);
   const mthExp = state.expenses.filter(e => {
