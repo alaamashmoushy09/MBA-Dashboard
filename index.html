@@ -1077,7 +1077,9 @@ async function signOut() {
 }
 
 // ── Provider token (Google Calendar) ──
+let _providerToken = null; // captured from onAuthStateChange session directly
 function getProviderToken() {
+  if (_providerToken) return _providerToken;
   try {
     const raw = localStorage.getItem('sb-otakccqrmrglflamciby-auth-token');
     return JSON.parse(raw)?.provider_token ?? null;
@@ -2264,6 +2266,11 @@ async function bootApp() {
   }
 }
 
+// Capture provider_token from live session on initial load
+sb.auth.getSession().then(({ data }) => {
+  if (data?.session?.provider_token) _providerToken = data.session.provider_token;
+});
+
 const _hasSession = !!getToken() && getToken() !== SUPA_KEY;
 if (_hasSession) {
   bootApp();
@@ -2274,6 +2281,7 @@ if (_hasSession) {
 
 sb.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN' && session) {
+    if (session.provider_token) _providerToken = session.provider_token;
     bootApp();
   } else if (event === 'SIGNED_OUT') {
     appReady = false;
