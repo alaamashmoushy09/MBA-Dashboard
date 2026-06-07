@@ -652,53 +652,78 @@ async function signOut() {
   document.getElementById('auth-overlay').classList.remove('hidden');
 }
 
+// ── Direct REST helpers (bypasses SDK auth lock) ──
+async function apiHeaders() {
+  const { data: { session } } = await sb.auth.getSession();
+  return {
+    'apikey': SUPA_KEY,
+    'Authorization': `Bearer ${session?.access_token ?? SUPA_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+  };
+}
+
+async function apiGet(table, qs) {
+  const h = await apiHeaders();
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${qs}`, { headers: h });
+  if (!r.ok) throw new Error(`${table}: ${r.status}`);
+  return r.json();
+}
+
+async function apiPost(table, body) {
+  const h = await apiHeaders();
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, { method:'POST', headers: h, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`${table} insert: ${r.status}`);
+  return r.json();
+}
+
+async function apiPatch(table, id, body) {
+  const h = await apiHeaders();
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers: h, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`${table} update: ${r.status}`);
+}
+
+async function apiDelete(table, id) {
+  const h = await apiHeaders();
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, { method:'DELETE', headers: h });
+  if (!r.ok) throw new Error(`${table} delete: ${r.status}`);
+}
+
+async function apiUpsert(table, body) {
+  const h = { ...await apiHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' };
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, { method:'POST', headers: h, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`${table} upsert: ${r.status}`);
+}
+
 // ── Data loading ──
 async function loadAllData() {
-  const [expRes, taskRes, courseRes, settRes] = await Promise.all([
-    sb.from('expenses').select('*').order('created_at', { ascending:false }),
-    sb.from('tasks').select('*').order('created_at', { ascending:true }),
-    sb.from('courses').select('*').order('created_at', { ascending:true }),
-    sb.from('settings').select('*').maybeSingle()
+  const [expData, taskData, courseData, settData] = await Promise.all([
+    apiGet('expenses', 'order=created_at.desc'),
+    apiGet('tasks', 'order=created_at.asc'),
+    apiGet('courses', 'order=created_at.asc'),
+    apiGet('settings', 'limit=1')
   ]);
 
-  if (expRes.error) throw new Error('expenses: ' + expRes.error.message);
-  if (taskRes.error) throw new Error('tasks: ' + taskRes.error.message);
-  if (courseRes.error) throw new Error('courses: ' + courseRes.error.message);
-  if (settRes.error) throw new Error('settings: ' + settRes.error.message);
-
-  state.expenses = (expRes.data || []).map(e => ({
-    id: e.id,
-    desc: e.description,
-    usdAmt: e.usd_amt,
-    origAmt: e.orig_amt,
-    origCur: e.orig_cur,
-    cat: e.cat,
-    date: e.date,
-    notes: e.notes || ''
+  state.expenses = expData.map(e => ({
+    id: e.id, desc: e.description, usdAmt: e.usd_amt,
+    origAmt: e.orig_amt, origCur: e.orig_cur, cat: e.cat, date: e.date, notes: e.notes || ''
   }));
 
-  state.tasks = (taskRes.data || []).map(t => ({
-    id: t.id,
-    title: t.title,
-    due: t.due || '',
-    phase: t.phase,
-    notes: t.notes || '',
-    done: t.done
+  state.tasks = taskData.map(t => ({
+    id: t.id, title: t.title, due: t.due || '',
+    phase: t.phase, notes: t.notes || '', done: t.done
   }));
 
-  state.courses = (courseRes.data || []).map(c => ({
-    id: c.id,
-    name: c.name,
-    credits: c.credits,
-    period: c.period,
-    grade: c.grade || '',
-    notes: c.notes || ''
+  state.courses = courseData.map(c => ({
+    id: c.id, name: c.name, credits: c.credits,
+    period: c.period, grade: c.grade || '', notes: c.notes || ''
   }));
 
-  if (settRes.data) {
-    state.budgetUSD = settRes.data.budget_usd || 0;
-    displayCur = settRes.data.display_cur || displayCur;
-    const theme = settRes.data.theme || savedTheme;
+  const sett = settData[0] || null;
+  if (sett) {
+    state.budgetUSD = sett.budget_usd || 0;
+    displayCur = sett.display_cur || displayCur;
+    const theme = sett.theme || savedTheme;
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('mba-theme', theme);
     updateThemeLabel(theme);
@@ -712,13 +737,9 @@ async function loadAllData() {
 
 async function saveSettings() {
   const theme = document.documentElement.getAttribute('data-theme');
-  const { error } = await sb.from('settings').upsert({
-    budget_usd: state.budgetUSD,
-    display_cur: displayCur,
-    theme,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'user_id' });
-  if (error) showToast('Could not save settings.');
+  try {
+    await apiUpsert('settings', { budget_usd: state.budgetUSD, display_cur: displayCur, theme, updated_at: new Date().toISOString() });
+  } catch { showToast('Could not save settings.'); }
 }
 
 // ── UI helpers ──
@@ -808,24 +829,24 @@ async function addExpense() {
   const notes = document.getElementById('exp-notes').value.trim();
   if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Please fill in description, amount, and date.'); return; }
   const usdAmt = toUSD(rawAmt, cur);
-  const { data, error } = await sb.from('expenses').insert({
-    description: desc, usd_amt: usdAmt, orig_amt: rawAmt,
-    orig_cur: cur, cat, date, notes
-  }).select().single();
-  if (error) { showToast('Could not save expense. Check your connection.'); return; }
-  state.expenses.unshift({ id:data.id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes });
-  document.getElementById('exp-desc').value = '';
-  document.getElementById('exp-amt').value = '';
-  document.getElementById('exp-notes').value = '';
-  render();
+  try {
+    const rows = await apiPost('expenses', { description:desc, usd_amt:usdAmt, orig_amt:rawAmt, orig_cur:cur, cat, date, notes });
+    const row = rows[0];
+    state.expenses.unshift({ id:row.id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes });
+    document.getElementById('exp-desc').value = '';
+    document.getElementById('exp-amt').value = '';
+    document.getElementById('exp-notes').value = '';
+    render();
+  } catch { showToast('Could not save expense. Check your connection.'); }
 }
 
 async function deleteExpense(id) {
   if (!confirm('Delete this expense?')) return;
-  const { error } = await sb.from('expenses').delete().eq('id', id);
-  if (error) { showToast('Could not delete expense.'); return; }
-  state.expenses = state.expenses.filter(e => e.id !== id);
-  render();
+  try {
+    await apiDelete('expenses', id);
+    state.expenses = state.expenses.filter(e => e.id !== id);
+    render();
+  } catch { showToast('Could not delete expense.'); }
 }
 
 async function addTask() {
@@ -834,30 +855,32 @@ async function addTask() {
   const phase = document.getElementById('task-phase').value;
   const notes = document.getElementById('task-notes').value.trim();
   if (!title) return;
-  const { data, error } = await sb.from('tasks').insert({
-    title, due: due || null, phase, notes, done: false
-  }).select().single();
-  if (error) { showToast('Could not save task.'); return; }
-  state.tasks.push({ id:data.id, title, due, phase, notes, done:false });
-  document.getElementById('task-title').value = '';
-  document.getElementById('task-notes').value = '';
-  render();
+  try {
+    const rows = await apiPost('tasks', { title, due: due || null, phase, notes, done: false });
+    const row = rows[0];
+    state.tasks.push({ id:row.id, title, due, phase, notes, done:false });
+    document.getElementById('task-title').value = '';
+    document.getElementById('task-notes').value = '';
+    render();
+  } catch { showToast('Could not save task.'); }
 }
 
 async function toggleTask(id) {
   const t = state.tasks.find(t => t.id === id);
   if (!t) return;
-  const { error } = await sb.from('tasks').update({ done: !t.done }).eq('id', id);
-  if (error) { showToast('Could not update task.'); return; }
-  t.done = !t.done;
-  render();
+  try {
+    await apiPatch('tasks', id, { done: !t.done });
+    t.done = !t.done;
+    render();
+  } catch { showToast('Could not update task.'); }
 }
 
 async function deleteTask(id) {
-  const { error } = await sb.from('tasks').delete().eq('id', id);
-  if (error) { showToast('Could not delete task.'); return; }
-  state.tasks = state.tasks.filter(t => t.id !== id);
-  render();
+  try {
+    await apiDelete('tasks', id);
+    state.tasks = state.tasks.filter(t => t.id !== id);
+    render();
+  } catch { showToast('Could not delete task.'); }
 }
 
 async function addCourse() {
@@ -867,29 +890,33 @@ async function addCourse() {
   const grade = document.getElementById('course-grade').value;
   const notes = document.getElementById('course-notes').value.trim();
   if (!name) return;
-  const { data, error } = await sb.from('courses').insert({ name, credits, period, grade, notes }).select().single();
-  if (error) { showToast('Could not save course.'); return; }
-  state.courses.push({ id:data.id, name, credits, period, grade, notes });
-  document.getElementById('course-name').value = '';
-  document.getElementById('course-credits').value = '';
-  document.getElementById('course-notes').value = '';
-  document.getElementById('course-grade').value = '';
-  render();
+  try {
+    const rows = await apiPost('courses', { name, credits, period, grade, notes });
+    const row = rows[0];
+    state.courses.push({ id:row.id, name, credits, period, grade, notes });
+    document.getElementById('course-name').value = '';
+    document.getElementById('course-credits').value = '';
+    document.getElementById('course-notes').value = '';
+    document.getElementById('course-grade').value = '';
+    render();
+  } catch { showToast('Could not save course.'); }
 }
 
 async function updateGrade(id, val) {
   const c = state.courses.find(c => c.id === id);
   if (!c) return;
-  const { error } = await sb.from('courses').update({ grade: val }).eq('id', id);
-  if (error) { showToast('Could not update grade.'); return; }
-  c.grade = val;
+  try {
+    await apiPatch('courses', id, { grade: val });
+    c.grade = val;
+  } catch { showToast('Could not update grade.'); }
 }
 
 async function deleteCourse(id) {
-  const { error } = await sb.from('courses').delete().eq('id', id);
-  if (error) { showToast('Could not delete course.'); return; }
-  state.courses = state.courses.filter(c => c.id !== id);
-  render();
+  try {
+    await apiDelete('courses', id);
+    state.courses = state.courses.filter(c => c.id !== id);
+    render();
+  } catch { showToast('Could not delete course.'); }
 }
 
 async function saveBudget() {
