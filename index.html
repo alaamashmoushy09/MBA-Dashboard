@@ -872,7 +872,7 @@ select option{background:var(--surface2);}
           </div>
           <div class="form-group" style="max-width:130px;">
             <label class="form-label">Time (optional)</label>
-            <input type="time" id="task-time" />
+            <input type="time" id="task-time" step="900" />
           </div>
         </div>
         <div class="form-row">
@@ -1278,11 +1278,16 @@ function storeCalEventId(taskId, calEventId) { const m=getCalMap(); m[taskId]=ca
 function removeCalEventId(taskId) { const m=getCalMap(); delete m[taskId]; saveCalMap(m); }
 async function deleteCalendarEvent(calEventId) {
   const pt = getProviderToken();
-  if (!pt || !calEventId) return;
+  if (!calEventId) return;
+  if (!pt) { showToast('Calendar not connected — delete the event manually from Google Calendar.'); return; }
   try {
-    await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(calEventId)}`, {
+    const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(calEventId)}`, {
       method:'DELETE', headers:{'Authorization':`Bearer ${pt}`}
     });
+    if (r.status === 401 || r.status === 403) {
+      calendarConnected = false; renderCalConnectHint();
+      showToast('Session expired — reconnect calendar, then try again.');
+    }
   } catch {}
 }
 function renderCalConnectHint() {
@@ -1299,33 +1304,51 @@ function renderCalConnectHint() {
 }
 const GIS_CLIENT_ID = '918271495993-blp74bf2varpfcdkutoi8hhbpph974u6.apps.googleusercontent.com';
 let _gisTokenClient = null;
+let _calTokenRenewTimer = null;
+
+function _onGisToken(response, silent) {
+  if (response.access_token) {
+    _providerToken = response.access_token;
+    sessionStorage.setItem('mba-pt', response.access_token);
+    calendarConnected = true;
+    renderCalConnectHint();
+    // Schedule silent renewal 5 min before expiry (tokens last 3600s)
+    const ms = ((response.expires_in || 3600) - 300) * 1000;
+    clearTimeout(_calTokenRenewTimer);
+    _calTokenRenewTimer = setTimeout(_silentRefreshCalendar, ms);
+    if (!silent) showToast('Google Calendar connected ✓', 3000, true);
+  } else if (!silent) {
+    calendarConnected = false;
+    renderCalConnectHint();
+    showToast('Calendar access denied.');
+  }
+}
+
+function _silentRefreshCalendar() {
+  if (_gisTokenClient) _gisTokenClient.requestAccessToken({ prompt: '' });
+}
 
 function initGoogleCalendarAuth() {
   if (!window.google?.accounts?.oauth2) { setTimeout(initGoogleCalendarAuth, 500); return; }
+  let silent = true;
   _gisTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GIS_CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/calendar.events',
-    callback: (response) => {
-      if (response.access_token) {
-        _providerToken = response.access_token;
-        sessionStorage.setItem('mba-pt', response.access_token);
-        calendarConnected = true;
-        renderCalConnectHint();
-        showToast('Google Calendar connected ✓', 3000, true);
-      } else {
-        calendarConnected = false;
-        renderCalConnectHint();
-        showToast('Calendar access denied.');
-      }
+    callback: (r) => { _onGisToken(r, silent); silent = false; },
+    error_callback: (e) => {
+      if (!silent) { calendarConnected = false; renderCalConnectHint(); }
+      silent = false;
     }
   });
+  // Try silent refresh immediately — works if user already granted consent
+  _gisTokenClient.requestAccessToken({ prompt: '' });
 }
 
 function reconnectCalendar() {
   if (_gisTokenClient) {
     _gisTokenClient.requestAccessToken({ prompt: 'consent' });
   } else {
-    showToast('Calendar auth not ready yet, try again in a moment.');
+    showToast('Calendar auth not ready, try again in a moment.');
     initGoogleCalendarAuth();
   }
 }
