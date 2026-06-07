@@ -661,6 +661,11 @@ async function loadAllData() {
     sb.from('settings').select('*').maybeSingle()
   ]);
 
+  if (expRes.error) throw new Error('expenses: ' + expRes.error.message);
+  if (taskRes.error) throw new Error('tasks: ' + taskRes.error.message);
+  if (courseRes.error) throw new Error('courses: ' + courseRes.error.message);
+  if (settRes.error) throw new Error('settings: ' + settRes.error.message);
+
   state.expenses = (expRes.data || []).map(e => ({
     id: e.id,
     desc: e.description,
@@ -1055,9 +1060,16 @@ sb.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
     if (session) {
       showLoading();
-      await loadAllData();
-      render();
-      showApp();
+      try {
+        await loadAllData();
+        render();
+        showApp();
+      } catch (err) {
+        console.error('Failed to load data:', err);
+        showToast('Could not load your data. Please refresh and try again.');
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('auth-overlay').classList.remove('hidden');
+      }
     } else {
       document.getElementById('loading-overlay').classList.add('hidden');
       document.getElementById('auth-overlay').classList.remove('hidden');
