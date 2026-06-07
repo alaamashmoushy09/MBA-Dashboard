@@ -307,6 +307,7 @@ select option{background:var(--surface2);}
   opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;
 }
 .toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:var(--green-bg);border-color:var(--green);color:var(--green);}
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar{width:5px;}
@@ -875,7 +876,7 @@ async function signInWithGoogle() {
   const redirectTo = window.location.href.split('#')[0];
   const { error } = await sb.auth.signInWithOAuth({
     provider:'google',
-    options:{ redirectTo }
+    options:{ redirectTo, scopes:'https://www.googleapis.com/auth/calendar.events' }
   });
   if (error) showToast('Sign-in failed: ' + error.message);
 }
@@ -893,6 +894,27 @@ function getProviderToken() {
   try {
     const raw = localStorage.getItem('sb-otakccqrmrglflamciby-auth-token');
     return JSON.parse(raw)?.provider_token ?? null;
+  } catch { return null; }
+}
+
+async function createCalendarEvent(title, dateStr, notes) {
+  const pt = getProviderToken();
+  if (!pt || !dateStr) return null;
+  try {
+    const body = {
+      summary: title,
+      description: notes || '',
+      start: { date: dateStr },
+      end: { date: dateStr }
+    };
+    const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) return null;
+    const ev = await r.json();
+    return ev.id || null;
   } catch { return null; }
 }
 
@@ -1061,11 +1083,12 @@ function showLoading() {
   document.getElementById('loading-overlay').classList.remove('hidden');
 }
 
-function showToast(msg, duration=4000) {
+function showToast(msg, duration=4000, success=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.classList.toggle('success', success);
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
+  setTimeout(() => { t.classList.remove('show'); t.classList.remove('success'); }, duration);
 }
 
 function toggleTheme() {
@@ -1318,6 +1341,12 @@ async function submitTask() {
       state.tasks.push({ id:row.id, title, due, phase, notes, done:false });
       document.getElementById('task-title').value = '';
       document.getElementById('task-notes').value = '';
+      if (due) {
+        const calId = await createCalendarEvent(title, due, notes);
+        if (calId) showToast('Task saved and added to Google Calendar ✓', 3000, true);
+        else if (getProviderToken()) showToast('Task saved. Calendar sync failed — try again.');
+        else showToast('Task saved. Sign out and back in to enable calendar sync.');
+      }
       render();
     } catch { showToast('Could not save task.'); }
   }
