@@ -24,6 +24,7 @@
   --purple:#A78BFA;--purple-bg:rgba(167,139,250,0.12);
   --teal:#2DD4BF;--teal-bg:rgba(45,212,191,0.12);
   --pink:#F472B6;--pink-bg:rgba(244,114,182,0.12);
+  --orange:#F97316;--orange-bg:rgba(249,115,22,0.12);
   --shadow-sm:0 1px 2px rgba(0,0,0,0.3);
 }
 :root[data-theme="light"]{
@@ -39,6 +40,7 @@
   --purple:#7C3AED;--purple-bg:#EDE9FE;
   --teal:#0D9488;--teal-bg:#CCFBF1;
   --pink:#BE185D;--pink-bg:#FCE7F3;
+  --orange:#C2410C;--orange-bg:rgba(194,65,12,0.10);
   --shadow-sm:0 1px 2px rgba(0,0,0,0.06);
 }
 
@@ -87,7 +89,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   padding:0;display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;
   transition:background .25s,border-color .25s;
 }
-.sidebar-top{padding:1.75rem 1.5rem 1.25rem;}
+.sidebar-top{padding:1.75rem 1.5rem 1.25rem;display:flex;flex-direction:column;}
+.sidebar-top-row{display:flex;align-items:center;gap:10px;margin-bottom:2px;}
+.avatar-circle{
+  width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;
+  border:1px solid var(--gold-border);
+}
+.avatar-letter{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:var(--gold-dim);border:1px solid var(--gold-border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:var(--gold);
+}
 .logo-wordmark{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);letter-spacing:.01em;line-height:1;}
 .logo-sub{font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;font-weight:500;margin-top:5px;}
 .phase-pill{
@@ -141,7 +154,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .main{margin-left:240px;padding:2.5rem 2.5rem;max-width:1000px;width:100%;}
 .page{display:none;}
 .page.active{display:block;}
-.page-header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+.page-header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.page-header-text{flex:1;}
 .page-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;color:var(--text);line-height:1.1;}
 .page-title em{font-style:italic;color:var(--gold);}
 [data-theme="light"] .page-title em{color:var(--navy);}
@@ -162,7 +176,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .cd-num{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:500;color:var(--text);line-height:1;letter-spacing:-.02em;}
 .cd-num.passed{font-size:32px;color:var(--gold);}
 .cd-label{font-size:12px;color:var(--text2);margin-top:6px;}
-.cd-date{font-size:10px;color:var(--text3);margin-top:3px;letter-spacing:.02em;}
+.cd-date-row{display:flex;align-items:center;gap:6px;margin-top:3px;}
+.cd-date{font-size:10px;color:var(--text3);letter-spacing:.02em;}
+.cd-edit-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:0;line-height:1;display:inline-flex;align-items:center;opacity:0.6;transition:opacity .15s;}
+.cd-edit-btn:hover{opacity:1;}
+.cd-date-input{font-size:10px;color:var(--text);background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:2px 5px;font-family:'Inter',sans-serif;width:120px;}
+
+/* ── Journey progress ── */
+.journey-bar-wrap{margin-bottom:20px;}
+.journey-bar-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.5rem;box-shadow:var(--shadow-sm);}
+.journey-bar-title{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);font-weight:600;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;}
+.journey-track{position:relative;height:6px;background:var(--surface3);border-radius:3px;margin:28px 0 32px;}
+.journey-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--amber));transition:width .6s ease;}
+.journey-today{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--gold);border-radius:50%;border:2px solid var(--bg);animation:pulse 1.8s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.5);}50%{box-shadow:0 0 0 6px rgba(201,168,76,0);}}
+.journey-milestone{position:absolute;top:50%;transform:translate(-50%,-50%);width:8px;height:8px;background:var(--surface3);border:2px solid var(--border2);border-radius:50%;}
+.journey-milestone-label{position:absolute;top:14px;transform:translateX(-50%);font-size:9px;color:var(--text3);white-space:nowrap;letter-spacing:.03em;}
+.journey-start-label{position:absolute;left:0;top:14px;font-size:9px;color:var(--text3);letter-spacing:.03em;}
+.journey-end-label{position:absolute;right:0;top:14px;font-size:9px;color:var(--text3);letter-spacing:.03em;}
 
 /* ── Metrics ── */
 .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
@@ -170,6 +201,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .metric-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px;}
 .metric-value{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--text);line-height:1;}
 .metric-sub{font-size:11px;color:var(--text3);margin-top:5px;}
+
+/* ── Calendar card ── */
+.cal-event-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.cal-event-row:last-child{border-bottom:none;}
+.cal-event-dot{width:7px;height:7px;background:var(--blue);border-radius:50%;margin-top:5px;flex-shrink:0;}
+.cal-event-time{font-size:10px;color:var(--text3);white-space:nowrap;min-width:60px;}
+.cal-event-title{font-size:13px;color:var(--text);}
 
 /* ── Forms ── */
 .form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end;}
@@ -188,8 +226,12 @@ select option{background:var(--surface2);}
 .btn-primary{background:var(--gold);color:#0A0F1E;}
 .btn-primary:hover{opacity:.88;transform:translateY(-1px);}
 [data-theme="light"] .btn-primary{background:var(--navy);color:#fff;}
+.btn-secondary{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:9px 16px;font-size:12px;border-radius:8px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;font-weight:500;}
+.btn-secondary:hover{border-color:var(--text2);color:var(--text);}
 .btn-danger{background:transparent;border:1px solid var(--border2);color:var(--text3);padding:5px 10px;font-size:11px;border-radius:6px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;}
 .btn-danger:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+.btn-icon{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px 6px;border-radius:5px;transition:color .15s,background .15s;display:inline-flex;align-items:center;}
+.btn-icon:hover{color:var(--text);background:var(--surface2);}
 .input-with-cur{display:flex;gap:0;}
 .input-with-cur input{border-radius:8px 0 0 8px;border-right:none;}
 .input-with-cur select{border-radius:0 8px 8px 0;width:auto;min-width:70px;}
@@ -204,6 +246,7 @@ select option{background:var(--surface2);}
 .cat-books{background:var(--purple-bg);color:var(--purple);}
 .cat-social{background:var(--pink-bg);color:var(--pink);}
 .cat-health{background:var(--teal-bg);color:var(--teal);}
+.cat-travel{background:var(--orange-bg);color:var(--orange);}
 .cat-other{background:var(--surface2);color:var(--text2);}
 .exp-desc{font-size:14px;color:var(--text);}
 .exp-note{font-size:11px;color:var(--text3);margin-top:2px;}
@@ -222,6 +265,15 @@ select option{background:var(--surface2);}
 .ph-loa{background:var(--amber-bg);color:var(--amber);}
 .ph-mba{background:var(--blue-bg);color:var(--blue);}
 .ph-summer{background:var(--green-bg);color:var(--green);}
+
+/* ── Networking cards ── */
+.network-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.network-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1.1rem;display:flex;flex-direction:column;gap:6px;}
+.network-name{font-size:15px;font-weight:600;color:var(--text);}
+.network-meta{font-size:11px;color:var(--text3);}
+.network-meta span{color:var(--text2);}
+.network-notes{font-size:12px;color:var(--text3);font-style:italic;}
+.network-actions{display:flex;gap:6px;margin-top:4px;}
 
 /* ── Course rows ── */
 .grade-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);gap:12px;}
@@ -261,18 +313,34 @@ select option{background:var(--surface2);}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 
+/* ── Bottom nav (mobile only) ── */
+.bottom-nav{display:none;}
+
 /* ── Mobile ── */
 @media(max-width:720px){
-  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:.75rem;}
-  .main{margin-left:0;padding:1.25rem;}
-  .sidebar-top{padding:.5rem;}
-  .nav-section{display:flex;gap:4px;flex-wrap:wrap;padding:.25rem;}
-  .nav-label{display:none;}
-  .nav-divider{display:none;}
-  .sidebar-footer{margin-top:0;border-top:none;padding:.5rem;}
-  .shell{flex-direction:column;}
+  .sidebar{display:none;}
+  .main{margin-left:0;padding:1.25rem;padding-bottom:80px;}
   .countdown-grid{grid-template-columns:1fr 1fr;}
   .metric-grid{grid-template-columns:1fr 1fr;}
+  .network-grid{grid-template-columns:1fr;}
+  .shell{flex-direction:column;}
+
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:150;
+    background:var(--surface);border-top:1px solid var(--border);
+    padding:0;height:56px;
+  }
+  .bnav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;border:none;background:none;cursor:pointer;
+    font-family:'Inter',sans-serif;font-size:9px;color:var(--text3);
+    letter-spacing:.05em;text-transform:uppercase;font-weight:500;
+    transition:color .15s;padding:4px 2px;
+  }
+  .bnav-item svg{width:18px;height:18px;opacity:.65;}
+  .bnav-item.active{color:var(--gold);}
+  .bnav-item.active svg{opacity:1;}
+  [data-theme="light"] .bnav-item.active{color:var(--navy);}
 }
 </style>
 </head>
@@ -304,8 +372,13 @@ select option{background:var(--surface2);}
 <div class="shell" id="app" style="display:none;">
   <aside class="sidebar">
     <div class="sidebar-top">
-      <div class="logo-wordmark">Alaa</div>
-      <div class="logo-sub">INSEAD MBA · 2026</div>
+      <div class="sidebar-top-row">
+        <div id="sidebar-avatar"></div>
+        <div>
+          <div class="logo-wordmark">Alaa</div>
+          <div class="logo-sub">INSEAD MBA · 2026</div>
+        </div>
+      </div>
       <div class="phase-pill">
         <span class="phase-pill-dot"></span>
         <span id="current-phase-text">Pre-LOA</span>
@@ -329,6 +402,10 @@ select option{background:var(--surface2);}
       <button class="nav-item" onclick="showPage('tasks',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         Tasks
+      </button>
+      <button class="nav-item" onclick="showPage('network',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Networking
       </button>
       <button class="nav-item" onclick="showPage('courses',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
@@ -355,36 +432,100 @@ select option{background:var(--surface2);}
     </div>
   </aside>
 
+  <!-- Mobile bottom nav -->
+  <nav class="bottom-nav">
+    <button class="bnav-item active" id="bnav-overview" onclick="showPage('overview',null);setBnavActive('bnav-overview')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Overview
+    </button>
+    <button class="bnav-item" id="bnav-expenses" onclick="showPage('expenses',null);setBnavActive('bnav-expenses')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/></svg>
+      Expenses
+    </button>
+    <button class="bnav-item" id="bnav-budget" onclick="showPage('budget',null);setBnavActive('bnav-budget')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Budget
+    </button>
+    <button class="bnav-item" id="bnav-tasks" onclick="showPage('tasks',null);setBnavActive('bnav-tasks')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Tasks
+    </button>
+    <button class="bnav-item" id="bnav-network" onclick="showPage('network',null);setBnavActive('bnav-network')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      Network
+    </button>
+    <button class="bnav-item" id="bnav-courses" onclick="showPage('courses',null);setBnavActive('bnav-courses')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Courses
+    </button>
+  </nav>
+
   <main class="main">
 
     <!-- OVERVIEW -->
     <div id="page-overview" class="page active">
       <div class="page-header">
-        <div class="page-title">Good <em id="greeting-time">evening</em>, Alaa.</div>
-        <div class="page-sub" id="today-date"></div>
+        <div class="page-header-text">
+          <div class="page-title">Good <em id="greeting-time">evening</em>, Alaa.</div>
+          <div class="page-sub" id="today-date"></div>
+        </div>
       </div>
-      <div class="countdown-grid">
+      <div class="countdown-grid" id="countdown-grid">
         <div class="cd-card cd-loa">
           <div class="cd-num" id="cd-loa">—</div>
           <div class="cd-label">Days to LOA</div>
-          <div class="cd-date">July 10, 2026</div>
+          <div class="cd-date-row">
+            <span class="cd-date" id="cd-loa-datelabel">July 10, 2026</span>
+            <button class="cd-edit-btn" onclick="editKeyDate('loa')" title="Edit date">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
         </div>
         <div class="cd-card cd-preloa">
           <div class="cd-num" id="cd-summer-pre">—</div>
           <div class="cd-label">Days to pre-MBA summer</div>
-          <div class="cd-date">July 11, 2026</div>
+          <div class="cd-date-row">
+            <span class="cd-date" id="cd-summer-pre-datelabel">July 11, 2026</span>
+            <button class="cd-edit-btn" onclick="editKeyDate('summerPre')" title="Edit date">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
         </div>
         <div class="cd-card cd-mba">
           <div class="cd-num" id="cd-mba">—</div>
           <div class="cd-label">Days to INSEAD</div>
-          <div class="cd-date">Aug 21, 2026</div>
+          <div class="cd-date-row">
+            <span class="cd-date" id="cd-mba-datelabel">Aug 21, 2026</span>
+            <button class="cd-edit-btn" onclick="editKeyDate('mba')" title="Edit date">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
         </div>
         <div class="cd-card cd-summer">
           <div class="cd-num" id="cd-summer">—</div>
           <div class="cd-label">Days to MBA summer</div>
-          <div class="cd-date">June 2027</div>
+          <div class="cd-date-row">
+            <span class="cd-date" id="cd-summer-datelabel">June 2027</span>
+            <button class="cd-edit-btn" onclick="editKeyDate('summer')" title="Edit date">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- MBA Journey progress bar -->
+      <div class="journey-bar-wrap">
+        <div class="journey-bar-card">
+          <div class="journey-bar-title">
+            <span>MBA Journey</span>
+            <span id="journey-pct" style="color:var(--gold);font-size:11px;font-weight:600;letter-spacing:.05em;"></span>
+          </div>
+          <div class="journey-track" id="journey-track">
+            <div class="journey-fill" id="journey-fill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="metric-grid">
         <div class="metric">
           <div class="metric-label">Total spent</div>
@@ -407,6 +548,13 @@ select option{background:var(--surface2);}
           <div class="metric-sub">this term</div>
         </div>
       </div>
+
+      <!-- Google Calendar this week -->
+      <div class="card">
+        <div class="card-title">This week</div>
+        <div id="ov-calendar"></div>
+      </div>
+
       <div class="card">
         <div class="card-title">Recent expenses</div>
         <div id="ov-expenses"></div>
@@ -420,8 +568,11 @@ select option{background:var(--surface2);}
     <!-- EXPENSES -->
     <div id="page-expenses" class="page">
       <div class="page-header">
-        <div class="page-title">Expenses</div>
-        <div class="page-sub">Enter each expense in the currency you actually paid in</div>
+        <div class="page-header-text">
+          <div class="page-title">Expenses</div>
+          <div class="page-sub">Enter each expense in the currency you actually paid in</div>
+        </div>
+        <button class="btn btn-secondary" onclick="exportCSV()" style="align-self:flex-end;">Export CSV</button>
       </div>
       <div class="card">
         <div class="card-title">Add expense</div>
@@ -451,6 +602,7 @@ select option{background:var(--surface2);}
               <option value="housing">Housing</option>
               <option value="food">Food</option>
               <option value="transport">Transport</option>
+              <option value="travel">Travel</option>
               <option value="books">Books / Supplies</option>
               <option value="social">Social / Events</option>
               <option value="health">Health</option>
@@ -479,8 +631,10 @@ select option{background:var(--surface2);}
     <!-- BUDGET -->
     <div id="page-budget" class="page">
       <div class="page-header">
-        <div class="page-title">Budget</div>
-        <div class="page-sub">Set a monthly target and track by category</div>
+        <div class="page-header-text">
+          <div class="page-title">Budget</div>
+          <div class="page-sub">Set a monthly target and track by category</div>
+        </div>
       </div>
       <div class="card">
         <div class="card-title">Monthly budget</div>
@@ -514,11 +668,13 @@ select option{background:var(--surface2);}
     <!-- TASKS -->
     <div id="page-tasks" class="page">
       <div class="page-header">
-        <div class="page-title">Tasks</div>
-        <div class="page-sub">Organized by phase of your journey</div>
+        <div class="page-header-text">
+          <div class="page-title">Tasks</div>
+          <div class="page-sub">Organized by phase of your journey</div>
+        </div>
       </div>
       <div class="card">
-        <div class="card-title">Add task</div>
+        <div class="card-title" id="task-form-title">Add task</div>
         <div class="form-row">
           <div class="form-group" style="flex:2;">
             <label class="form-label">Task</label>
@@ -544,7 +700,10 @@ select option{background:var(--surface2);}
             <input type="text" id="task-notes" placeholder="Any details..." />
           </div>
         </div>
-        <button class="btn btn-primary" onclick="addTask()">Add task</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-primary" id="task-submit-btn" onclick="submitTask()">Add task</button>
+          <button class="btn btn-secondary" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">Cancel</button>
+        </div>
       </div>
       <div class="phase-tabs">
         <button class="ptab active" onclick="filterTasks('all',this)">All</button>
@@ -556,11 +715,61 @@ select option{background:var(--surface2);}
       <div class="card"><div id="task-list"></div></div>
     </div>
 
+    <!-- NETWORKING -->
+    <div id="page-network" class="page">
+      <div class="page-header">
+        <div class="page-header-text">
+          <div class="page-title">Networking</div>
+          <div class="page-sub">Track contacts from your MBA journey</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" id="network-form-title">Add contact</div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2;">
+            <label class="form-label">Name</label>
+            <input type="text" id="net-name" placeholder="e.g. Sarah Chen" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">School</label>
+            <input type="text" id="net-school" placeholder="e.g. INSEAD" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Company</label>
+            <input type="text" id="net-company" placeholder="e.g. McKinsey" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">How met</label>
+            <input type="text" id="net-howmet" placeholder="e.g. Orientation dinner" />
+          </div>
+          <div class="form-group" style="max-width:175px;">
+            <label class="form-label">Follow-up date</label>
+            <input type="date" id="net-followup" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea id="net-notes" placeholder="Interests, context, next steps..." style="min-height:48px;"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-primary" id="net-submit-btn" onclick="submitNetwork()">Add contact</button>
+          <button class="btn btn-secondary" id="net-cancel-btn" onclick="cancelEditNetwork()" style="display:none;">Cancel</button>
+        </div>
+      </div>
+      <div id="network-list"></div>
+    </div>
+
     <!-- COURSES -->
     <div id="page-courses" class="page">
       <div class="page-header">
-        <div class="page-title">Courses &amp; Grades</div>
-        <div class="page-sub">Track your INSEAD modules and academic progress</div>
+        <div class="page-header-text">
+          <div class="page-title">Courses &amp; Grades</div>
+          <div class="page-sub">Track your INSEAD modules and academic progress</div>
+        </div>
       </div>
       <div class="card">
         <div class="card-title">Add course</div>
@@ -616,17 +825,24 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ── Constants ──
-const TO_USD = { SAR:0.2667, USD:1, EUR:1.0836, GBP:1.2706, AED:0.2723 };
+let TO_USD = { SAR:0.2667, USD:1, EUR:1.0836, GBP:1.2706, AED:0.2723 };
 const SYM = { SAR:'SAR ', USD:'$', EUR:'€', GBP:'£', AED:'AED ' };
-const CATS = { housing:'Housing', food:'Food', transport:'Transport', books:'Books / Supplies', social:'Social / Events', health:'Health', other:'Other' };
+const CATS = { housing:'Housing', food:'Food', transport:'Transport', travel:'Travel', books:'Books / Supplies', social:'Social / Events', health:'Health', other:'Other' };
 const PHASE_LABEL = { now:'Pre-LOA', loa:'Pre-MBA summer', mba:'MBA start', summer:'Summer break' };
 const PHASE_CLASS = { now:'ph-now', loa:'ph-loa', mba:'ph-mba', summer:'ph-summer' };
 
 let displayCur = localStorage.getItem('mba-display-cur') || 'USD';
 let taskFilter = 'all';
-let state = { expenses:[], tasks:[], courses:[], budgetUSD:0 };
+let editingTaskId = null;
+let editingNetworkId = null;
+let countersAnimated = false;
+let state = {
+  expenses:[], tasks:[], courses:[], budgetUSD:0, network:[],
+  keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' },
+  calendarEvents: null
+};
 
-// Apply saved theme immediately (before auth check, for no flash)
+// Apply saved theme immediately
 const savedTheme = localStorage.getItem('mba-theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -638,21 +854,49 @@ function fmt(usd, cur) {
   return SYM[cur] + (v >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(2));
 }
 
+// ── Live currency rates ──
+async function fetchCurrencyRates() {
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data && data.rates) {
+      const rates = data.rates;
+      if (rates.SAR) TO_USD.SAR = 1 / rates.SAR;
+      if (rates.EUR) TO_USD.EUR = 1 / rates.EUR;
+      if (rates.GBP) TO_USD.GBP = 1 / rates.GBP;
+      if (rates.AED) TO_USD.AED = 1 / rates.AED;
+    }
+  } catch { /* silently fall back to hardcoded */ }
+}
+
 // ── Auth ──
 async function signInWithGoogle() {
   const redirectTo = window.location.href.split('#')[0];
-  const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo } });
+  const { error } = await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{ redirectTo, scopes:'https://www.googleapis.com/auth/calendar.readonly' }
+  });
   if (error) showToast('Sign-in failed: ' + error.message);
 }
 
 async function signOut() {
   await sb.auth.signOut();
-  state = { expenses:[], tasks:[], courses:[], budgetUSD:0 };
+  state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, calendarEvents:null };
+  countersAnimated = false;
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-overlay').classList.remove('hidden');
 }
 
-// ── Direct REST helpers (bypasses SDK auth lock entirely) ──
+// ── Provider token (Google Calendar) ──
+function getProviderToken() {
+  try {
+    const raw = localStorage.getItem('sb-otakccqrmrglflamciby-auth-token');
+    return JSON.parse(raw)?.provider_token ?? null;
+  } catch { return null; }
+}
+
+// ── Direct REST helpers ──
 function getToken() {
   try {
     const raw = localStorage.getItem('sb-otakccqrmrglflamciby-auth-token');
@@ -699,11 +943,12 @@ async function apiUpsert(table, body) {
 
 // ── Data loading ──
 async function loadAllData() {
-  const [expData, taskData, courseData, settData] = await Promise.all([
+  const [expData, taskData, courseData, settData, netData] = await Promise.all([
     apiGet('expenses', 'order=created_at.desc'),
     apiGet('tasks', 'order=created_at.asc'),
     apiGet('courses', 'order=created_at.asc'),
-    apiGet('settings', 'limit=1')
+    apiGet('settings', 'limit=1'),
+    apiGet('network', 'order=created_at.desc').catch(() => [])
   ]);
 
   state.expenses = expData.map(e => ({
@@ -721,6 +966,11 @@ async function loadAllData() {
     period: c.period, grade: c.grade || '', notes: c.notes || ''
   }));
 
+  state.network = netData.map(n => ({
+    id: n.id, name: n.name, school: n.school || '', company: n.company || '',
+    how_met: n.how_met || '', follow_up: n.follow_up || '', notes: n.notes || ''
+  }));
+
   const sett = settData[0] || null;
   if (sett) {
     state.budgetUSD = sett.budget_usd || 0;
@@ -729,6 +979,12 @@ async function loadAllData() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('mba-theme', theme);
     updateThemeLabel(theme);
+    if (sett.key_dates) {
+      try {
+        const kd = typeof sett.key_dates === 'string' ? JSON.parse(sett.key_dates) : sett.key_dates;
+        state.keyDates = { ...state.keyDates, ...kd };
+      } catch {}
+    }
   }
 
   if (state.budgetUSD) {
@@ -740,16 +996,64 @@ async function loadAllData() {
 async function saveSettings() {
   const theme = document.documentElement.getAttribute('data-theme');
   try {
-    await apiUpsert('settings', { budget_usd: state.budgetUSD, display_cur: displayCur, theme, updated_at: new Date().toISOString() });
+    await apiUpsert('settings', {
+      budget_usd: state.budgetUSD,
+      display_cur: displayCur,
+      theme,
+      key_dates: JSON.stringify(state.keyDates),
+      updated_at: new Date().toISOString()
+    });
   } catch { showToast('Could not save settings.'); }
 }
 
+// ── Google Calendar ──
+async function fetchCalendarEvents() {
+  const token = getProviderToken();
+  if (!token) { state.calendarEvents = null; return; }
+  try {
+    const now = new Date();
+    const timeMin = now.toISOString();
+    const timeMax = new Date(now.getTime() + 7 * 86400000).toISOString();
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=7&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`;
+    const r = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!r.ok) { state.calendarEvents = null; return; }
+    const data = await r.json();
+    state.calendarEvents = data.items || [];
+  } catch { state.calendarEvents = null; }
+}
+
 // ── UI helpers ──
+function renderAvatar() {
+  const container = document.getElementById('sidebar-avatar');
+  if (!container) return;
+  try {
+    const raw = localStorage.getItem('sb-otakccqrmrglflamciby-auth-token');
+    const parsed = JSON.parse(raw);
+    const meta = parsed?.user?.user_metadata || {};
+    const avatarUrl = meta.avatar_url;
+    const name = meta.full_name || meta.name || 'A';
+    if (avatarUrl) {
+      container.innerHTML = `<img src="${avatarUrl}" class="avatar-circle" alt="avatar" onerror="this.parentNode.innerHTML='<div class=\\'avatar-letter\\'>${name.charAt(0).toUpperCase()}</div>'" />`;
+    } else {
+      container.innerHTML = `<div class="avatar-letter">${name.charAt(0).toUpperCase()}</div>`;
+    }
+  } catch {
+    container.innerHTML = `<div class="avatar-letter">A</div>`;
+  }
+}
+
+function setBnavActive(id) {
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
 function showApp() {
   document.getElementById('auth-overlay').classList.add('hidden');
   document.getElementById('loading-overlay').classList.add('hidden');
   document.getElementById('app').style.display = 'flex';
   updateThemeLabel(document.documentElement.getAttribute('data-theme'));
+  renderAvatar();
 }
 
 function showLoading() {
@@ -781,7 +1085,7 @@ function setDisplayCur(c, btn) {
   displayCur = c;
   localStorage.setItem('mba-display-cur', c);
   document.querySelectorAll('.dcbtn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   if (state.budgetUSD) document.getElementById('budget-amt').value = fromUSD(state.budgetUSD, c).toFixed(2);
   saveSettings();
   render();
@@ -821,7 +1125,123 @@ function greeting() {
   return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
 }
 
-// ── CRUD ──
+// ── Animated counters ──
+function animateCounter(el, target, duration) {
+  if (target <= 0) { el.textContent = '✓'; return; }
+  const start = target + Math.min(200, Math.ceil(target * 0.25));
+  const startTime = performance.now();
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start - eased * (start - target));
+    el.textContent = current;
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(step);
+}
+
+// ── Editable key dates ──
+function editKeyDate(key) {
+  const labelMap = { loa:'cd-loa-datelabel', summerPre:'cd-summer-pre-datelabel', mba:'cd-mba-datelabel', summer:'cd-summer-datelabel' };
+  const labelEl = document.getElementById(labelMap[key]);
+  if (!labelEl) return;
+  const currentDate = state.keyDates[key];
+  const input = document.createElement('input');
+  input.type = 'date';
+  input.value = currentDate;
+  input.className = 'cd-date-input';
+  labelEl.replaceWith(input);
+  input.focus();
+  function save() {
+    const val = input.value;
+    if (val) {
+      state.keyDates[key] = val;
+      saveSettings();
+    }
+    renderOverview();
+  }
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { input.blur(); }
+    else if (e.key === 'Escape') { renderOverview(); }
+  });
+}
+
+// ── Journey progress bar ──
+function renderJourneyBar() {
+  const JOURNEY_START = new Date('2026-01-01T00:00:00');
+  const JOURNEY_END   = new Date('2027-07-01T00:00:00');
+  const now = new Date();
+  const total = JOURNEY_END - JOURNEY_START;
+  const elapsed = Math.max(0, Math.min(now - JOURNEY_START, total));
+  const pct = elapsed / total * 100;
+
+  document.getElementById('journey-fill').style.width = pct.toFixed(1) + '%';
+  document.getElementById('journey-pct').textContent = pct.toFixed(0) + '% complete';
+
+  const milestones = [
+    { label:'LOA', date: new Date(state.keyDates.loa + 'T00:00:00') },
+    { label:'INSEAD', date: new Date(state.keyDates.mba + 'T00:00:00') },
+    { label:'MBA Summer', date: new Date(state.keyDates.summer + 'T00:00:00') },
+  ];
+
+  const track = document.getElementById('journey-track');
+  track.querySelectorAll('.journey-milestone,.journey-today,.journey-start-label,.journey-end-label,.journey-milestone-label').forEach(el => el.remove());
+
+  milestones.forEach(m => {
+    const mPct = Math.max(0, Math.min((m.date - JOURNEY_START) / total * 100, 100));
+    const dot = document.createElement('div');
+    dot.className = 'journey-milestone';
+    dot.style.left = mPct.toFixed(1) + '%';
+    const lbl = document.createElement('div');
+    lbl.className = 'journey-milestone-label';
+    lbl.style.left = mPct.toFixed(1) + '%';
+    lbl.textContent = m.label;
+    track.appendChild(dot);
+    track.appendChild(lbl);
+  });
+
+  const todayDot = document.createElement('div');
+  todayDot.className = 'journey-today';
+  todayDot.style.left = pct.toFixed(1) + '%';
+  track.appendChild(todayDot);
+
+  const startLbl = document.createElement('div');
+  startLbl.className = 'journey-start-label';
+  startLbl.textContent = 'Jan 2026';
+  track.appendChild(startLbl);
+
+  const endLbl = document.createElement('div');
+  endLbl.className = 'journey-end-label';
+  endLbl.textContent = 'Jul 2027';
+  track.appendChild(endLbl);
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  const rows = [['Date','Description','Category','Amount USD','Original Amount','Currency','Notes']];
+  state.expenses.forEach(e => {
+    rows.push([
+      e.date,
+      '"' + (e.desc || '').replace(/"/g,'""') + '"',
+      CATS[e.cat] || e.cat,
+      e.usdAmt.toFixed(2),
+      e.origAmt,
+      e.origCur,
+      '"' + (e.notes || '').replace(/"/g,'""') + '"'
+    ]);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'mba-expenses.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── CRUD: Expenses ──
 async function addExpense() {
   const desc = document.getElementById('exp-desc').value.trim();
   const rawAmt = parseFloat(document.getElementById('exp-amt').value);
@@ -851,20 +1271,56 @@ async function deleteExpense(id) {
   } catch { showToast('Could not delete expense.'); }
 }
 
-async function addTask() {
+// ── CRUD: Tasks (with edit) ──
+function startEditTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  editingTaskId = id;
+  document.getElementById('task-title').value = t.title;
+  document.getElementById('task-due').value = t.due;
+  document.getElementById('task-phase').value = t.phase;
+  document.getElementById('task-notes').value = t.notes;
+  document.getElementById('task-form-title').textContent = 'Edit task';
+  document.getElementById('task-submit-btn').textContent = 'Update task';
+  document.getElementById('task-cancel-btn').style.display = '';
+  document.getElementById('task-title').focus();
+}
+
+function cancelEditTask() {
+  editingTaskId = null;
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-due').value = todayStr;
+  document.getElementById('task-phase').value = 'now';
+  document.getElementById('task-notes').value = '';
+  document.getElementById('task-form-title').textContent = 'Add task';
+  document.getElementById('task-submit-btn').textContent = 'Add task';
+  document.getElementById('task-cancel-btn').style.display = 'none';
+}
+
+async function submitTask() {
   const title = document.getElementById('task-title').value.trim();
   const due = document.getElementById('task-due').value;
   const phase = document.getElementById('task-phase').value;
   const notes = document.getElementById('task-notes').value.trim();
   if (!title) return;
-  try {
-    const rows = await apiPost('tasks', { title, due: due || null, phase, notes, done: false });
-    const row = rows[0];
-    state.tasks.push({ id:row.id, title, due, phase, notes, done:false });
-    document.getElementById('task-title').value = '';
-    document.getElementById('task-notes').value = '';
-    render();
-  } catch { showToast('Could not save task.'); }
+  if (editingTaskId !== null) {
+    try {
+      await apiPatch('tasks', editingTaskId, { title, due: due || null, phase, notes });
+      const t = state.tasks.find(t => t.id === editingTaskId);
+      if (t) { t.title = title; t.due = due; t.phase = phase; t.notes = notes; }
+      cancelEditTask();
+      render();
+    } catch { showToast('Could not update task.'); }
+  } else {
+    try {
+      const rows = await apiPost('tasks', { title, due: due || null, phase, notes, done: false });
+      const row = rows[0];
+      state.tasks.push({ id:row.id, title, due, phase, notes, done:false });
+      document.getElementById('task-title').value = '';
+      document.getElementById('task-notes').value = '';
+      render();
+    } catch { showToast('Could not save task.'); }
+  }
 }
 
 async function toggleTask(id) {
@@ -885,6 +1341,69 @@ async function deleteTask(id) {
   } catch { showToast('Could not delete task.'); }
 }
 
+// ── CRUD: Networking ──
+function startEditNetwork(id) {
+  const n = state.network.find(n => n.id === id);
+  if (!n) return;
+  editingNetworkId = id;
+  document.getElementById('net-name').value = n.name;
+  document.getElementById('net-school').value = n.school;
+  document.getElementById('net-company').value = n.company;
+  document.getElementById('net-howmet').value = n.how_met;
+  document.getElementById('net-followup').value = n.follow_up;
+  document.getElementById('net-notes').value = n.notes;
+  document.getElementById('network-form-title').textContent = 'Edit contact';
+  document.getElementById('net-submit-btn').textContent = 'Update contact';
+  document.getElementById('net-cancel-btn').style.display = '';
+  document.getElementById('net-name').focus();
+}
+
+function cancelEditNetwork() {
+  editingNetworkId = null;
+  ['net-name','net-school','net-company','net-howmet','net-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('net-followup').value = '';
+  document.getElementById('network-form-title').textContent = 'Add contact';
+  document.getElementById('net-submit-btn').textContent = 'Add contact';
+  document.getElementById('net-cancel-btn').style.display = 'none';
+}
+
+async function submitNetwork() {
+  const name = document.getElementById('net-name').value.trim();
+  const school = document.getElementById('net-school').value.trim();
+  const company = document.getElementById('net-company').value.trim();
+  const how_met = document.getElementById('net-howmet').value.trim();
+  const follow_up = document.getElementById('net-followup').value;
+  const notes = document.getElementById('net-notes').value.trim();
+  if (!name) { showToast('Name is required.'); return; }
+  if (editingNetworkId !== null) {
+    try {
+      await apiPatch('network', editingNetworkId, { name, school, company, how_met, follow_up: follow_up || null, notes });
+      const n = state.network.find(n => n.id === editingNetworkId);
+      if (n) { n.name = name; n.school = school; n.company = company; n.how_met = how_met; n.follow_up = follow_up; n.notes = notes; }
+      cancelEditNetwork();
+      renderNetwork();
+    } catch { showToast('Could not update contact.'); }
+  } else {
+    try {
+      const rows = await apiPost('network', { name, school, company, how_met, follow_up: follow_up || null, notes });
+      const row = rows[0];
+      state.network.unshift({ id:row.id, name, school, company, how_met, follow_up, notes });
+      cancelEditNetwork();
+      renderNetwork();
+    } catch { showToast('Could not save contact.'); }
+  }
+}
+
+async function deleteNetwork(id) {
+  if (!confirm('Delete this contact?')) return;
+  try {
+    await apiDelete('network', id);
+    state.network = state.network.filter(n => n.id !== id);
+    renderNetwork();
+  } catch { showToast('Could not delete contact.'); }
+}
+
+// ── CRUD: Courses ──
 async function addCourse() {
   const name = document.getElementById('course-name').value.trim();
   const credits = parseFloat(document.getElementById('course-credits').value) || 0;
@@ -938,14 +1457,42 @@ function renderOverview() {
   document.getElementById('today-date').textContent = now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('current-phase-text').textContent = currentPhase();
 
-  const dates = { loa:'2026-07-10', 'summer-pre':'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' };
-  for (const [key, dateStr] of Object.entries(dates)) {
+  const kd = state.keyDates;
+  const dateMap = [
+    { cdId:'cd-loa', labelId:'cd-loa-datelabel', dateStr: kd.loa },
+    { cdId:'cd-summer-pre', labelId:'cd-summer-pre-datelabel', dateStr: kd.summerPre },
+    { cdId:'cd-mba', labelId:'cd-mba-datelabel', dateStr: kd.mba },
+    { cdId:'cd-summer', labelId:'cd-summer-datelabel', dateStr: kd.summer },
+  ];
+
+  const shouldAnimate = !countersAnimated;
+  if (shouldAnimate) countersAnimated = true;
+
+  dateMap.forEach(({ cdId, labelId, dateStr }) => {
     const d = daysUntil(dateStr);
-    const el = document.getElementById('cd-' + key);
-    if (!el) continue;
-    if (d <= 0) { el.textContent = '✓'; el.classList.add('passed'); }
-    else { el.textContent = d; el.classList.remove('passed'); }
-  }
+    const el = document.getElementById(cdId);
+    if (!el) return;
+    if (d <= 0) {
+      el.textContent = '✓';
+      el.classList.add('passed');
+    } else {
+      el.classList.remove('passed');
+      if (shouldAnimate) {
+        animateCounter(el, d, 800);
+      } else {
+        el.textContent = d;
+      }
+    }
+    const lbl = document.getElementById(labelId);
+    if (lbl && lbl.tagName !== 'INPUT') {
+      try {
+        const dateObj = new Date(dateStr + 'T00:00:00');
+        lbl.textContent = dateObj.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+      } catch {}
+    }
+  });
+
+  renderJourneyBar();
 
   const total = state.expenses.reduce((s,e) => s+e.usdAmt, 0);
   const mthExp = state.expenses.filter(e => {
@@ -960,10 +1507,38 @@ function renderOverview() {
   document.getElementById('ov-tasks').textContent = state.tasks.filter(t=>!t.done).length;
   document.getElementById('ov-courses').textContent = state.courses.length;
 
+  // Calendar this week
+  const calEl = document.getElementById('ov-calendar');
+  if (state.calendarEvents === null) {
+    calEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0;">Sign out and back in to connect Google Calendar.</div>';
+  } else if (state.calendarEvents.length === 0) {
+    calEl.innerHTML = '<div class="empty">No events this week</div>';
+  } else {
+    calEl.innerHTML = state.calendarEvents.map(ev => {
+      const startRaw = ev.start?.dateTime || ev.start?.date;
+      let timeStr = '';
+      if (startRaw) {
+        if (startRaw.includes('T')) {
+          const d = new Date(startRaw);
+          timeStr = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) + ' ' +
+            d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        } else {
+          const d = new Date(startRaw + 'T00:00:00');
+          timeStr = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) + ' (all day)';
+        }
+      }
+      return `<div class="cal-event-row">
+        <div class="cal-event-dot"></div>
+        <div class="cal-event-time">${timeStr}</div>
+        <div class="cal-event-title">${ev.summary || '(no title)'}</div>
+      </div>`;
+    }).join('');
+  }
+
   document.getElementById('ov-expenses').innerHTML = state.expenses.slice(0,5).map(e => `
     <div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
-        <span class="exp-cat cat-${e.cat}">${CATS[e.cat]}</span>
+        <span class="exp-cat cat-${e.cat}">${CATS[e.cat]||e.cat}</span>
         <div><div class="exp-desc">${e.desc}</div>${e.notes?`<div class="exp-note">${e.notes}</div>`:''}</div>
       </div>
       <div>
@@ -985,7 +1560,7 @@ function renderExpenses() {
   document.getElementById('expense-list').innerHTML = state.expenses.map(e => `
     <div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
-        <span class="exp-cat cat-${e.cat}">${CATS[e.cat]}</span>
+        <span class="exp-cat cat-${e.cat}">${CATS[e.cat]||e.cat}</span>
         <div><div class="exp-desc">${e.desc}</div><div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
@@ -1010,8 +1585,33 @@ function renderTasks() {
           ${t.due?' · Due '+t.due:''}${t.notes?' · '+t.notes:''}
         </div>
       </div>
+      <button class="btn-icon" onclick="startEditTask(${t.id})" title="Edit task">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
       <button class="btn-danger" onclick="deleteTask(${t.id})">✕</button>
     </div>`).join('') || '<div class="empty">No tasks in this phase yet</div>';
+}
+
+function renderNetwork() {
+  const container = document.getElementById('network-list');
+  if (!state.network.length) {
+    container.innerHTML = '<div class="empty">No contacts yet. Add your first contact above.</div>';
+    return;
+  }
+  container.innerHTML = `<div class="network-grid">${state.network.map(n => `
+    <div class="network-card">
+      <div class="network-name">${n.name}</div>
+      ${n.school || n.company ? `<div class="network-meta">${n.school ? `<span>${n.school}</span>` : ''}${n.school && n.company ? ' · ' : ''}${n.company ? `<span>${n.company}</span>` : ''}</div>` : ''}
+      ${n.how_met ? `<div class="network-meta">Met: <span>${n.how_met}</span></div>` : ''}
+      ${n.follow_up ? `<div class="network-meta">Follow-up: <span>${n.follow_up}</span></div>` : ''}
+      ${n.notes ? `<div class="network-notes">${n.notes}</div>` : ''}
+      <div class="network-actions">
+        <button class="btn-icon" onclick="startEditNetwork(${n.id})" title="Edit">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn-danger" onclick="deleteNetwork(${n.id})">✕</button>
+      </div>
+    </div>`).join('')}</div>`;
 }
 
 function renderBudget() {
@@ -1078,7 +1678,14 @@ function renderCourses() {
   document.getElementById('course-list').innerHTML = html || '<div class="empty">No courses yet. Add your first course above.</div>';
 }
 
-function render() { renderOverview(); renderExpenses(); renderTasks(); renderBudget(); renderCourses(); }
+function render() {
+  renderOverview();
+  renderExpenses();
+  renderTasks();
+  renderNetwork();
+  renderBudget();
+  renderCourses();
+}
 
 // ── Init ──
 const todayStr = new Date().toISOString().split('T')[0];
@@ -1090,12 +1697,15 @@ let appReady = false;
 async function bootApp() {
   if (appReady) return;
   showLoading();
-  // Add a 15-second timeout so spinner never hangs forever
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Connection timed out. Please refresh.')), 15000)
   );
   try {
-    await Promise.race([loadAllData(), timeout]);
+    await Promise.race([
+      Promise.all([fetchCurrencyRates(), loadAllData()]),
+      timeout
+    ]);
+    await fetchCalendarEvents();
     appReady = true;
     render();
     showApp();
@@ -1107,7 +1717,6 @@ async function bootApp() {
   }
 }
 
-// Check session directly from localStorage — no SDK lock involvement
 const _hasSession = !!getToken() && getToken() !== SUPA_KEY;
 if (_hasSession) {
   bootApp();
@@ -1116,13 +1725,13 @@ if (_hasSession) {
   document.getElementById('auth-overlay').classList.remove('hidden');
 }
 
-// Handle Google OAuth redirect and sign-out
 sb.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN' && session) {
     bootApp();
   } else if (event === 'SIGNED_OUT') {
     appReady = false;
-    state = { expenses:[], tasks:[], courses:[], budgetUSD:0 };
+    countersAnimated = false;
+    state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, calendarEvents:null };
     document.getElementById('app').style.display = 'none';
     document.getElementById('auth-overlay').classList.remove('hidden');
   }
