@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
@@ -1279,16 +1280,37 @@ function renderCalConnectHint() {
     el.innerHTML = '<span style="color:var(--text3);font-size:11px;">Checking calendar…</span>';
   }
 }
-async function reconnectCalendar() {
-  const redirectTo = window.location.href.split('#')[0];
-  await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo,
-      scopes: 'https://www.googleapis.com/auth/calendar.events',
-      queryParams: { access_type: 'offline', prompt: 'consent' }
+const GIS_CLIENT_ID = '918271495993-blp74bf2varpfcdkutoi8hhbpph974u6.apps.googleusercontent.com';
+let _gisTokenClient = null;
+
+function initGoogleCalendarAuth() {
+  if (!window.google?.accounts?.oauth2) { setTimeout(initGoogleCalendarAuth, 500); return; }
+  _gisTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GIS_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/calendar.events',
+    callback: (response) => {
+      if (response.access_token) {
+        _providerToken = response.access_token;
+        sessionStorage.setItem('mba-pt', response.access_token);
+        calendarConnected = true;
+        renderCalConnectHint();
+        showToast('Google Calendar connected ✓', 3000, true);
+      } else {
+        calendarConnected = false;
+        renderCalConnectHint();
+        showToast('Calendar access denied.');
+      }
     }
   });
+}
+
+function reconnectCalendar() {
+  if (_gisTokenClient) {
+    _gisTokenClient.requestAccessToken({ prompt: 'consent' });
+  } else {
+    showToast('Calendar auth not ready yet, try again in a moment.');
+    initGoogleCalendarAuth();
+  }
 }
 
 // ── Google Calendar ──
@@ -2268,6 +2290,7 @@ async function bootApp() {
       timeout
     ]);
     await Promise.all([fetchCalendarEvents(), fetchWeather(), checkCalendarConnection()]);
+    initGoogleCalendarAuth();
     appReady = true;
     render();
     showApp();
