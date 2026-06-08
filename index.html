@@ -427,30 +427,27 @@ select option{background:var(--surface2);}
 .task-overdue{color:var(--red)!important;}
 .task-urgent{color:var(--amber)!important;}
 
-/* ── Mobile layout improvements ── */
+/* ── Mobile & tablet layout ── */
 @media (max-width: 600px) {
   .form-row { flex-direction: column; }
-  .input-with-cur { flex-direction: row; } /* keep amount+currency together */
-  .task-row .btn-danger,
-  .task-row .btn-icon {
-    min-width: 44px;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  .form-group { min-width: 0 !important; max-width: 100% !important; width: 100% !important; }
+  .form-group[style*="max-width"] { max-width: 100% !important; }
+  .input-with-cur { flex-direction: row; }
+  input[type=text],input[type=number],input[type=date],input[type=url],select,textarea {
+    width: 100%; box-sizing: border-box;
   }
-  .exp-row {
-    flex-wrap: wrap;
-    gap: 8px;
+  .card { padding: 16px; }
+  .page-title { font-size: 28px; }
+  .task-row .btn-danger, .task-row .btn-icon {
+    min-width: 44px; min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
   }
-  .exp-row > div:first-child {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
-  .exp-note {
-    white-space: normal;
-    word-break: break-word;
-  }
+  .exp-row { flex-wrap: wrap; gap: 8px; }
+  .exp-row > div:first-child { flex: 1 1 100%; min-width: 0; }
+  .exp-note { white-space: normal; word-break: break-word; }
+  .metric-cards { grid-template-columns: 1fr 1fr !important; }
+  .countdown-cards { grid-template-columns: 1fr 1fr !important; }
+  .btn-primary { width: 100%; }
 }
 </style>
 </head>
