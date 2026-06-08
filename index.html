@@ -418,6 +418,14 @@ select option{background:var(--surface2);}
   .bnav-item.active svg{opacity:1;}
   [data-theme="light"] .bnav-item.active{color:var(--navy);}
 }
+/* ── Donut chart ── */
+.donut-wrap{display:flex;align-items:center;gap:28px;flex-wrap:wrap;margin-bottom:8px;}
+.donut-legend{display:flex;flex-direction:column;gap:7px;flex:1;min-width:160px;}
+.donut-legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);}
+.donut-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.donut-legend-val{margin-left:auto;font-weight:500;color:var(--text);}
+.task-overdue{color:var(--red)!important;}
+.task-urgent{color:var(--amber)!important;}
 </style>
 </head>
 <body>
@@ -614,7 +622,8 @@ select option{background:var(--surface2);}
     <div id="page-overview" class="page active">
       <div class="page-header">
         <div class="page-header-text">
-          <div class="page-title">Good <em id="greeting-time">evening</em>, Alaa.</div>
+          <div class="page-title">Good <em id="greeting-time">evening</em>, <em>Alaa</em>.</div>
+          <div id="greeting-sub" style="font-size:13px;color:var(--text3);margin-top:6px;font-style:italic;"></div>
           <div class="page-sub" id="today-date"></div>
         </div>
       </div>
@@ -843,6 +852,10 @@ select option{background:var(--surface2);}
             <label class="form-label">Notes (optional)</label>
             <textarea id="exp-notes" placeholder="Any additional details..."></textarea>
           </div>
+          <div class="form-group">
+            <label class="form-label">Receipt link (optional)</label>
+            <input type="url" id="exp-receipt" placeholder="https://drive.google.com/..." />
+          </div>
         </div>
         <button class="btn btn-primary" onclick="addExpense()">Add expense</button>
       </div>
@@ -881,6 +894,10 @@ select option{background:var(--surface2);}
       </div>
       <div class="card">
         <div class="card-title">Spending by category</div>
+        <div class="donut-wrap">
+          <svg id="donut-svg" width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="54" fill="none" stroke="var(--border2)" stroke-width="22"/><text id="donut-center" x="70" y="75" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="18" fill="var(--text)">—</text></svg>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
         <div id="budget-cats"></div>
       </div>
       <div class="card">
@@ -991,6 +1008,7 @@ select option{background:var(--surface2);}
           <button class="btn btn-secondary" id="net-cancel-btn" onclick="cancelEditNetwork()" style="display:none;">Cancel</button>
         </div>
       </div>
+      <div id="network-stats" style="margin-bottom:14px;"></div>
       <div id="network-list"></div>
     </div>
 
@@ -1283,7 +1301,9 @@ async function loadAllData() {
 
   state.expenses = expData.map(e => ({
     id: e.id, desc: e.description, usdAmt: e.usd_amt,
-    origAmt: e.orig_amt, origCur: e.orig_cur, cat: e.cat, date: e.date, notes: e.notes || ''
+    origAmt: e.orig_amt, origCur: e.orig_cur, cat: e.cat, date: e.date,
+    notes: (e.notes||'').replace(/\n?\[receipt:[^\]]*\]/,'').trim(),
+    receiptUrl: (e.notes||'').match(/\[receipt:([^\]]+)\]/)?.[1] || null
   }));
 
   state.tasks = taskData.map(t => ({
@@ -1541,6 +1561,13 @@ function currentPhase() {
 function greeting() {
   const h = new Date().getHours();
   return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+}
+function greetingSub() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Start the day strong — your MBA dream is getting closer.';
+  if (h < 17) return 'Keep the momentum going.';
+  if (h < 21) return 'Winding down? Check what\'s next on your list.';
+  return 'Late night productivity — respect.';
 }
 
 // ── Animated counters ──
@@ -1912,15 +1939,18 @@ async function addExpense() {
   const cat = document.getElementById('exp-cat').value;
   const date = document.getElementById('exp-date').value;
   const notes = document.getElementById('exp-notes').value.trim();
+  const receipt = document.getElementById('exp-receipt').value.trim();
   if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Please fill in description, amount, and date.'); return; }
   const usdAmt = toUSD(rawAmt, cur);
   try {
-    const rows = await apiPost('expenses', { description:desc, usd_amt:usdAmt, orig_amt:rawAmt, orig_cur:cur, cat, date, notes });
+    const fullNotes = notes + (receipt ? '\n[receipt:' + receipt + ']' : '');
+    const rows = await apiPost('expenses', { description:desc, usd_amt:usdAmt, orig_amt:rawAmt, orig_cur:cur, cat, date, notes: fullNotes });
     const row = rows[0];
-    state.expenses.unshift({ id:row.id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes });
+    state.expenses.unshift({ id:row.id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes, receiptUrl: receipt || null });
     document.getElementById('exp-desc').value = '';
     document.getElementById('exp-amt').value = '';
     document.getElementById('exp-notes').value = '';
+    document.getElementById('exp-receipt').value = '';
     render();
   } catch { showToast('Could not save expense. Check your connection.'); }
 }
@@ -2143,6 +2173,8 @@ async function saveBudget() {
 function renderOverview() {
   const now = new Date();
   document.getElementById('greeting-time').textContent = greeting();
+  const grSubEl = document.getElementById('greeting-sub');
+  if (grSubEl) grSubEl.textContent = greetingSub();
   document.getElementById('today-date').textContent = now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('current-phase-text').textContent = currentPhase();
 
@@ -2280,7 +2312,7 @@ function renderExpenses() {
     <div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
         <span class="exp-cat cat-${e.cat}">${CATS[e.cat]||e.cat}</span>
-        <div><div class="exp-desc">${e.desc}</div><div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}</div></div>
+        <div><div class="exp-desc">${e.desc}</div><div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}${e.receiptUrl?` · <a href="${e.receiptUrl}" target="_blank" style="color:var(--gold);text-decoration:none;">📎 Receipt</a>`:''}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <div>
@@ -2298,14 +2330,19 @@ function renderTasks() {
   const done = filtered.filter(t=>t.done);
   function taskRow(t) {
     const { time, notes: cleanNotes } = parseTaskTime(t.notes);
-    const dueDisplay = t.due ? (' · ' + new Date(t.due+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + (time ? ' at ' + (() => { const [h,m]=time.split(':'); const h12=+h%12||12; return h12+':'+m+' '+(+h<12?'AM':'PM'); })() : '')) : '';
+    const dueDate = t.due ? new Date(t.due+'T00:00:00') : null;
+    const today2 = new Date(); today2.setHours(0,0,0,0);
+    const diffDays = dueDate ? Math.ceil((dueDate-today2)/86400000) : null;
+    const urgencyClass = !t.done && diffDays !== null ? (diffDays < 0 ? 'task-overdue' : diffDays <= 3 ? 'task-urgent' : '') : '';
+    const dueDisplay = t.due ? (' · ' + dueDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + (time ? ' at ' + (() => { const [h,m]=time.split(':'); const h12=+h%12||12; return h12+':'+m+' '+(+h<12?'AM':'PM'); })() : '')) : '';
+    const overdueLabel = !t.done && diffDays !== null && diffDays < 0 ? ' (overdue)' : (!t.done && diffDays === 0 ? ' (today)' : '');
     return `<div class="task-row">
       <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask(${t.id})" />
       <div style="flex:1;">
         <div style="font-size:14px;" class="${t.done?'task-done-text':''}">${t.title}</div>
-        <div class="task-due">
+        <div class="task-due ${urgencyClass}">
           <span class="phase-badge ${PHASE_CLASS[t.phase]}">${PHASE_LABEL[t.phase]}</span>
-          ${dueDisplay}${cleanNotes?' · '+cleanNotes:''}
+          ${dueDisplay}${overdueLabel}${cleanNotes?' · '+cleanNotes:''}
         </div>
       </div>
       ${!t.done?`<button class="btn-icon" onclick="startEditTask(${t.id})" title="Edit">
@@ -2331,6 +2368,20 @@ function renderTasks() {
 
 function renderNetwork() {
   const container = document.getElementById('network-list');
+  const statsEl = document.getElementById('network-stats');
+  // Stats card
+  if (statsEl && state.network.length > 0) {
+    const today3 = new Date(); today3.setHours(0,0,0,0);
+    const followUps = state.network.filter(n => n.follow_up && new Date(n.follow_up+'T00:00:00') <= today3);
+    const bySchool = {};
+    state.network.forEach(n => { const k = n.school||'Other'; bySchool[k]=(bySchool[k]||0)+1; });
+    const topSchools = Object.entries(bySchool).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    statsEl.innerHTML = `<div class="card" style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:600;margin-bottom:6px;">Total contacts</div><div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;color:var(--text);line-height:1;">${state.network.length}</div></div>
+      <div style="flex:1;min-width:140px;"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:600;margin-bottom:8px;">By school</div>${topSchools.map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px;"><span>${k}</span><span style="font-weight:500;color:var(--text);">${v}</span></div>`).join('')}</div>
+      ${followUps.length ? `<div style="min-width:160px;"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);font-weight:600;margin-bottom:8px;">⚡ Follow up due (${followUps.length})</div>${followUps.slice(0,3).map(n=>`<div style="font-size:12px;color:var(--text2);margin-bottom:3px;">${n.name}</div>`).join('')}${followUps.length>3?`<div style="font-size:11px;color:var(--text3);">+${followUps.length-3} more</div>`:''}</div>` : ''}
+    </div>`;
+  } else if (statsEl) { statsEl.innerHTML = ''; }
   if (!state.network.length) {
     container.innerHTML = '<div class="empty">No contacts yet. Add your first contact above.</div>';
     return;
@@ -2355,6 +2406,35 @@ function renderBudget() {
   const catTotals = {};
   Object.keys(CATS).forEach(k => catTotals[k]=0);
   state.expenses.forEach(e => { catTotals[e.cat]=(catTotals[e.cat]||0)+e.usdAmt; });
+  // Donut chart
+  const DONUT_COLORS = { housing:'var(--blue)', food:'var(--green)', transport:'var(--amber)', travel:'var(--orange)', books:'var(--purple)', social:'var(--pink)', health:'var(--teal)', other:'var(--text3)' };
+  const total = Object.values(catTotals).reduce((s,v)=>s+v,0);
+  const donutSvg = document.getElementById('donut-svg');
+  const donutLegend = document.getElementById('donut-legend');
+  const donutCenter = document.getElementById('donut-center');
+  if (donutSvg && total > 0) {
+    const r = 54, cx = 70, cy = 70, circ = 2*Math.PI*r;
+    const slices = Object.entries(catTotals).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+    let offset = -Math.PI/2;
+    const paths = slices.map(([k,v]) => {
+      const angle = (v/total)*2*Math.PI;
+      const x1=cx+r*Math.cos(offset), y1=cy+r*Math.sin(offset);
+      const x2=cx+r*Math.cos(offset+angle), y2=cy+r*Math.sin(offset+angle);
+      const large = angle>Math.PI?1:0;
+      const col = DONUT_COLORS[k]||'var(--text3)';
+      const d = `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`;
+      offset += angle;
+      return `<path d="${d}" fill="${col}" opacity="0.85"/>`;
+    });
+    // Inner white/bg circle to make donut
+    const existing = donutSvg.querySelectorAll('path,circle.donut-inner');
+    existing.forEach(el=>el.remove());
+    const baseCircle = donutSvg.querySelector('circle');
+    donutSvg.innerHTML = paths.join('') + `<circle cx="70" cy="70" r="43" fill="var(--surface)"/>` + `<text id="donut-center" x="70" y="75" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="15" fill="var(--text)">${fmt(total)}</text>`;
+    donutLegend.innerHTML = slices.map(([k,v])=>`<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${DONUT_COLORS[k]||'var(--text3)'}"></div><span>${CATS[k]||k}</span><span class="donut-legend-val">${fmt(v)}</span></div>`).join('');
+  } else if (donutSvg) {
+    donutLegend.innerHTML = '<div style="font-size:12px;color:var(--text3);">Add expenses to see chart</div>';
+  }
   const maxCat = Math.max(...Object.values(catTotals),1);
   const hasData = Object.values(catTotals).some(v=>v>0);
   document.getElementById('budget-cats').innerHTML = hasData
