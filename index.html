@@ -856,6 +856,15 @@ select option{background:var(--surface2);}
             <label class="form-label">Receipt link (optional)</label>
             <input type="url" id="exp-receipt" placeholder="https://drive.google.com/..." />
           </div>
+          <div class="form-group">
+            <label class="form-label">Scan receipt (photo)</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="file" id="exp-receipt-img" accept="image/*" capture="environment" style="display:none;" onchange="scanReceipt(this)">
+              <button type="button" class="btn" style="background:var(--card2);border:1px solid var(--border2);color:var(--text1);font-size:13px;padding:8px 16px;display:flex;align-items:center;gap:6px;" onclick="document.getElementById('exp-receipt-img').click()">📷 Scan receipt</button>
+              <span id="scan-status" style="font-size:12px;color:var(--text3);"></span>
+              <span onclick="const k=prompt('Gemini API key:',localStorage.getItem('mba-gemini-key')||'');if(k!==null)localStorage.setItem('mba-gemini-key',k.trim());" style="font-size:11px;color:var(--text3);cursor:pointer;text-decoration:underline;margin-left:4px;">set key</span>
+            </div>
+          </div>
         </div>
         <button class="btn btn-primary" onclick="addExpense()">Add expense</button>
       </div>
@@ -1070,6 +1079,9 @@ select option{background:var(--surface2);}
 
 <script>
 // ── Supabase init ──
+function getGeminiKey() {
+  return localStorage.getItem('mba-gemini-key') || '';
+}
 const SUPA_URL = 'https://otakccqrmrglflamciby.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YWtjY3FybXJnbGZsYW1jaWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTQwNTksImV4cCI6MjA5NjMzMDA1OX0.1wmtuRbH9RXmr5yHwgfhA-h1ibhyRIG-beoBzz-STDo';
 
@@ -1930,6 +1942,73 @@ function renderMilestoneCards() {
 }
 function renderMilestoneList() { renderMilestoneCards(); }
 
+
+/// ── Receipt scanning via Gemini ──
+async function scanReceipt(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('scan-status');
+  statusEl.textContent = '⏳ Scanning…';
+  try {
+    const base64 = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = e => res(e.target.result.split(',')[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(file);
+    });
+    const prompt = `You are a receipt parser. Look at this receipt image and extract:
+1. amount (number only, total amount paid)
+2. currency (3-letter code like USD, EUR, SAR, AED, GBP — guess from context if not shown)
+3. date (YYYY-MM-DD format)
+4. description (merchant name or short description, max 40 chars)
+5. category (one of: housing, food, transport, health, education, entertainment, shopping, other)
+
+Respond ONLY with a JSON object like: {"amount":25.50,"currency":"USD","date":"2026-06-08","description":"Starbucks Coffee","category":"food"}
+If you cannot read a field, use null for that field.`;
+    let geminiKey = getGeminiKey();
+    if (!geminiKey) {
+      geminiKey = prompt('Enter your Gemini API key (saved locally, never uploaded):');
+      if (!geminiKey) { statusEl.textContent = ''; return; }
+      localStorage.setItem('mba-gemini-key', geminiKey.trim());
+      geminiKey = geminiKey.trim();
+    }
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { text: prompt },
+            { inline_data: { mime_type: file.type, data: base64 } }
+          ]}]
+        })
+      }
+    );
+    if (!resp.ok) throw new Error('Gemini API error: ' + resp.status);
+    const data = await resp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Could not parse response');
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (parsed.amount) document.getElementById('exp-amt').value = parsed.amount;
+    if (parsed.currency) document.getElementById('exp-cur').value = parsed.currency;
+    if (parsed.date) document.getElementById('exp-date').value = parsed.date;
+    if (parsed.description) document.getElementById('exp-desc').value = parsed.description;
+    if (parsed.category) {
+      const sel = document.getElementById('exp-cat');
+      if ([...sel.options].some(o => o.value === parsed.category)) sel.value = parsed.category;
+    }
+    statusEl.textContent = '✓ Done — review and adjust if needed';
+    statusEl.style.color = 'var(--green)';
+    setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = ''; }, 4000);
+  } catch(e) {
+    statusEl.textContent = '✗ Scan failed — fill in manually';
+    statusEl.style.color = 'var(--red)';
+    setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = ''; }, 4000);
+  }
+  input.value = '';
+}
 
 // ── CRUD: Expenses ──
 async function addExpense() {
