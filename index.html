@@ -1288,7 +1288,7 @@ async function loadAllData() {
 
   state.tasks = taskData.map(t => ({
     id: t.id, title: t.title, due: t.due || '',
-    phase: t.phase, notes: t.notes || '', done: t.done
+    phase: t.phase, notes: t.notes || '', done: t.done, calEventId: t.cal_event_id || null
   }));
 
   state.courses = courseData.map(c => ({
@@ -1339,11 +1339,12 @@ async function saveSettings() {
   } catch { showToast('Could not save settings.'); }
 }
 
-// ── Google Calendar event ID map (localStorage, device-specific) ──
-function getCalMap() { try { return JSON.parse(localStorage.getItem('mba-cal-map')||'{}'); } catch { return {}; } }
-function saveCalMap(m) { localStorage.setItem('mba-cal-map', JSON.stringify(m)); }
-function storeCalEventId(taskId, calEventId) { const m=getCalMap(); m[taskId]=calEventId; saveCalMap(m); }
-function removeCalEventId(taskId) { const m=getCalMap(); delete m[taskId]; saveCalMap(m); }
+// ── Google Calendar event ID — stored in Supabase (cross-device) ──
+async function storeCalEventId(taskId, calEventId) {
+  const t = state.tasks.find(t => t.id === taskId);
+  if (t) t.calEventId = calEventId;
+  try { await apiPatch('tasks', taskId, { cal_event_id: calEventId }); } catch {}
+}
 async function deleteCalendarEvent(calEventId) {
   const pt = getProviderToken();
   if (!calEventId) return;
@@ -1991,13 +1992,14 @@ async function submitTask() {
     try {
       const rows = await apiPost('tasks', { title, due: due || null, phase, notes, done: false });
       const row = rows[0];
-      state.tasks.push({ id:row.id, title, due, phase, notes, done:false });
+      const newTask = { id:row.id, title, due, phase, notes, done:false, calEventId:null };
+      state.tasks.push(newTask);
       document.getElementById('task-title').value = '';
       document.getElementById('task-time').value = '';
       document.getElementById('task-notes').value = '';
       if (due) {
         const calId = await createCalendarEvent(title, due, notes, time);
-        if (calId) { storeCalEventId(row.id, calId); showToast('Task saved + added to Google Calendar ✓', 3000, true); }
+        if (calId) { await storeCalEventId(row.id, calId); showToast('Task saved + added to Google Calendar ✓', 3000, true); }
         else if (!getProviderToken()) showToast('Task saved. Connect Google Calendar below to enable sync.');
         // else: createCalendarEvent already showed a specific error toast
       }
@@ -2018,9 +2020,9 @@ async function toggleTask(id) {
 
 async function deleteTask(id) {
   try {
-    const calMap = getCalMap();
+    const task = state.tasks.find(t => t.id === id);
     await apiDelete('tasks', id);
-    if (calMap[id]) { await deleteCalendarEvent(calMap[id]); removeCalEventId(id); }
+    if (task?.calEventId) await deleteCalendarEvent(task.calEventId);
     state.tasks = state.tasks.filter(t => t.id !== id);
     fetchCalendarEvents().then(() => renderOverview());
     render();
