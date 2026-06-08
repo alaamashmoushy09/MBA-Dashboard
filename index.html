@@ -1129,28 +1129,34 @@ async function createCalendarEvent(title, dateStr, notes, timeStr) {
   const pt = getProviderToken();
   if (!pt || !dateStr) return null;
   const { notes: cleanNotes } = parseTaskTime(notes || '');
+
+  // Pure arithmetic next-day (zero Date objects, zero UTC conversion)
+  function nextDay(ds) {
+    const [y,m,d] = ds.split('-').map(Number);
+    const days = [0,31,(y%4===0&&(y%100!==0||y%400===0))?29:28,31,30,31,30,31,31,30,31,30,31];
+    let nd=d+1, nm=m, ny=y;
+    if(nd>days[m]){nd=1;nm++;if(nm>12){nm=1;ny++;}}
+    return ny+'-'+String(nm).padStart(2,'0')+'-'+String(nd).padStart(2,'0');
+  }
+
   let startObj, endObj;
   if (timeStr) {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const startDT = dateStr + 'T' + timeStr + ':00';
-    const endDate = new Date(startDT); endDate.setHours(endDate.getHours() + 1);
-    const endDT = endDate.toISOString().slice(0,16) + ':00';
-    startObj = { dateTime: startDT, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
-    endObj   = { dateTime: endDT,   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+    // Add 1 hour using pure arithmetic on HH:MM
+    const [hh, mm] = timeStr.split(':').map(Number);
+    const endHH = (hh + 1) % 24;
+    const endDateStr = (hh === 23) ? nextDay(dateStr) : dateStr;
+    const endDT = endDateStr + 'T' + String(endHH).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00';
+    startObj = { dateTime: startDT, timeZone: tz };
+    endObj   = { dateTime: endDT,   timeZone: tz };
   } else {
-    // Compute next day using local date math (avoid toISOString UTC conversion)
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const nd = new Date(y, m - 1, d + 1);
-    const nextDayStr = nd.getFullYear() + '-' + String(nd.getMonth()+1).padStart(2,'0') + '-' + String(nd.getDate()).padStart(2,'0');
     startObj = { date: dateStr };
-    endObj   = { date: nextDayStr };
+    endObj   = { date: nextDay(dateStr) };
   }
+
   try {
-    const body = {
-      summary: title,
-      description: cleanNotes || '',
-      start: startObj,
-      end: endObj
-    };
+    const body = { summary: title, description: cleanNotes || '', start: startObj, end: endObj };
     const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
