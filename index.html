@@ -1089,7 +1089,7 @@ async function signInWithGoogle() {
   const redirectTo = window.location.href.split('#')[0];
   const { error } = await sb.auth.signInWithOAuth({
     provider:'google',
-    options:{ redirectTo, scopes:'https://www.googleapis.com/auth/calendar.events', queryParams:{ access_type:'offline', prompt:'consent' } }
+    options:{ redirectTo }
   });
   if (error) showToast('Sign-in failed: ' + error.message);
 }
