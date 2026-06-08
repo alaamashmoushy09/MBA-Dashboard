@@ -1116,11 +1116,19 @@ let calendarConnected = null; // null=unknown, true=ok, false=disconnected
 async function checkCalendarConnection() {
   const pt = getProviderToken();
   if (!pt) { calendarConnected = false; renderCalConnectHint(); return; }
+  // If localStorage token is still within its lifetime, trust it without an API call
+  try {
+    const stored = JSON.parse(localStorage.getItem('mba-cal-token') || 'null');
+    if (stored && stored.token === pt && Date.now() < stored.expiry) {
+      calendarConnected = true; renderCalConnectHint(); return;
+    }
+  } catch {}
   try {
     const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary', {
       headers: { 'Authorization': `Bearer ${pt}` }
     });
     calendarConnected = r.ok;
+    if (!r.ok) { try { localStorage.removeItem('mba-cal-token'); } catch {} }
   } catch { calendarConnected = false; }
   renderCalConnectHint();
 }
@@ -1368,7 +1376,8 @@ function initGoogleCalendarAuth() {
 
 function reconnectCalendar() {
   if (_gisTokenClient) {
-    _gisTokenClient.requestAccessToken({ prompt: 'consent' });
+    // Use select_account (just picks account, no full consent screen since already approved)
+    _gisTokenClient.requestAccessToken({ prompt: 'select_account' });
   } else {
     showToast('Calendar auth not ready, try again in a moment.');
     initGoogleCalendarAuth();
