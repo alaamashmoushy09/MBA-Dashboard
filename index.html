@@ -1948,7 +1948,8 @@ async function addExpense() {
   let receiptUrl = null;
   if (imgFile) {
     try {
-      const userId = (await supabase.auth.getUser()).data.user.id;
+      let userId = 'user';
+      try { const p = JSON.parse(atob(getToken().split('.')[1])); userId = p.sub || 'user'; } catch {}
       const path = userId + '/' + Date.now() + '.jpg';
       // Try to create bucket (ignore errors — may already exist)
       const hdrs = apiHeaders();
