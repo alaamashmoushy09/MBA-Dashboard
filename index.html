@@ -1963,11 +1963,11 @@ async function addExpense() {
         headers: uploadHdrs,
         body: imgFile
       });
-      if (!uploadResp.ok) throw new Error('Upload failed: ' + uploadResp.status);
+      if (!uploadResp.ok) { const t = await uploadResp.text(); throw new Error(uploadResp.status + ': ' + t.slice(0,200)); }
       receiptUrl = SUPA_URL + '/storage/v1/object/public/receipts/' + path;
     } catch (err) {
       console.error('Photo upload error:', err);
-      showToast('Photo upload failed, expense saved');
+      showToast('Upload error: ' + err.message.slice(0,150));
     }
   }
 
