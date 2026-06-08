@@ -426,6 +426,32 @@ select option{background:var(--surface2);}
 .donut-legend-val{margin-left:auto;font-weight:500;color:var(--text);}
 .task-overdue{color:var(--red)!important;}
 .task-urgent{color:var(--amber)!important;}
+
+/* ── Mobile layout improvements ── */
+@media (max-width: 600px) {
+  .form-row { flex-direction: column; }
+  .input-with-cur { flex-direction: row; } /* keep amount+currency together */
+  .task-row .btn-danger,
+  .task-row .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .exp-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .exp-row > div:first-child {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .exp-note {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
 </style>
 </head>
 <body>
@@ -901,6 +927,15 @@ select option{background:var(--surface2);}
         <div id="budget-cats"></div>
       </div>
       <div class="card">
+        <div class="card-title">Monthly targets</div>
+        <div id="budget-targets-form">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Set a monthly spending limit per category. Leave blank to remove a target.</div>
+          <div id="budget-targets-inputs"></div>
+          <button class="btn btn-primary" onclick="saveBudgetTargets()" style="margin-top:8px;">Save targets</button>
+        </div>
+        <div id="budget-targets-progress" style="margin-top:18px;"></div>
+      </div>
+      <div class="card">
         <div class="card-title">Monthly totals</div>
         <div id="budget-monthly"></div>
       </div>
@@ -945,6 +980,14 @@ select option{background:var(--surface2);}
           <div class="form-group">
             <label class="form-label">Notes (optional)</label>
             <input type="text" id="task-notes" placeholder="Any details..." />
+          </div>
+          <div class="form-group" style="max-width:140px;">
+            <label class="form-label">Repeat</label>
+            <select id="task-repeat">
+              <option value="">None</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
           </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -1994,26 +2037,68 @@ async function deleteExpense(id) {
   } catch { showToast('Could not delete expense.'); }
 }
 
+function editExpense(id) {
+  // Re-render with that row in edit mode
+  _editingExpenseId = id;
+  renderExpenses();
+}
+let _editingExpenseId = null;
+
+async function saveExpenseEdit(id) {
+  const desc = document.getElementById('ee-desc-'+id).value.trim();
+  const rawAmt = parseFloat(document.getElementById('ee-amt-'+id).value);
+  const cur = document.getElementById('ee-cur-'+id).value;
+  const cat = document.getElementById('ee-cat-'+id).value;
+  const date = document.getElementById('ee-date-'+id).value;
+  const notes = document.getElementById('ee-notes-'+id).value.trim();
+  if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Please fill in description, amount, and date.'); return; }
+  const usdAmt = toUSD(rawAmt, cur);
+  try {
+    await apiPatch('expenses', id, { description: desc, usd_amt: usdAmt, orig_amt: rawAmt, orig_cur: cur, cat, date, notes });
+    const e = state.expenses.find(e => e.id === id);
+    if (e) { e.desc = desc; e.usdAmt = usdAmt; e.origAmt = rawAmt; e.origCur = cur; e.cat = cat; e.date = date; e.notes = notes; }
+    _editingExpenseId = null;
+    render();
+    showToast('Expense updated ✓', 2500, true);
+  } catch { showToast('Could not update expense.'); }
+}
+
+function cancelExpenseEdit() {
+  _editingExpenseId = null;
+  renderExpenses();
+}
+
 // ── CRUD: Tasks (with edit) ──
 function parseTaskTime(notes) {
   if (!notes) return { time: '', notes: '' };
   const m = notes.match(/\[⏰([^\]]+)\](.*)$/s);
   return m ? { time: m[1].trim(), notes: notes.replace(/\s*\[⏰[^\]]+\].*$/s,'').trim() } : { time: '', notes };
 }
-function buildTaskNotes(notes, time) {
-  const base = notes.trim();
+function parseTaskRepeat(notes) {
+  if (!notes) return '';
+  const m = notes.match(/\[repeat:(weekly|monthly)\]/);
+  return m ? m[1] : '';
+}
+function buildTaskNotes(notes, time, repeat) {
+  let base = notes.trim();
+  // Remove any existing repeat tag first
+  base = base.replace(/\s*\[repeat:(?:weekly|monthly)\]/g, '').trim();
+  if (repeat) base = base ? base + ' [repeat:' + repeat + ']' : '[repeat:' + repeat + ']';
   return time ? (base ? base + ' [⏰' + time + ']' : '[⏰' + time + ']') : base;
 }
 function startEditTask(id) {
   const t = state.tasks.find(t => t.id === id);
   if (!t) return;
   editingTaskId = id;
-  const { time, notes } = parseTaskTime(t.notes);
+  const { time, notes: notesWithTime } = parseTaskTime(t.notes);
+  const repeat = parseTaskRepeat(notesWithTime);
+  const notes = notesWithTime.replace(/\s*\[repeat:(?:weekly|monthly)\]/g, '').trim();
   document.getElementById('task-title').value = t.title;
   document.getElementById('task-due').value = t.due;
   document.getElementById('task-time').value = time;
   document.getElementById('task-phase').value = t.phase;
   document.getElementById('task-notes').value = notes;
+  document.getElementById('task-repeat').value = repeat;
   document.getElementById('task-form-title').textContent = 'Edit task';
   document.getElementById('task-submit-btn').textContent = 'Update task';
   document.getElementById('task-cancel-btn').style.display = '';
@@ -2027,6 +2112,7 @@ function cancelEditTask() {
   document.getElementById('task-time').value = '';
   document.getElementById('task-phase').value = 'now';
   document.getElementById('task-notes').value = '';
+  document.getElementById('task-repeat').value = '';
   document.getElementById('task-form-title').textContent = 'Add task';
   document.getElementById('task-submit-btn').textContent = 'Add task';
   document.getElementById('task-cancel-btn').style.display = 'none';
@@ -2038,7 +2124,8 @@ async function submitTask() {
   const time = document.getElementById('task-time').value;
   const phase = document.getElementById('task-phase').value;
   const rawNotes = document.getElementById('task-notes').value.trim();
-  const notes = buildTaskNotes(rawNotes, time);
+  const repeat = document.getElementById('task-repeat').value;
+  const notes = buildTaskNotes(rawNotes, time, repeat);
   if (!title) return;
   if (editingTaskId !== null) {
     try {
@@ -2071,9 +2158,36 @@ async function submitTask() {
 async function toggleTask(id) {
   const t = state.tasks.find(t => t.id === id);
   if (!t) return;
+  const newDone = !t.done;
   try {
-    await apiPatch('tasks', id, { done: !t.done });
-    t.done = !t.done;
+    await apiPatch('tasks', id, { done: newDone });
+    t.done = newDone;
+    // If just completed and has a repeat setting, create next occurrence
+    if (newDone) {
+      const repeat = parseTaskRepeat(t.notes);
+      if (repeat && t.due) {
+        const [y, mo, d] = t.due.split('-').map(Number);
+        let nextDate;
+        if (repeat === 'weekly') {
+          // Add 7 days
+          const dt = new Date(y, mo - 1, d + 7);
+          nextDate = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+        } else {
+          // Add 1 month
+          const nm = mo === 12 ? 1 : mo + 1;
+          const ny = mo === 12 ? y + 1 : y;
+          const maxDay = new Date(ny, nm, 0).getDate();
+          const nd = Math.min(d, maxDay);
+          nextDate = ny + '-' + String(nm).padStart(2,'0') + '-' + String(nd).padStart(2,'0');
+        }
+        try {
+          const rows = await apiPost('tasks', { title: t.title, due: nextDate, phase: t.phase, notes: t.notes, done: false });
+          const row = rows[0];
+          state.tasks.push({ id: row.id, title: t.title, due: nextDate, phase: t.phase, notes: t.notes, done: false, calEventId: null });
+          showToast('Task recurring — next due ' + nextDate, 4000, true);
+        } catch { showToast('Could not create recurring task.'); }
+      }
+    }
     render();
   } catch { showToast('Could not update task.'); }
 }
@@ -2199,6 +2313,72 @@ async function saveBudget() {
   }
 }
 
+// ── Budget targets ──
+function loadBudgetTargets() {
+  try { return JSON.parse(localStorage.getItem('mba-budget-targets') || '{}'); } catch { return {}; }
+}
+function saveBudgetTargets() {
+  const targets = {};
+  Object.keys(CATS).forEach(k => {
+    const inp = document.getElementById('bt-inp-' + k);
+    if (inp) {
+      const v = parseFloat(inp.value);
+      if (!isNaN(v) && v > 0) targets[k] = toUSD(v, displayCur);
+    }
+  });
+  localStorage.setItem('mba-budget-targets', JSON.stringify(targets));
+  renderBudgetTargets();
+  showToast('Targets saved ✓', 2500, true);
+}
+function renderBudgetTargets() {
+  const targets = loadBudgetTargets();
+  // Render inputs
+  const inputsEl = document.getElementById('budget-targets-inputs');
+  if (inputsEl) {
+    inputsEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">` +
+      Object.entries(CATS).map(([k, label]) => {
+        const existingUSD = targets[k] || '';
+        const displayVal = existingUSD ? fromUSD(existingUSD, displayCur).toFixed(2) : '';
+        return `<div class="form-group">
+          <label class="form-label">${label} (${displayCur})</label>
+          <input type="number" id="bt-inp-${k}" placeholder="No limit" min="0" step="0.01" value="${displayVal}" />
+        </div>`;
+      }).join('') + `</div>`;
+  }
+  // Render current month progress
+  const progressEl = document.getElementById('budget-targets-progress');
+  if (!progressEl) return;
+  const catsWithTargets = Object.keys(targets).filter(k => targets[k] > 0);
+  if (!catsWithTargets.length) { progressEl.innerHTML = ''; return; }
+  const now = new Date();
+  const catSpend = {};
+  state.expenses.forEach(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+      catSpend[e.cat] = (catSpend[e.cat] || 0) + e.usdAmt;
+    }
+  });
+  const monthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+  progressEl.innerHTML = `<div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:600;margin-bottom:12px;">${monthName} vs targets</div>` +
+    catsWithTargets.map(k => {
+      const spent = catSpend[k] || 0;
+      const target = targets[k];
+      const pct = target > 0 ? spent / target * 100 : 0;
+      const clampedPct = Math.min(pct, 100);
+      const color = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : 'var(--green)';
+      return `<div class="budget-bar-row">
+        <div class="budget-bar-top">
+          <span style="color:var(--text2);font-size:13px;">${CATS[k]}</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-weight:500;font-size:13px;color:${color};">${fmt(spent)}</span>
+            <span style="font-size:11px;color:var(--text3);">/ ${fmt(target)} · ${Math.round(pct)}%</span>
+          </div>
+        </div>
+        <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${clampedPct.toFixed(1)}%;background:${color};"></div></div>
+      </div>`;
+    }).join('');
+}
+
 // ── Render functions ──
 function renderOverview() {
   const now = new Date();
@@ -2293,12 +2473,12 @@ function renderOverview() {
   const todayStr = new Date().toISOString().slice(0,10);
   const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
   const weekEndStr = weekEnd.toISOString().slice(0,10);
-  const weekTasks = (state.tasks || []).filter(t => !t.done && t.due_date && t.due_date >= todayStr && t.due_date <= weekEndStr)
-    .sort((a,b) => a.due_date.localeCompare(b.due_date));
+  const weekTasks = (state.tasks || []).filter(t => !t.done && t.due && t.due >= todayStr && t.due <= weekEndStr)
+    .sort((a,b) => a.due.localeCompare(b.due));
   let html = '';
   if (weekTasks.length) {
     html += weekTasks.map(t => {
-      const d = new Date(t.due_date + 'T00:00:00');
+      const d = new Date(t.due + 'T00:00:00');
       const label = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       return `<div class="cal-event-row">
         <div class="cal-event-dot" style="background:var(--gold)"></div>
@@ -2353,20 +2533,62 @@ function renderOverview() {
 }
 
 function renderExpenses() {
-  document.getElementById('expense-list').innerHTML = state.expenses.map(e => `
-    <div class="exp-row">
-      <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
+  document.getElementById('expense-list').innerHTML = state.expenses.map(e => {
+    if (_editingExpenseId === e.id) {
+      // Inline edit row
+      const catOptions = Object.entries(CATS).map(([k,v]) =>
+        `<option value="${k}" ${e.cat===k?'selected':''}>${v}</option>`).join('');
+      const curOptions = ['SAR','USD','EUR','GBP','AED'].map(c =>
+        `<option value="${c}" ${e.origCur===c?'selected':''}>${c}</option>`).join('');
+      return `<div class="exp-row" style="flex-direction:column;align-items:stretch;gap:8px;padding:14px 0;">
+        <div class="form-row" style="margin-bottom:0;">
+          <div class="form-group" style="flex:2;">
+            <label class="form-label">Description</label>
+            <input type="text" id="ee-desc-${e.id}" value="${e.desc.replace(/"/g,'&quot;')}" />
+          </div>
+          <div class="form-group" style="max-width:180px;">
+            <label class="form-label">Amount &amp; currency</label>
+            <div class="input-with-cur">
+              <input type="number" id="ee-amt-${e.id}" value="${e.origAmt}" min="0" step="0.01" />
+              <select id="ee-cur-${e.id}">${curOptions}</select>
+            </div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0;">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select id="ee-cat-${e.id}">${catOptions}</select>
+          </div>
+          <div class="form-group" style="max-width:175px;">
+            <label class="form-label">Date</label>
+            <input type="date" id="ee-date-${e.id}" value="${e.date}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <input type="text" id="ee-notes-${e.id}" value="${(e.notes||'').replace(/"/g,'&quot;')}" />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:12px;" onclick="saveExpenseEdit(${e.id})">Save</button>
+          <button class="btn btn-secondary" style="padding:7px 14px;font-size:12px;" onclick="cancelExpenseEdit()">Cancel</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="exp-row">
+      <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;">
         <span class="exp-cat cat-${e.cat}">${CATS[e.cat]||e.cat}</span>
-        <div><div class="exp-desc">${e.desc}</div><div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}${e.receiptUrl?` · <img src="${e.receiptUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;vertical-align:middle;" onclick="window.open('${e.receiptUrl}')">`:''}</div></div>
+        <div style="min-width:0;"><div class="exp-desc">${e.desc}</div><div class="exp-note" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.date}${e.notes?' · '+e.notes:''}${e.receiptUrl?` · <img src="${e.receiptUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;vertical-align:middle;" onclick="window.open('${e.receiptUrl}')">`:''}</div></div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <div style="text-align:right;">
           <div class="exp-amount">${fmt(e.usdAmt)}</div>
           ${e.origCur!==displayCur?`<div class="exp-amount-sub">Paid ${SYM[e.origCur]}${e.origAmt.toLocaleString()} ${e.origCur}</div>`:''}
         </div>
+        <button class="btn-icon" onclick="editExpense(${e.id})" title="Edit" style="color:var(--text3);">✏️</button>
         <button class="btn-danger" onclick="deleteExpense(${e.id})">✕</button>
       </div>
-    </div>`).join('') || '<div class="empty">No expenses yet. Add your first one above.</div>';
+    </div>`;
+  }).join('') || '<div class="empty">No expenses yet. Add your first one above.</div>';
 }
 
 function renderTasks() {
@@ -2500,6 +2722,7 @@ function renderBudget() {
   });
   const months = Object.values(monthlyData).sort((a,b)=>a.label>b.label?1:-1);
   const maxM = Math.max(...months.map(m=>m.total),1);
+  renderBudgetTargets();
   document.getElementById('budget-monthly').innerHTML = months.map(m => {
     const over = state.budgetUSD && m.total > state.budgetUSD;
     return `<div class="budget-bar-row">
