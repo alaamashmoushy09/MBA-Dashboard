@@ -853,17 +853,8 @@ select option{background:var(--surface2);}
             <textarea id="exp-notes" placeholder="Any additional details..."></textarea>
           </div>
           <div class="form-group">
-            <label class="form-label">Receipt link (optional)</label>
-            <input type="url" id="exp-receipt" placeholder="https://drive.google.com/..." />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Scan receipt (photo)</label>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <input type="file" id="exp-receipt-img" accept="image/*" style="display:none;" onchange="scanReceipt(this)">
-              <button type="button" class="btn" style="background:var(--card2);border:1px solid var(--border2);color:var(--text1);font-size:13px;padding:8px 16px;display:flex;align-items:center;gap:6px;" onclick="ensureGeminiKey() && document.getElementById('exp-receipt-img').click()">📷 Scan receipt</button>
-              <span id="scan-status" style="font-size:12px;color:var(--text3);"></span>
-              <span onclick="const k=prompt('Gemini API key:',localStorage.getItem('mba-gemini-key')||'');if(k!==null)localStorage.setItem('mba-gemini-key',k.trim());" style="font-size:11px;color:var(--text3);cursor:pointer;text-decoration:underline;margin-left:4px;">set key</span>
-            </div>
+            <label class="form-label">Photo (optional)</label>
+            <input type="file" id="exp-receipt-img" accept="image/*" style="font-size:13px;color:var(--text2);" />
           </div>
         </div>
         <button class="btn btn-primary" onclick="addExpense()">Add expense</button>
@@ -1079,18 +1070,7 @@ select option{background:var(--surface2);}
 
 <script>
 // ── Supabase init ──
-function getGeminiKey() {
-  return localStorage.getItem('mba-gemini-key') || '';
-}
-function ensureGeminiKey() {
-  let k = getGeminiKey();
-  if (!k) {
-    k = prompt('Paste your Gemini API key (from aistudio.google.com). It will be saved on this device only:');
-    if (!k) return false;
-    localStorage.setItem('mba-gemini-key', k.trim());
-  }
-  return true;
-}
+
 const SUPA_URL = 'https://otakccqrmrglflamciby.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YWtjY3FybXJnbGZsYW1jaWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTQwNTksImV4cCI6MjA5NjMzMDA1OX0.1wmtuRbH9RXmr5yHwgfhA-h1ibhyRIG-beoBzz-STDo';
 
@@ -1952,80 +1932,6 @@ function renderMilestoneCards() {
 function renderMilestoneList() { renderMilestoneCards(); }
 
 
-/// ── Receipt scanning via Gemini ──
-async function scanReceipt(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const statusEl = document.getElementById('scan-status');
-  statusEl.textContent = '⏳ Scanning…';
-  try {
-    const base64 = await new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onerror = rej;
-      reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-          const MAX = 1024;
-          let w = img.width, h = img.height;
-          if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h * MAX / w); w = MAX; } else { w = Math.round(w * MAX / h); h = MAX; } }
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          res(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-    const prompt = `You are a receipt parser. Look at this receipt image and extract:
-1. amount (number only, total amount paid)
-2. currency (3-letter code like USD, EUR, SAR, AED, GBP — guess from context if not shown)
-3. date (YYYY-MM-DD format)
-4. description (merchant name or short description, max 40 chars)
-5. category (one of: housing, food, transport, health, education, entertainment, shopping, other)
-
-Respond ONLY with a JSON object like: {"amount":25.50,"currency":"USD","date":"2026-06-08","description":"Starbucks Coffee","category":"food"}
-If you cannot read a field, use null for that field.`;
-    const geminiKey = getGeminiKey();
-    if (!geminiKey) { statusEl.textContent = 'No API key — click "set key"'; return; }
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
-        body: JSON.stringify({
-          contents: [{ parts: [
-            { text: prompt },
-            { inline_data: { mime_type: file.type, data: base64 } }
-          ]}]
-        })
-      }
-    );
-    if (!resp.ok) { const errBody = await resp.text(); throw new Error('Gemini ' + resp.status + ': ' + errBody.slice(0,200)); }
-    const data = await resp.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Could not parse response');
-    const parsed = JSON.parse(jsonMatch[0]);
-    if (parsed.amount) document.getElementById('exp-amt').value = parsed.amount;
-    if (parsed.currency) document.getElementById('exp-cur').value = parsed.currency;
-    if (parsed.date) document.getElementById('exp-date').value = parsed.date;
-    if (parsed.description) document.getElementById('exp-desc').value = parsed.description;
-    if (parsed.category) {
-      const sel = document.getElementById('exp-cat');
-      if ([...sel.options].some(o => o.value === parsed.category)) sel.value = parsed.category;
-    }
-    statusEl.textContent = '✓ Done — review and adjust if needed';
-    statusEl.style.color = 'var(--green)';
-    setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = ''; }, 4000);
-  } catch(e) {
-    console.error('Scan error:', e);
-    statusEl.textContent = '✗ ' + (e.message || 'Scan failed') + ' — fill in manually';
-    statusEl.style.color = 'var(--red)';
-    setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = ''; }, 15000);
-  }
-  input.value = '';
-}
 
 // ── CRUD: Expenses ──
 async function addExpense() {
@@ -2035,18 +1941,45 @@ async function addExpense() {
   const cat = document.getElementById('exp-cat').value;
   const date = document.getElementById('exp-date').value;
   const notes = document.getElementById('exp-notes').value.trim();
-  const receipt = document.getElementById('exp-receipt').value.trim();
+  const imgFile = document.getElementById('exp-receipt-img').files[0];
   if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Please fill in description, amount, and date.'); return; }
   const usdAmt = toUSD(rawAmt, cur);
+
+  let receiptUrl = null;
+  if (imgFile) {
+    try {
+      const userId = (await supabase.auth.getUser()).data.user.id;
+      const path = userId + '/' + Date.now() + '.jpg';
+      // Try to create bucket (ignore errors — may already exist)
+      const hdrs = apiHeaders();
+      await fetch(SUPA_URL + '/storage/v1/bucket', {
+        method: 'POST',
+        headers: hdrs,
+        body: JSON.stringify({ id: 'receipts', name: 'receipts', public: true })
+      }).catch(() => {});
+      const uploadHdrs = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + getToken(), 'Content-Type': imgFile.type || 'image/jpeg' };
+      const uploadResp = await fetch(SUPA_URL + '/storage/v1/object/receipts/' + path, {
+        method: 'POST',
+        headers: uploadHdrs,
+        body: imgFile
+      });
+      if (!uploadResp.ok) throw new Error('Upload failed: ' + uploadResp.status);
+      receiptUrl = SUPA_URL + '/storage/v1/object/public/receipts/' + path;
+    } catch (err) {
+      console.error('Photo upload error:', err);
+      showToast('Photo upload failed, expense saved');
+    }
+  }
+
   try {
-    const fullNotes = notes + (receipt ? '\n[receipt:' + receipt + ']' : '');
+    const fullNotes = notes + (receiptUrl ? '\n[receipt:' + receiptUrl + ']' : '');
     const rows = await apiPost('expenses', { description:desc, usd_amt:usdAmt, orig_amt:rawAmt, orig_cur:cur, cat, date, notes: fullNotes });
     const row = rows[0];
-    state.expenses.unshift({ id:row.id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes, receiptUrl: receipt || null });
+    state.expenses.unshift({ id:row.id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes, receiptUrl: receiptUrl || null });
     document.getElementById('exp-desc').value = '';
     document.getElementById('exp-amt').value = '';
     document.getElementById('exp-notes').value = '';
-    document.getElementById('exp-receipt').value = '';
+    document.getElementById('exp-receipt-img').value = '';
     render();
   } catch { showToast('Could not save expense. Check your connection.'); }
 }
@@ -2423,7 +2356,7 @@ function renderExpenses() {
     <div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
         <span class="exp-cat cat-${e.cat}">${CATS[e.cat]||e.cat}</span>
-        <div><div class="exp-desc">${e.desc}</div><div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}${e.receiptUrl?` · <a href="${e.receiptUrl}" target="_blank" style="color:var(--gold);text-decoration:none;">📎 Receipt</a>`:''}</div></div>
+        <div><div class="exp-desc">${e.desc}</div><div class="exp-note">${e.date}${e.notes?' · '+e.notes:''}${e.receiptUrl?` · <img src="${e.receiptUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;vertical-align:middle;" onclick="window.open('${e.receiptUrl}')">`:''}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <div>
