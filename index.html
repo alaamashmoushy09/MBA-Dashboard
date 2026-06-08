@@ -2001,7 +2001,7 @@ If you cannot read a field, use null for that field.`;
         })
       }
     );
-    if (!resp.ok) throw new Error('Gemini API error: ' + resp.status);
+    if (!resp.ok) { const errBody = await resp.text(); throw new Error('Gemini ' + resp.status + ': ' + errBody.slice(0,200)); }
     const data = await resp.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -2022,7 +2022,7 @@ If you cannot read a field, use null for that field.`;
     console.error('Scan error:', e);
     statusEl.textContent = '✗ ' + (e.message || 'Scan failed') + ' — fill in manually';
     statusEl.style.color = 'var(--red)';
-    setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = ''; }, 6000);
+    setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = ''; }, 15000);
   }
   input.value = '';
 }
