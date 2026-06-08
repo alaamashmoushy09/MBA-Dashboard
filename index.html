@@ -153,8 +153,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* ── Main ── */
 .main{margin-left:260px;padding:2.5rem 2.5rem;max-width:1100px;width:100%;}
-.page{display:none;}
-.page.active{display:block;}
+.page{display:none;opacity:0;}
+.page.active{display:block;animation:pageIn .22s ease forwards;}
+@keyframes pageIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 .page-header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .page-header-text{flex:1;}
 .page-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;color:var(--text);line-height:1.1;}
@@ -202,6 +203,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .metric-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px;}
 .metric-value{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--text);line-height:1;}
 .metric-sub{font-size:11px;color:var(--text3);margin-top:5px;}
+/* ring metrics */
+.metric-ring{display:flex;align-items:center;gap:14px;}
+.ring-svg{flex-shrink:0;}
+.ring-track{fill:none;stroke:var(--border2);stroke-width:4;}
+.ring-fill{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .7s ease;}
+.ring-text-wrap{flex:1;}
+.ring-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;color:var(--text);line-height:1;}
+.ring-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:6px;}
+.ring-sub{font-size:11px;color:var(--text3);margin-top:4px;}
 
 /* ── Calendar card ── */
 .cal-event-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
@@ -440,14 +450,22 @@ select option{background:var(--surface2);}
     <div class="sidebar-top">
       <div class="sidebar-top-row">
         <div id="sidebar-avatar"></div>
-        <div>
+        <div style="flex:1;min-width:0;">
           <div class="logo-wordmark">Alaa</div>
-          <div class="logo-sub">INSEAD MBA · 2026</div>
+          <div class="logo-sub">INSEAD MBA · Class of 2027</div>
         </div>
       </div>
       <div class="phase-pill">
         <span class="phase-pill-dot"></span>
         <span id="current-phase-text">Pre-LOA</span>
+      </div>
+      <div style="margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:5px;">
+          <span>Journey to MBA</span><span id="sidebar-days-label"></span>
+        </div>
+        <div style="height:4px;background:var(--border2);border-radius:4px;overflow:hidden;">
+          <div id="sidebar-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--amber));border-radius:4px;transition:width .6s ease;width:0%;"></div>
+        </div>
       </div>
     </div>
     <div class="nav-divider"></div>
@@ -724,14 +742,34 @@ select option{background:var(--surface2);}
           <div class="metric-sub" id="ov-month-name">—</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Tasks pending</div>
-          <div class="metric-value" id="ov-tasks">—</div>
-          <div class="metric-sub">to complete</div>
+          <div class="metric-ring">
+            <svg class="ring-svg" width="52" height="52" viewBox="0 0 52 52">
+              <circle class="ring-track" cx="26" cy="26" r="21"/>
+              <circle class="ring-fill" id="ring-tasks" cx="26" cy="26" r="21"
+                stroke="var(--purple)" stroke-dasharray="131.9" stroke-dashoffset="131.9"
+                transform="rotate(-90 26 26)"/>
+            </svg>
+            <div class="ring-text-wrap">
+              <div class="ring-lbl">Tasks done</div>
+              <div class="ring-val" id="ov-tasks">—</div>
+              <div class="ring-sub" id="ov-tasks-sub">pending</div>
+            </div>
+          </div>
         </div>
         <div class="metric">
-          <div class="metric-label">Courses tracked</div>
-          <div class="metric-value" id="ov-courses">—</div>
-          <div class="metric-sub">this term</div>
+          <div class="metric-ring">
+            <svg class="ring-svg" width="52" height="52" viewBox="0 0 52 52">
+              <circle class="ring-track" cx="26" cy="26" r="21"/>
+              <circle class="ring-fill" id="ring-budget" cx="26" cy="26" r="21"
+                stroke="var(--teal)" stroke-dasharray="131.9" stroke-dashoffset="131.9"
+                transform="rotate(-90 26 26)"/>
+            </svg>
+            <div class="ring-text-wrap">
+              <div class="ring-lbl">Budget used</div>
+              <div class="ring-val" id="ov-courses">—</div>
+              <div class="ring-sub" id="ov-budget-pct">of total</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2144,6 +2182,19 @@ function renderOverview() {
   renderJourneyBar();
   renderMilestoneCards();
 
+  // Sidebar progress bar — from today to MBA start
+  (function() {
+    const start = new Date('2026-01-01T00:00:00');
+    const end   = new Date(state.keyDates.mba + 'T00:00:00');
+    const now2  = new Date();
+    const pct   = Math.min(Math.max((now2-start)/(end-start),0),1);
+    const dLeft = Math.max(Math.ceil((end-now2)/86400000),0);
+    const bar   = document.getElementById('sidebar-progress-bar');
+    const lbl   = document.getElementById('sidebar-days-label');
+    if (bar) bar.style.width = (pct*100).toFixed(1)+'%';
+    if (lbl) lbl.textContent = dLeft > 0 ? dLeft+' days left' : 'Started!';
+  })();
+
   const total = state.expenses.reduce((s,e) => s+e.usdAmt, 0);
   const mthExp = state.expenses.filter(e => {
     const d = new Date(e.date + 'T00:00:00');
@@ -2154,8 +2205,24 @@ function renderOverview() {
   document.getElementById('ov-total-sub').textContent = 'all time · ' + displayCur;
   document.getElementById('ov-month').textContent = fmt(mthTotal);
   document.getElementById('ov-month-name').textContent = now.toLocaleString('default',{month:'long'}) + ' · ' + displayCur;
-  document.getElementById('ov-tasks').textContent = state.tasks.filter(t=>!t.done).length;
-  document.getElementById('ov-courses').textContent = state.courses.length;
+  // Tasks ring
+  const pendingTasks = state.tasks.filter(t=>!t.done).length;
+  const doneTasks = state.tasks.filter(t=>t.done).length;
+  const totalTasks = pendingTasks + doneTasks;
+  const taskPct = totalTasks > 0 ? doneTasks / totalTasks : 0;
+  document.getElementById('ov-tasks').textContent = pendingTasks;
+  document.getElementById('ov-tasks-sub').textContent = totalTasks > 0 ? `${doneTasks} of ${totalTasks} done` : 'to complete';
+  const ringTasks = document.getElementById('ring-tasks');
+  if (ringTasks) ringTasks.style.strokeDashoffset = 131.9 * (1 - taskPct);
+
+  // Budget ring
+  const totalSpent = state.expenses.reduce((s,e)=>s+e.usdAmt,0);
+  const budgetPct = state.budgetUSD > 0 ? Math.min(totalSpent / state.budgetUSD, 1) : 0;
+  const budgetColor = budgetPct > 0.85 ? 'var(--red)' : budgetPct > 0.6 ? 'var(--amber)' : 'var(--teal)';
+  document.getElementById('ov-courses').textContent = state.budgetUSD > 0 ? fmt(totalSpent) : state.courses.length;
+  document.getElementById('ov-budget-pct').textContent = state.budgetUSD > 0 ? `${Math.round(budgetPct*100)}% of ${fmt(state.budgetUSD)}` : 'courses tracked';
+  const ringBudget = document.getElementById('ring-budget');
+  if (ringBudget) { ringBudget.style.strokeDashoffset = 131.9 * (1 - budgetPct); ringBudget.style.stroke = budgetColor; }
 
   // Calendar this week
   const calEl = document.getElementById('ov-calendar');
