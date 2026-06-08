@@ -1137,8 +1137,11 @@ async function createCalendarEvent(title, dateStr, notes, timeStr) {
     startObj = { dateTime: startDT, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
     endObj   = { dateTime: endDT,   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
   } else {
+    const nextDay = new Date(dateStr + 'T00:00:00');
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDayStr = nextDay.toISOString().split('T')[0];
     startObj = { date: dateStr };
-    endObj   = { date: dateStr };
+    endObj   = { date: nextDayStr };
   }
   try {
     const body = {
