@@ -1155,13 +1155,19 @@ async function createCalendarEvent(title, dateStr, notes, timeStr) {
     if (r.status === 401 || r.status === 403) {
       calendarConnected = false;
       renderCalConnectHint();
+      showToast('Calendar token expired — click Reconnect then try again.');
       return null;
     }
-    if (!r.ok) return null;
+    if (!r.ok) {
+      let msg = r.status;
+      try { const j = await r.json(); msg = j?.error?.message || r.status; } catch {}
+      showToast('Calendar error: ' + msg);
+      return null;
+    }
     calendarConnected = true;
     const ev = await r.json();
     return ev.id || null;
-  } catch { return null; }
+  } catch (e) { showToast('Calendar error: ' + (e.message || e)); return null; }
 }
 
 // ── Direct REST helpers ──
@@ -1935,8 +1941,8 @@ async function submitTask() {
       if (due) {
         const calId = await createCalendarEvent(title, due, notes, time);
         if (calId) { storeCalEventId(row.id, calId); showToast('Task saved + added to Google Calendar ✓', 3000, true); }
-        else if (getProviderToken()) showToast('Task saved. Calendar sync failed.');
-        else showToast('Task saved. Click "Connect Google Calendar" below to enable sync.');
+        else if (!getProviderToken()) showToast('Task saved. Connect Google Calendar below to enable sync.');
+        // else: createCalendarEvent already showed a specific error toast
       }
       render();
     } catch { showToast('Could not save task.'); }
