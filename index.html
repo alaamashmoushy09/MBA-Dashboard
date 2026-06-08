@@ -1157,6 +1157,19 @@ document.documentElement.setAttribute('data-theme', savedTheme);
 
 function toUSD(a, c) { return a * TO_USD[c]; }
 function fromUSD(a, c) { return a / TO_USD[c]; }
+async function toUSDOnDate(amount, cur, dateStr) {
+  if (cur === 'USD') return amount;
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const date = dateStr > today ? today : dateStr;
+    const r = await fetch(`https://api.frankfurter.app/${date}?from=${cur}&to=USD`);
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const rate = data.rates?.USD;
+    if (rate) return Math.round(amount * rate * 100) / 100;
+  } catch {}
+  return toUSD(amount, cur); // fallback to static rate
+}
 function fmt(usd, cur) {
   cur = cur || displayCur;
   const v = fromUSD(usd, cur);
@@ -1909,7 +1922,7 @@ async function quickAddExpense() {
   const cat = document.getElementById('rp-exp-cat').value;
   const date = document.getElementById('rp-exp-date').value;
   if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Fill in description, amount, and date.'); return; }
-  const usdAmt = toUSD(rawAmt, cur);
+  const usdAmt = await toUSDOnDate(rawAmt, cur, date);
   try {
     const rows = await apiPost('expenses', { description:desc, usd_amt:usdAmt, orig_amt:rawAmt, orig_cur:cur, cat, date, notes:'' });
     state.expenses.unshift({ id:rows[0].id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes:'' });
@@ -1981,7 +1994,7 @@ async function addExpense() {
   const notes = document.getElementById('exp-notes').value.trim();
   const imgFile = document.getElementById('exp-receipt-img').files[0];
   if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Please fill in description, amount, and date.'); return; }
-  const usdAmt = toUSD(rawAmt, cur);
+  const usdAmt = await toUSDOnDate(rawAmt, cur, date);
 
   let receiptUrl = null;
   if (imgFile) {
@@ -2047,7 +2060,7 @@ async function saveExpenseEdit(id) {
   const date = document.getElementById('ee-date-'+id).value;
   const notes = document.getElementById('ee-notes-'+id).value.trim();
   if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Please fill in description, amount, and date.'); return; }
-  const usdAmt = toUSD(rawAmt, cur);
+  const usdAmt = await toUSDOnDate(rawAmt, cur, date);
   try {
     await apiPatch('expenses', id, { description: desc, usd_amt: usdAmt, orig_amt: rawAmt, orig_cur: cur, cat, date, notes });
     const e = state.expenses.find(e => e.id === id);
