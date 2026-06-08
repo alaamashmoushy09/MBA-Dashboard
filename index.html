@@ -428,26 +428,24 @@ select option{background:var(--surface2);}
 .task-urgent{color:var(--amber)!important;}
 
 /* ── Mobile & tablet layout ── */
-@media (max-width: 600px) {
-  .form-row { flex-direction: column; }
-  .form-group { min-width: 0 !important; max-width: 100% !important; width: 100% !important; }
-  .form-group[style*="max-width"] { max-width: 100% !important; }
-  .input-with-cur { flex-direction: row; }
+@media (max-width: 720px) {
+  .form-row { flex-direction: column !important; align-items: stretch !important; }
+  .form-group { min-width: 0 !important; max-width: 100% !important; width: 100% !important; flex: none !important; }
+  .input-with-cur { flex-direction: row !important; width: 100% !important; }
+  .input-with-cur input { flex: 1 !important; min-width: 0 !important; }
   input[type=text],input[type=number],input[type=date],input[type=url],select,textarea {
-    width: 100%; box-sizing: border-box;
+    width: 100% !important; box-sizing: border-box !important; max-width: 100% !important;
   }
-  .card { padding: 16px; }
-  .page-title { font-size: 28px; }
+  .card { padding: 14px !important; }
+  .page-title { font-size: 26px !important; }
   .task-row .btn-danger, .task-row .btn-icon {
-    min-width: 44px; min-height: 44px;
-    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 44px !important; min-height: 44px !important;
+    display: inline-flex !important; align-items: center !important; justify-content: center !important;
   }
-  .exp-row { flex-wrap: wrap; gap: 8px; }
-  .exp-row > div:first-child { flex: 1 1 100%; min-width: 0; }
-  .exp-note { white-space: normal; word-break: break-word; }
-  .metric-cards { grid-template-columns: 1fr 1fr !important; }
-  .countdown-cards { grid-template-columns: 1fr 1fr !important; }
-  .btn-primary { width: 100%; }
+  .exp-row { flex-wrap: wrap !important; gap: 8px !important; }
+  .exp-row > div:first-child { flex: 1 1 100% !important; min-width: 0 !important; }
+  .exp-note { white-space: normal !important; word-break: break-word !important; }
+  .btn-primary { width: 100% !important; box-sizing: border-box !important; }
 }
 </style>
 </head>
