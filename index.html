@@ -233,7 +233,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{
   color:var(--text);width:100%;outline:none;transition:border .15s,background .25s;
   box-sizing:border-box;
 }
-input[type=date]{height:40px;line-height:normal;}
+input[type=date]{height:40px!important;max-height:40px!important;min-height:0!important;-webkit-appearance:none;appearance:none;overflow:hidden;}
 input:focus,select:focus,textarea:focus{border-color:var(--gold);background:var(--surface);}
 [data-theme="light"] input:focus,[data-theme="light"] select:focus,[data-theme="light"] textarea:focus{border-color:var(--navy);}
 textarea{resize:vertical;min-height:60px;}
