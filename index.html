@@ -1173,7 +1173,31 @@ let _providerToken = (function() {
   return null;
 })();
 
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { flowType: 'implicit' } });
+// Cookie-based storage so Safari session is shared with home-screen (standalone) PWA
+const _ckStore = {
+  _ck(key) { return 'sb_' + key.replace(/[^a-zA-Z0-9_-]/g,'_'); },
+  getItem(key) {
+    try {
+      const ck = this._ck(key);
+      const m = document.cookie.split('; ').find(r => r.startsWith(ck + '='));
+      if (m) return decodeURIComponent(m.slice(ck.length + 1));
+    } catch {}
+    try { return localStorage.getItem(key); } catch {}
+    return null;
+  },
+  setItem(key, value) {
+    try { localStorage.setItem(key, value); } catch {}
+    try {
+      const ck = this._ck(key);
+      document.cookie = ck + '=' + encodeURIComponent(value) + '; max-age=31536000; path=/; SameSite=Lax';
+    } catch {}
+  },
+  removeItem(key) {
+    try { localStorage.removeItem(key); } catch {}
+    try { document.cookie = this._ck(key) + '=; max-age=0; path=/'; } catch {}
+  }
+};
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { flowType: 'implicit', storage: _ckStore } });
 
 // ── Constants ──
 let TO_USD = { SAR:0.2667, USD:1, EUR:1.0836, GBP:1.2706, AED:0.2723 };
@@ -1340,10 +1364,9 @@ async function createCalendarEvent(title, dateStr, notes, timeStr) {
 
 // ── Direct REST helpers ──
 function getToken() {
-  try {
-    const raw = localStorage.getItem('sb-otakccqrmrglflamciby-auth-token');
-    return JSON.parse(raw)?.access_token ?? SUPA_KEY;
-  } catch { return SUPA_KEY; }
+  const raw = _ckStore.getItem('sb-otakccqrmrglflamciby-auth-token');
+  try { const t = JSON.parse(raw)?.access_token; if (t) return t; } catch {}
+  return SUPA_KEY;
 }
 
 function apiHeaders() {
