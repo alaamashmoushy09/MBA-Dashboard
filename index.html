@@ -744,10 +744,10 @@ select option{background:var(--surface2);}
               <div class="form-group" style="flex:2;">
                 <input type="text" id="ms-name" placeholder="e.g. Graduation ceremony" style="font-size:12px;padding:7px 10px;" />
               </div>
-              <div class="form-group" style="max-width:160px;">
+              <div class="form-group">
                 <input type="date" id="ms-date" style="font-size:12px;padding:7px 10px;" />
               </div>
-              <div class="form-group" style="max-width:140px;">
+              <div class="form-group">
                 <select id="ms-type" style="font-size:12px;padding:7px 10px;">
                   <option value="academic">Academic</option>
                   <option value="travel">Travel</option>
@@ -837,7 +837,7 @@ select option{background:var(--surface2);}
             <label class="form-label">Description</label>
             <input type="text" id="exp-desc" placeholder="e.g. Apartment deposit" />
           </div>
-          <div class="form-group" style="max-width:210px;">
+          <div class="form-group">
             <label class="form-label">Amount &amp; currency paid</label>
             <div class="input-with-cur">
               <input type="number" id="exp-amt" placeholder="0" min="0" step="0.01" />
@@ -865,7 +865,7 @@ select option{background:var(--surface2);}
               <option value="other">Other</option>
             </select>
           </div>
-          <div class="form-group" style="max-width:180px;">
+          <div class="form-group">
             <label class="form-label">Date</label>
             <input type="date" id="exp-date" />
           </div>
@@ -899,7 +899,7 @@ select option{background:var(--surface2);}
       <div class="card">
         <div class="card-title">Monthly budget</div>
         <div class="form-row">
-          <div class="form-group" style="max-width:240px;">
+          <div class="form-group">
             <label class="form-label">Budget amount &amp; currency</label>
             <div class="input-with-cur">
               <input type="number" id="budget-amt" placeholder="e.g. 5000" min="0" />
@@ -953,11 +953,11 @@ select option{background:var(--surface2);}
             <label class="form-label">Task</label>
             <input type="text" id="task-title" placeholder="e.g. Apply for student visa" />
           </div>
-          <div class="form-group" style="max-width:175px;">
+          <div class="form-group">
             <label class="form-label">Due date</label>
             <input type="date" id="task-due" />
           </div>
-          <div class="form-group" style="max-width:130px;">
+          <div class="form-group">
             <label class="form-label">Time (optional)</label>
             <select id="task-time">
               <option value="">— no time —</option>
@@ -965,7 +965,7 @@ select option{background:var(--surface2);}
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group" style="max-width:200px;">
+          <div class="form-group">
             <label class="form-label">Phase</label>
             <select id="task-phase">
               <option value="now">Now (pre-LOA)</option>
@@ -978,7 +978,7 @@ select option{background:var(--surface2);}
             <label class="form-label">Notes (optional)</label>
             <input type="text" id="task-notes" placeholder="Any details..." />
           </div>
-          <div class="form-group" style="max-width:140px;">
+          <div class="form-group">
             <label class="form-label">Repeat</label>
             <select id="task-repeat">
               <option value="">None</option>
@@ -1032,7 +1032,7 @@ select option{background:var(--surface2);}
             <label class="form-label">How met</label>
             <input type="text" id="net-howmet" placeholder="e.g. Orientation dinner" />
           </div>
-          <div class="form-group" style="max-width:175px;">
+          <div class="form-group">
             <label class="form-label">Follow-up date</label>
             <input type="date" id="net-followup" />
           </div>
@@ -1067,13 +1067,13 @@ select option{background:var(--surface2);}
             <label class="form-label">Course name</label>
             <input type="text" id="course-name" placeholder="e.g. Financial Accounting" />
           </div>
-          <div class="form-group" style="max-width:130px;">
+          <div class="form-group">
             <label class="form-label">Credits</label>
             <input type="number" id="course-credits" placeholder="e.g. 3" min="0" />
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group" style="max-width:160px;">
+          <div class="form-group">
             <label class="form-label">Period</label>
             <select id="course-period">
               <option value="P1">Period 1</option>
@@ -1084,7 +1084,7 @@ select option{background:var(--surface2);}
               <option value="elective">Elective</option>
             </select>
           </div>
-          <div class="form-group" style="max-width:160px;">
+          <div class="form-group">
             <label class="form-label">Grade (optional)</label>
             <select id="course-grade">
               <option value="">— not yet —</option>
@@ -2556,7 +2556,7 @@ function renderExpenses() {
             <label class="form-label">Description</label>
             <input type="text" id="ee-desc-${e.id}" value="${e.desc.replace(/"/g,'&quot;')}" />
           </div>
-          <div class="form-group" style="max-width:180px;">
+          <div class="form-group">
             <label class="form-label">Amount &amp; currency</label>
             <div class="input-with-cur">
               <input type="number" id="ee-amt-${e.id}" value="${e.origAmt}" min="0" step="0.01" />
@@ -2569,7 +2569,7 @@ function renderExpenses() {
             <label class="form-label">Category</label>
             <select id="ee-cat-${e.id}">${catOptions}</select>
           </div>
-          <div class="form-group" style="max-width:175px;">
+          <div class="form-group">
             <label class="form-label">Date</label>
             <input type="date" id="ee-date-${e.id}" value="${e.date}" />
           </div>
