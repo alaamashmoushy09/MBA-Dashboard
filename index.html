@@ -398,12 +398,31 @@ select option{background:var(--surface2);}
 /* ── Mobile ── */
 @media(max-width:720px){
   .sidebar{display:none;}
-  .main{margin-left:0;padding:1.25rem;padding-bottom:80px;}
+  .main{margin-left:0;padding:1rem;padding-bottom:80px;}
   .countdown-grid{grid-template-columns:1fr 1fr;}
   .metric-grid{grid-template-columns:1fr 1fr;}
   .network-grid{grid-template-columns:1fr;}
   .shell{flex-direction:column;}
-
+  .page-title{font-size:26px;}
+  .card{padding:14px;}
+  /* Forms */
+  .form-row{flex-direction:column;align-items:stretch;}
+  .form-group{min-width:0!important;max-width:none!important;width:100%!important;flex:none!important;}
+  .form-group input,.form-group select,.form-group textarea{width:100%;box-sizing:border-box;max-width:100%;}
+  /* Amount+currency pair — keep side by side */
+  .input-with-cur{display:flex;flex-direction:row;width:100%;}
+  .input-with-cur input{flex:1;width:1px!important;min-width:0;max-width:none!important;}
+  .input-with-cur select{flex:0 0 85px;width:85px!important;min-width:0;}
+  /* Expense rows */
+  .exp-row{flex-wrap:wrap;gap:6px;}
+  .exp-row>div:first-child{flex:1 1 100%;min-width:0;}
+  .exp-note{white-space:normal;word-break:break-word;}
+  /* Buttons */
+  .btn-primary{width:100%;box-sizing:border-box;}
+  .page-header{flex-direction:column;align-items:flex-start;gap:8px;}
+  .page-header>.btn,.page-header>.btn-secondary{width:100%;}
+  .task-row .btn-danger,.task-row .btn-icon{min-width:44px;min-height:44px;}
+  /* Bottom nav */
   .bottom-nav{
     display:flex;position:fixed;bottom:0;left:0;right:0;z-index:150;
     background:var(--surface);border-top:1px solid var(--border);
@@ -430,31 +449,6 @@ select option{background:var(--surface2);}
 .task-overdue{color:var(--red)!important;}
 .task-urgent{color:var(--amber)!important;}
 
-/* ── Mobile & tablet layout ── */
-@media (max-width: 720px) {
-  .form-row { flex-direction: column !important; align-items: stretch !important; }
-  .form-group { min-width: 0 !important; max-width: 100% !important; width: 100% !important; flex: none !important; }
-  input[type=text],input[type=number],input[type=date],input[type=url],textarea {
-    width: 100% !important; box-sizing: border-box !important; max-width: 100% !important;
-  }
-  select { width: 100% !important; box-sizing: border-box !important; }
-  /* input-with-cur MUST come after the general rules to override them */
-  .input-with-cur { flex-direction: row !important; width: 100% !important; display: flex !important; }
-  .input-with-cur input[type=number] { flex: 1 1 auto !important; width: 0 !important; min-width: 0 !important; max-width: none !important; }
-  .input-with-cur select { flex: 0 0 auto !important; width: auto !important; min-width: 80px !important; max-width: 90px !important; }
-  .card { padding: 14px !important; }
-  .page-title { font-size: 26px !important; }
-  .task-row .btn-danger, .task-row .btn-icon {
-    min-width: 44px !important; min-height: 44px !important;
-    display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  }
-  .exp-row { flex-wrap: wrap !important; gap: 6px !important; align-items: center !important; }
-  .exp-row > div:first-child { flex: 1 1 100% !important; min-width: 0 !important; }
-  .exp-note { white-space: normal !important; word-break: break-word !important; }
-  .btn-primary { width: 100% !important; box-sizing: border-box !important; }
-  .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
-  .page-header .btn { width: 100% !important; }
-}
 </style>
 </head>
 <body>
