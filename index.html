@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
@@ -452,6 +453,24 @@ select option{background:var(--surface2);}
 .task-overdue{color:var(--red)!important;}
 .task-urgent{color:var(--amber)!important;}
 
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+/* Flatpickr dark theme overrides */
+.flatpickr-calendar{background:var(--surface);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:'Inter',sans-serif;}
+.flatpickr-day{color:var(--text2);border-radius:8px;}
+.flatpickr-day:hover,.flatpickr-day:focus{background:var(--surface2);color:var(--text);}
+.flatpickr-day.selected,.flatpickr-day.selected:hover{background:var(--gold);border-color:var(--gold);color:#0A0F1E;}
+.flatpickr-day.today{border-color:var(--gold);color:var(--gold);}
+.flatpickr-months,.flatpickr-weekdays{background:transparent;}
+.flatpickr-month,.flatpickr-weekday,.flatpickr-current-month{color:var(--text);fill:var(--text);}
+.flatpickr-prev-month,.flatpickr-next-month{fill:var(--text2);}
+.flatpickr-prev-month:hover svg,.flatpickr-next-month:hover svg{fill:var(--gold);}
+.numInputWrapper span{border-color:var(--border2);}
+.numInput{color:var(--text);background:var(--surface2);}
+[data-theme="light"] .flatpickr-calendar{background:#fff;border-color:#e2e2e2;}
+[data-theme="light"] .flatpickr-day{color:#333;}
+[data-theme="light"] .flatpickr-day.selected{background:var(--navy);border-color:var(--navy);color:#fff;}
 </style>
 </head>
 <body>
@@ -2789,6 +2808,7 @@ function render() {
   renderBudget();
   renderCourses();
   renderRightPanel();
+  setTimeout(initDatePickers, 50);
 }
 
 // ── Init ──
@@ -2843,17 +2863,22 @@ sb.auth.getSession().then(({ data }) => {
   if (data?.session?.provider_token) { _providerToken = data.session.provider_token; sessionStorage.setItem('mba-pt', data.session.provider_token); }
 });
 
-// On iOS, clip date inputs to consistent height using overflow:hidden wrapper
-const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-if (_isIOS) {
+// Init Flatpickr on all date inputs for consistent cross-platform calendar picker
+function initDatePickers() {
   document.querySelectorAll('input[type=date]').forEach(el => {
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'height:42px;overflow:hidden;border-radius:8px;';
-    el.parentNode.insertBefore(wrapper, el);
-    wrapper.appendChild(el);
-    el.style.cssText = 'margin-top:0;height:42px;';
+    if (el._flatpickr) return;
+    const val = el.value;
+    flatpickr(el, {
+      dateFormat: 'Y-m-d',
+      defaultDate: val || null,
+      disableMobile: true,
+      onChange: (dates, dateStr) => { el.value = dateStr; el.dispatchEvent(new Event('change')); }
+    });
   });
 }
+// Run after DOM ready and after each render
+document.addEventListener('DOMContentLoaded', initDatePickers);
+setTimeout(initDatePickers, 500);
 
 const _hasSession = !!getToken() && getToken() !== SUPA_KEY;
 if (_hasSession) {
