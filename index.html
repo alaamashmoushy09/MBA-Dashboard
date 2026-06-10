@@ -627,7 +627,7 @@ select option{background:var(--surface2);}
           <option value="books">Books</option><option value="social">Social</option>
           <option value="health">Health</option><option value="other">Other</option>
         </select>
-        <input type="date" id="rp-exp-date" style="flex:1;" />
+        <input type="text" inputmode="none" id="rp-exp-date" style="flex:1;" />
       </div>
       <button class="btn btn-primary" style="width:100%;padding:8px;" onclick="quickAddExpense()">Add expense</button>
     </div>
@@ -767,7 +767,7 @@ select option{background:var(--surface2);}
                 <input type="text" id="ms-name" placeholder="e.g. Graduation ceremony" style="font-size:12px;padding:7px 10px;" />
               </div>
               <div class="form-group">
-                <input type="date" id="ms-date" style="font-size:12px;padding:7px 10px;" />
+                <input type="text" inputmode="none" id="ms-date" style="font-size:12px;padding:7px 10px;" />
               </div>
               <div class="form-group">
                 <select id="ms-type" style="font-size:12px;padding:7px 10px;">
@@ -889,7 +889,7 @@ select option{background:var(--surface2);}
           </div>
           <div class="form-group">
             <label class="form-label">Date</label>
-            <input type="date" id="exp-date" />
+            <input type="text" inputmode="none" id="exp-date" />
           </div>
         </div>
         <div class="form-row">
@@ -977,7 +977,7 @@ select option{background:var(--surface2);}
           </div>
           <div class="form-group">
             <label class="form-label">Due date</label>
-            <input type="date" id="task-due" />
+            <input type="text" inputmode="none" id="task-due" />
           </div>
           <div class="form-group">
             <label class="form-label">Time (optional)</label>
@@ -1056,7 +1056,7 @@ select option{background:var(--surface2);}
           </div>
           <div class="form-group">
             <label class="form-label">Follow-up date</label>
-            <input type="date" id="net-followup" />
+            <input type="text" inputmode="none" id="net-followup" />
           </div>
         </div>
         <div class="form-row">
@@ -2593,7 +2593,7 @@ function renderExpenses() {
           </div>
           <div class="form-group">
             <label class="form-label">Date</label>
-            <input type="date" id="ee-date-${e.id}" value="${e.date}" />
+            <input type="text" inputmode="none" id="ee-date-${e.id}" value="${e.date}" />
           </div>
           <div class="form-group">
             <label class="form-label">Notes</label>
@@ -2865,13 +2865,14 @@ sb.auth.getSession().then(({ data }) => {
 
 // Init Flatpickr on all date inputs for consistent cross-platform calendar picker
 function initDatePickers() {
-  document.querySelectorAll('input[type=date]').forEach(el => {
+  document.querySelectorAll('input[inputmode="none"]').forEach(el => {
     if (el._flatpickr) return;
     const val = el.value;
     flatpickr(el, {
       dateFormat: 'Y-m-d',
       defaultDate: val || null,
       disableMobile: true,
+      allowInput: false,
       onChange: (dates, dateStr) => { el.value = dateStr; el.dispatchEvent(new Event('change')); }
     });
   });
