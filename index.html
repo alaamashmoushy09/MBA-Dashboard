@@ -1071,6 +1071,16 @@ select option{background:var(--surface2);}
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label class="form-label">Mobile number</label>
+            <input type="tel" id="net-phone" placeholder="e.g. +33 6 12 34 56 78" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="net-email" placeholder="e.g. sarah@example.com" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
             <label class="form-label">Notes</label>
             <textarea id="net-notes" placeholder="Interests, context, next steps..." style="min-height:48px;"></textarea>
           </div>
@@ -1406,7 +1416,8 @@ async function loadAllData() {
 
   state.network = netData.map(n => ({
     id: n.id, name: n.name, school: n.school || '', company: n.company || '',
-    how_met: n.how_met || '', follow_up: n.follow_up || '', notes: n.notes || ''
+    how_met: n.how_met || '', follow_up: n.follow_up || '',
+    phone: n.phone || '', email: n.email || '', notes: n.notes || ''
   }));
 
   const sett = settData[0] || null;
@@ -2279,6 +2290,8 @@ function startEditNetwork(id) {
   document.getElementById('net-company').value = n.company;
   document.getElementById('net-howmet').value = n.how_met;
   document.getElementById('net-followup').value = n.follow_up;
+  document.getElementById('net-phone').value = n.phone || '';
+  document.getElementById('net-email').value = n.email || '';
   document.getElementById('net-notes').value = n.notes;
   document.getElementById('network-form-title').textContent = 'Edit contact';
   document.getElementById('net-submit-btn').textContent = 'Update contact';
@@ -2288,7 +2301,7 @@ function startEditNetwork(id) {
 
 function cancelEditNetwork() {
   editingNetworkId = null;
-  ['net-name','net-school','net-company','net-howmet','net-notes'].forEach(id => document.getElementById(id).value = '');
+  ['net-name','net-school','net-company','net-howmet','net-notes','net-phone','net-email'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('net-followup').value = '';
   document.getElementById('network-form-title').textContent = 'Add contact';
   document.getElementById('net-submit-btn').textContent = 'Add contact';
@@ -2301,25 +2314,55 @@ async function submitNetwork() {
   const company = document.getElementById('net-company').value.trim();
   const how_met = document.getElementById('net-howmet').value.trim();
   const follow_up = document.getElementById('net-followup').value;
+  const phone = document.getElementById('net-phone').value.trim();
+  const email = document.getElementById('net-email').value.trim();
   const notes = document.getElementById('net-notes').value.trim();
   if (!name) { showToast('Name is required.'); return; }
   if (editingNetworkId !== null) {
     try {
-      await apiPatch('network', editingNetworkId, { name, school, company, how_met, follow_up: follow_up || null, notes });
+      await apiPatch('network', editingNetworkId, { name, school, company, how_met, follow_up: follow_up || null, phone: phone || null, email: email || null, notes });
       const n = state.network.find(n => n.id === editingNetworkId);
-      if (n) { n.name = name; n.school = school; n.company = company; n.how_met = how_met; n.follow_up = follow_up; n.notes = notes; }
+      if (n) { n.name = name; n.school = school; n.company = company; n.how_met = how_met; n.follow_up = follow_up; n.phone = phone; n.email = email; n.notes = notes; }
       cancelEditNetwork();
       renderNetwork();
     } catch { showToast('Could not update contact.'); }
   } else {
     try {
-      const rows = await apiPost('network', { name, school, company, how_met, follow_up: follow_up || null, notes });
+      const rows = await apiPost('network', { name, school, company, how_met, follow_up: follow_up || null, phone: phone || null, email: email || null, notes });
       const row = rows[0];
-      state.network.unshift({ id:row.id, name, school, company, how_met, follow_up, notes });
+      state.network.unshift({ id:row.id, name, school, company, how_met, follow_up, phone, email, notes });
       cancelEditNetwork();
       renderNetwork();
     } catch { showToast('Could not save contact.'); }
   }
+}
+
+function downloadVCard(id) {
+  const n = state.network.find(n => n.id === id);
+  if (!n) return;
+  const nameParts = n.name.trim().split(' ');
+  const lastName = nameParts.length > 1 ? nameParts.pop() : '';
+  const firstName = nameParts.join(' ');
+  const lines = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${n.name}`,
+    `N:${lastName};${firstName};;;`,
+    n.phone ? `TEL;TYPE=CELL:${n.phone}` : '',
+    n.email ? `EMAIL:${n.email}` : '',
+    n.company ? `ORG:${n.company}` : '',
+    n.notes ? `NOTE:${n.notes.replace(/\n/g,' ')}` : '',
+    'END:VCARD'
+  ].filter(Boolean).join('\r\n');
+  const blob = new Blob([lines], { type: 'text/vcard' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = n.name.replace(/\s+/g,'_') + '.vcf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 async function deleteNetwork(id) {
@@ -2760,9 +2803,12 @@ function renderNetwork() {
       <div class="network-name">${n.name}</div>
       ${n.school || n.company ? `<div class="network-meta">${n.school ? `<span>${n.school}</span>` : ''}${n.school && n.company ? ' · ' : ''}${n.company ? `<span>${n.company}</span>` : ''}</div>` : ''}
       ${n.how_met ? `<div class="network-meta">Met: <span>${n.how_met}</span></div>` : ''}
+      ${n.phone ? `<div class="network-meta">📱 <a href="tel:${n.phone}" style="color:var(--text2);text-decoration:none;">${n.phone}</a></div>` : ''}
+      ${n.email ? `<div class="network-meta">✉️ <a href="mailto:${n.email}" style="color:var(--text2);text-decoration:none;">${n.email}</a></div>` : ''}
       ${n.follow_up ? `<div class="network-meta">Follow-up: <span>${n.follow_up}</span></div>` : ''}
       ${n.notes ? `<div class="network-notes">${n.notes}</div>` : ''}
       <div class="network-actions">
+        <button class="btn-icon" onclick="downloadVCard(${n.id})" title="Add to Contacts" style="color:var(--blue);font-size:14px;">👤+</button>
         <button class="btn-icon" onclick="startEditNetwork(${n.id})" title="Edit">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
