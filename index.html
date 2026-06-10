@@ -1530,6 +1530,39 @@ async function storeCalEventId(taskId, calEventId) {
   if (t) t.calEventId = calEventId;
   try { await apiPatch('tasks', taskId, { cal_event_id: calEventId }); } catch {}
 }
+async function updateCalendarEvent(calEventId, title, dateStr, notes, timeStr) {
+  const pt = getProviderToken();
+  if (!pt || !calEventId || !dateStr) return;
+  const { notes: cleanNotes } = parseTaskTime(notes || '');
+  function nextDay(ds) {
+    const [y,m,d] = ds.split('-').map(Number);
+    const days = [0,31,(y%4===0&&(y%100!==0||y%400===0))?29:28,31,30,31,30,31,31,30,31,30,31];
+    let nd=d+1,nm=m,ny=y;
+    if(nd>days[m]){nd=1;nm++;if(nm>12){nm=1;ny++;}}
+    return ny+'-'+String(nm).padStart(2,'0')+'-'+String(nd).padStart(2,'0');
+  }
+  let startObj, endObj;
+  if (timeStr) {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const [hh,mm] = timeStr.split(':').map(Number);
+    const endHH = (hh+1)%24;
+    const endDateStr = hh===23 ? nextDay(dateStr) : dateStr;
+    startObj = { dateTime: dateStr+'T'+timeStr+':00', timeZone: tz };
+    endObj   = { dateTime: endDateStr+'T'+String(endHH).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':00', timeZone: tz };
+  } else {
+    startObj = { date: dateStr };
+    endObj   = { date: nextDay(dateStr) };
+  }
+  try {
+    const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(calEventId)}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ summary: title, description: cleanNotes || '', start: startObj, end: endObj })
+    });
+    if (r.status === 401 || r.status === 403) { calendarConnected = false; renderCalConnectHint(); }
+  } catch {}
+}
+
 async function deleteCalendarEvent(calEventId) {
   const pt = getProviderToken();
   if (!calEventId) return;
@@ -2273,7 +2306,18 @@ async function submitTask() {
     try {
       await apiPatch('tasks', editingTaskId, { title, due: due || null, phase, notes });
       const t = state.tasks.find(t => t.id === editingTaskId);
-      if (t) { t.title = title; t.due = due; t.phase = phase; t.notes = notes; }
+      if (t) {
+        t.title = title; t.due = due; t.phase = phase; t.notes = notes;
+        // Update or create calendar event if date/title/time changed
+        if (due && calendarConnected) {
+          if (t.calEventId) {
+            await updateCalendarEvent(t.calEventId, title, due, notes, time);
+          } else {
+            const calId = await createCalendarEvent(title, due, notes, time);
+            if (calId) await storeCalEventId(editingTaskId, calId);
+          }
+        }
+      }
       cancelEditTask();
       render();
     } catch { showToast('Could not update task.'); }
