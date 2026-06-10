@@ -918,6 +918,17 @@ select option{background:var(--surface2);}
         </div>
       </div>
       <div class="card">
+        <div class="card-title">Savings & runway</div>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">Starting savings (USD)</label>
+            <input type="number" id="savings-start" placeholder="e.g. 50000" min="0" step="100" />
+          </div>
+          <button class="btn btn-primary" onclick="saveSavings()" style="align-self:flex-end;">Save</button>
+        </div>
+        <div id="savings-display"></div>
+      </div>
+      <div class="card">
         <div class="card-title">Monthly budget</div>
         <div class="form-row">
           <div class="form-group">
@@ -1158,6 +1169,7 @@ const sb = supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { flowType: 'implic
 let TO_USD = { SAR:0.2667, USD:1, EUR:1.0836, GBP:1.2706, AED:0.2723 };
 const SYM = { SAR:'SAR ', USD:'$', EUR:'€', GBP:'£', AED:'AED ' };
 const CATS = { housing:'Housing', food:'Food', transport:'Transport', travel:'Travel', books:'Books / Supplies', social:'Social / Events', health:'Health', other:'Other' };
+const CAT_ICONS = { housing:'🏠', food:'🍽️', transport:'🚗', travel:'✈️', books:'📚', social:'🎉', health:'💊', other:'📦' };
 const PHASE_LABEL = { now:'Pre-LOA', loa:'Pre-MBA summer', mba:'MBA start', summer:'Summer break' };
 const PHASE_CLASS = { now:'ph-now', loa:'ph-loa', mba:'ph-mba', summer:'ph-summer' };
 
@@ -2366,6 +2378,43 @@ async function saveBudget() {
   }
 }
 
+// ── Savings & runway ──
+function loadSavings() {
+  try { return parseFloat(localStorage.getItem('mba-savings-start') || '0') || 0; } catch { return 0; }
+}
+function saveSavings() {
+  const v = parseFloat(document.getElementById('savings-start').value);
+  if (!isNaN(v) && v >= 0) {
+    localStorage.setItem('mba-savings-start', String(v));
+    renderSavings();
+    showToast('Savings updated ✓', 2000, true);
+  }
+}
+function renderSavings() {
+  const el = document.getElementById('savings-display');
+  if (!el) return;
+  const inp = document.getElementById('savings-start');
+  const startSavings = loadSavings();
+  if (inp && startSavings) inp.value = startSavings;
+  const totalSpent = state.expenses.reduce((s,e)=>s+e.usdAmt, 0);
+  const remaining = startSavings - totalSpent;
+  const monthly = state.budgetUSD || 0;
+  const monthsLeft = monthly > 0 ? Math.floor(remaining / monthly) : null;
+  const pct = startSavings > 0 ? Math.min(100, Math.round(totalSpent / startSavings * 100)) : 0;
+  if (!startSavings) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);">Enter your starting savings above to see your runway.</div>'; return; }
+  const runwayColor = monthsLeft === null ? 'var(--text2)' : monthsLeft > 12 ? 'var(--green)' : monthsLeft > 6 ? 'var(--amber)' : 'var(--red)';
+  el.innerHTML = `
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;">
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:600;margin-bottom:4px;">Starting savings</div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--text);line-height:1;">${fmt(startSavings)}</div></div>
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:600;margin-bottom:4px;">Total spent</div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--red);line-height:1;">${fmt(totalSpent)}</div></div>
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:600;margin-bottom:4px;">Remaining</div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:${remaining>=0?'var(--green)':'var(--red)'};line-height:1;">${fmt(remaining)}</div></div>
+      ${monthsLeft !== null ? `<div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:600;margin-bottom:4px;">Runway</div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:${runwayColor};line-height:1;">${monthsLeft}mo</div></div>` : ''}
+    </div>
+    <div style="margin-bottom:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--text3);"><span>Spent ${pct}% of savings</span><span>${fmt(totalSpent)} / ${fmt(startSavings)}</span></div>
+    <div class="budget-bar-bg"><div class="budget-bar-fill${pct>80?' over':''}" style="width:${pct}%"></div></div>
+  `;
+}
+
 // ── Budget targets ──
 function loadBudgetTargets() {
   try { return JSON.parse(localStorage.getItem('mba-budget-targets') || '{}'); } catch { return {}; }
@@ -2567,7 +2616,7 @@ function renderOverview() {
   document.getElementById('ov-expenses').innerHTML = state.expenses.slice(0,5).map(e => `
     <div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;">
-        <span class="exp-cat cat-${e.cat}">${CATS[e.cat]||e.cat}</span>
+        <span class="exp-cat cat-${e.cat}">${CAT_ICONS[e.cat]||'📦'} ${CATS[e.cat]||e.cat}</span>
         <div><div class="exp-desc">${e.desc}</div>${e.notes?`<div class="exp-note">${e.notes}</div>`:''}</div>
       </div>
       <div>
@@ -2629,7 +2678,7 @@ function renderExpenses() {
     }
     return `<div class="exp-row">
       <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;">
-        <span class="exp-cat cat-${e.cat}">${CATS[e.cat]||e.cat}</span>
+        <span class="exp-cat cat-${e.cat}">${CAT_ICONS[e.cat]||'📦'} ${CATS[e.cat]||e.cat}</span>
         <div style="min-width:0;"><div class="exp-desc">${e.desc}</div><div class="exp-note" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.date}${e.notes?' · '+e.notes:''}${e.receiptUrl?` · <img src="${e.receiptUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;vertical-align:middle;" onclick="window.open('${e.receiptUrl}')">`:''}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
@@ -2751,7 +2800,7 @@ function renderBudget() {
     existing.forEach(el=>el.remove());
     const baseCircle = donutSvg.querySelector('circle');
     donutSvg.innerHTML = paths.join('') + `<circle cx="70" cy="70" r="43" fill="var(--surface)"/>` + `<text id="donut-center" x="70" y="75" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="15" fill="var(--text)">${fmt(total)}</text>`;
-    donutLegend.innerHTML = slices.map(([k,v])=>`<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${DONUT_COLORS[k]||'var(--text3)'}"></div><span>${CATS[k]||k}</span><span class="donut-legend-val">${fmt(v)}</span></div>`).join('');
+    donutLegend.innerHTML = slices.map(([k,v])=>`<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${DONUT_COLORS[k]||'var(--text3)'}"></div><span>${CAT_ICONS[k]||''} ${CATS[k]||k}</span><span class="donut-legend-val">${fmt(v)}</span></div>`).join('');
   } else if (donutSvg) {
     donutLegend.innerHTML = '<div style="font-size:12px;color:var(--text3);">Add expenses to see chart</div>';
   }
@@ -2760,7 +2809,7 @@ function renderBudget() {
   document.getElementById('budget-cats').innerHTML = hasData
     ? Object.entries(catTotals).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
         <div class="budget-bar-row">
-          <div class="budget-bar-top"><span style="color:var(--text2);font-size:13px;">${CATS[k]}</span><span style="font-weight:500;font-size:13px;">${fmt(v)}</span></div>
+          <div class="budget-bar-top"><span style="color:var(--text2);font-size:13px;">${CAT_ICONS[k]||''} ${CATS[k]}</span><span style="font-weight:500;font-size:13px;">${fmt(v)}</span></div>
           <div class="budget-bar-bg"><div class="budget-bar-fill" style="width:${Math.round(v/maxCat*100)}%"></div></div>
         </div>`).join('')
     : '<div class="empty">No expense data yet</div>';
@@ -2775,6 +2824,7 @@ function renderBudget() {
   });
   const months = Object.values(monthlyData).sort((a,b)=>a.label>b.label?1:-1);
   const maxM = Math.max(...months.map(m=>m.total),1);
+  renderSavings();
   renderBudgetTargets();
   document.getElementById('budget-monthly').innerHTML = months.map(m => {
     const over = state.budgetUSD && m.total > state.budgetUSD;
