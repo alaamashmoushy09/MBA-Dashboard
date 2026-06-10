@@ -1243,6 +1243,7 @@ function getProviderToken() {
 }
 
 let calendarConnected = null; // null=unknown, true=ok, false=disconnected
+let _calAutoConnectPending = false;
 
 async function checkCalendarConnection() {
   const pt = getProviderToken();
@@ -1459,11 +1460,32 @@ function renderCalConnectHint() {
   if (!el) return;
   if (calendarConnected === true) {
     el.innerHTML = '<span style="color:var(--green);">● Calendar connected</span>';
+    _calAutoConnectPending = false;
+    try { document.getElementById('cal-auto-banner')?.remove(); } catch {}
   } else if (calendarConnected === false) {
     el.innerHTML = '<button onclick="reconnectCalendar()" style="background:none;border:none;cursor:pointer;font-size:11px;font-family:inherit;color:var(--amber);">⚠ Reconnect Google Calendar</button>';
+    _scheduleAutoReconnect();
   } else {
     // null = still checking
     el.innerHTML = '<span style="color:var(--text3);font-size:11px;">Checking calendar…</span>';
+  }
+}
+
+function _scheduleAutoReconnect() {
+  if (_calAutoConnectPending) return;
+  if (!localStorage.getItem('mba-cal-hasConnected')) return;
+  _calAutoConnectPending = true;
+  // Show a prominent one-tap banner
+  let banner = document.getElementById('cal-auto-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'cal-auto-banner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--amber);color:#000;text-align:center;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;';
+    banner.innerHTML = '🔗 Tap here to reconnect Google Calendar';
+    banner.onclick = () => { banner.remove(); _calAutoConnectPending = false; reconnectCalendar(); };
+    document.body.appendChild(banner);
+    // Auto-dismiss after 8 seconds if not tapped
+    setTimeout(() => { try { banner.remove(); } catch {} _calAutoConnectPending = false; }, 8000);
   }
 }
 const GIS_CLIENT_ID = '918271495993-blp74bf2varpfcdkutoi8hhbpph974u6.apps.googleusercontent.com';
@@ -1475,6 +1497,7 @@ function _onGisToken(response, silent) {
     _providerToken = response.access_token;
     const expiry = Date.now() + ((response.expires_in || 3600) - 60) * 1000;
     try { localStorage.setItem('mba-cal-token', JSON.stringify({ token: response.access_token, expiry })); } catch {}
+    try { localStorage.setItem('mba-cal-hasConnected', '1'); } catch {}
     calendarConnected = true;
     renderCalConnectHint();
     // Schedule silent renewal before expiry
@@ -1510,7 +1533,6 @@ function initGoogleCalendarAuth() {
 
 function reconnectCalendar() {
   if (_gisTokenClient) {
-    // Use select_account (just picks account, no full consent screen since already approved)
     _gisTokenClient.requestAccessToken({ prompt: 'select_account' });
   } else {
     showToast('Calendar auth not ready, try again in a moment.');
