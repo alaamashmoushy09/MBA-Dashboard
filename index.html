@@ -2843,16 +2843,15 @@ sb.auth.getSession().then(({ data }) => {
   if (data?.session?.provider_token) { _providerToken = data.session.provider_token; sessionStorage.setItem('mba-pt', data.session.provider_token); }
 });
 
-// On iOS, replace date inputs with text inputs (iOS ignores height CSS on date inputs)
-const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+// On iOS, clip date inputs to consistent height using overflow:hidden wrapper
+const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 if (_isIOS) {
   document.querySelectorAll('input[type=date]').forEach(el => {
-    el.type = 'text';
-    el.placeholder = 'YYYY-MM-DD';
-    el.pattern = '\\d{4}-\\d{2}-\\d{2}';
-    el.addEventListener('focus', function() {
-      if (!this.value) this.value = new Date().toISOString().slice(0,10);
-    });
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'height:42px;overflow:hidden;border-radius:8px;';
+    el.parentNode.insertBefore(wrapper, el);
+    wrapper.appendChild(el);
+    el.style.cssText = 'margin-top:0;height:42px;';
   });
 }
 
