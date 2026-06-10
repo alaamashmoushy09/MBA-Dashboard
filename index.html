@@ -12,7 +12,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
@@ -627,7 +626,7 @@ select option{background:var(--surface2);}
           <option value="books">Books</option><option value="social">Social</option>
           <option value="health">Health</option><option value="other">Other</option>
         </select>
-        <input type="text" inputmode="none" id="rp-exp-date" style="flex:1;" />
+        <input type="date" id="rp-exp-date" style="flex:1;" />
       </div>
       <button class="btn btn-primary" style="width:100%;padding:8px;" onclick="quickAddExpense()">Add expense</button>
     </div>
@@ -767,7 +766,7 @@ select option{background:var(--surface2);}
                 <input type="text" id="ms-name" placeholder="e.g. Graduation ceremony" style="font-size:12px;padding:7px 10px;" />
               </div>
               <div class="form-group">
-                <input type="text" inputmode="none" id="ms-date" style="font-size:12px;padding:7px 10px;" />
+                <input type="date" id="ms-date" style="font-size:12px;padding:7px 10px;" />
               </div>
               <div class="form-group">
                 <select id="ms-type" style="font-size:12px;padding:7px 10px;">
@@ -889,7 +888,7 @@ select option{background:var(--surface2);}
           </div>
           <div class="form-group">
             <label class="form-label">Date</label>
-            <input type="text" inputmode="none" id="exp-date" />
+            <input type="date" id="exp-date" />
           </div>
         </div>
         <div class="form-row">
@@ -977,7 +976,7 @@ select option{background:var(--surface2);}
           </div>
           <div class="form-group">
             <label class="form-label">Due date</label>
-            <input type="text" inputmode="none" id="task-due" />
+            <input type="date" id="task-due" />
           </div>
           <div class="form-group">
             <label class="form-label">Time (optional)</label>
@@ -1056,7 +1055,7 @@ select option{background:var(--surface2);}
           </div>
           <div class="form-group">
             <label class="form-label">Follow-up date</label>
-            <input type="text" inputmode="none" id="net-followup" />
+            <input type="date" id="net-followup" />
           </div>
         </div>
         <div class="form-row">
@@ -2593,7 +2592,7 @@ function renderExpenses() {
           </div>
           <div class="form-group">
             <label class="form-label">Date</label>
-            <input type="text" inputmode="none" id="ee-date-${e.id}" value="${e.date}" />
+            <input type="date" id="ee-date-${e.id}" value="${e.date}" />
           </div>
           <div class="form-group">
             <label class="form-label">Notes</label>
@@ -2808,7 +2807,7 @@ function render() {
   renderBudget();
   renderCourses();
   renderRightPanel();
-  setTimeout(initDatePickers, 50);
+  setTimeout(fixIOSDateInputs, 50);
 }
 
 // ── Init ──
@@ -2863,23 +2862,21 @@ sb.auth.getSession().then(({ data }) => {
   if (data?.session?.provider_token) { _providerToken = data.session.provider_token; sessionStorage.setItem('mba-pt', data.session.provider_token); }
 });
 
-// Init Flatpickr on all date inputs for consistent cross-platform calendar picker
-function initDatePickers() {
-  document.querySelectorAll('input[inputmode="none"]').forEach(el => {
-    if (el._flatpickr) return;
-    const val = el.value;
-    flatpickr(el, {
-      dateFormat: 'Y-m-d',
-      defaultDate: val || null,
-      disableMobile: true,
-      allowInput: false,
-      onChange: (dates, dateStr) => { el.value = dateStr; el.dispatchEvent(new Event('change')); }
-    });
+// On iOS, wrap date inputs to clip native control to consistent height
+const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function fixIOSDateInputs() {
+  if (!_isIOS) return;
+  document.querySelectorAll('input[type=date]').forEach(el => {
+    if (el.parentNode.dataset.dateWrap) return;
+    const wrapper = document.createElement('div');
+    wrapper.dataset.dateWrap = '1';
+    wrapper.style.cssText = 'height:42px;overflow:hidden;border-radius:8px;display:block;width:100%;';
+    el.parentNode.insertBefore(wrapper, el);
+    wrapper.appendChild(el);
   });
 }
-// Run after DOM ready and after each render
-document.addEventListener('DOMContentLoaded', initDatePickers);
-setTimeout(initDatePickers, 500);
+document.addEventListener('DOMContentLoaded', fixIOSDateInputs);
+setTimeout(fixIOSDateInputs, 500);
 
 const _hasSession = !!getToken() && getToken() !== SUPA_KEY;
 if (_hasSession) {
