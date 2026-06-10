@@ -2320,7 +2320,9 @@ async function submitNetwork() {
   if (!name) { showToast('Name is required.'); return; }
   if (editingNetworkId !== null) {
     try {
-      await apiPatch('network', editingNetworkId, { name, school, company, how_met, follow_up: follow_up || null, phone: phone || null, email: email || null, notes });
+      let payload = { name, school, company, how_met, follow_up: follow_up || null, phone: phone || null, email: email || null, notes };
+      try { await apiPatch('network', editingNetworkId, payload); }
+      catch { await apiPatch('network', editingNetworkId, { name, school, company, how_met, follow_up: follow_up || null, notes }); }
       const n = state.network.find(n => n.id === editingNetworkId);
       if (n) { n.name = name; n.school = school; n.company = company; n.how_met = how_met; n.follow_up = follow_up; n.phone = phone; n.email = email; n.notes = notes; }
       cancelEditNetwork();
@@ -2328,7 +2330,9 @@ async function submitNetwork() {
     } catch { showToast('Could not update contact.'); }
   } else {
     try {
-      const rows = await apiPost('network', { name, school, company, how_met, follow_up: follow_up || null, phone: phone || null, email: email || null, notes });
+      let rows;
+      try { rows = await apiPost('network', { name, school, company, how_met, follow_up: follow_up || null, phone: phone || null, email: email || null, notes }); }
+      catch { rows = await apiPost('network', { name, school, company, how_met, follow_up: follow_up || null, notes }); }
       const row = rows[0];
       state.network.unshift({ id:row.id, name, school, company, how_met, follow_up, phone, email, notes });
       cancelEditNetwork();
