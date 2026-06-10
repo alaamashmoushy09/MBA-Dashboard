@@ -2781,7 +2781,11 @@ function renderOverview() {
     }).join('');
   }
   if (state.calendarEvents && state.calendarEvents.length) {
-    html += state.calendarEvents.map(ev => {
+    const taskTitles = new Set(weekTasks.map(t => t.title.trim().toLowerCase()));
+    html += state.calendarEvents.filter(ev => {
+      const title = (ev.summary || '').trim().toLowerCase();
+      return !taskTitles.has(title);
+    }).map(ev => {
       const startRaw = ev.start?.dateTime || ev.start?.date;
       let timeStr = '';
       if (startRaw) {
