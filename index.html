@@ -434,13 +434,14 @@ select option{background:var(--surface2);}
 @media (max-width: 720px) {
   .form-row { flex-direction: column !important; align-items: stretch !important; }
   .form-group { min-width: 0 !important; max-width: 100% !important; width: 100% !important; flex: none !important; }
-  .input-with-cur { flex-direction: row !important; width: 100% !important; }
-  .input-with-cur input { flex: 1 !important; min-width: 0 !important; width: auto !important; }
-  .input-with-cur select { width: auto !important; min-width: 75px !important; flex: none !important; }
   input[type=text],input[type=number],input[type=date],input[type=url],textarea {
     width: 100% !important; box-sizing: border-box !important; max-width: 100% !important;
   }
   select { width: 100% !important; box-sizing: border-box !important; }
+  /* input-with-cur MUST come after the general rules to override them */
+  .input-with-cur { flex-direction: row !important; width: 100% !important; display: flex !important; }
+  .input-with-cur input[type=number] { flex: 1 1 auto !important; width: 0 !important; min-width: 0 !important; max-width: none !important; }
+  .input-with-cur select { flex: 0 0 auto !important; width: auto !important; min-width: 80px !important; max-width: 90px !important; }
   .card { padding: 14px !important; }
   .page-title { font-size: 26px !important; }
   .task-row .btn-danger, .task-row .btn-icon {
@@ -449,10 +450,8 @@ select option{background:var(--surface2);}
   }
   .exp-row { flex-wrap: wrap !important; gap: 6px !important; align-items: center !important; }
   .exp-row > div:first-child { flex: 1 1 100% !important; min-width: 0 !important; }
-  .exp-row > div:last-child { flex: 0 0 auto !important; margin-left: auto !important; }
   .exp-note { white-space: normal !important; word-break: break-word !important; }
   .btn-primary { width: 100% !important; box-sizing: border-box !important; }
-  .exp-amount { font-size: 15px !important; }
   .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
   .page-header .btn { width: 100% !important; }
 }
