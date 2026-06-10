@@ -1238,13 +1238,9 @@ async function fetchCurrencyRates() {
 }
 
 // ── Auth ──
-async function signInWithGoogle() {
+function signInWithGoogle() {
   const redirectTo = window.location.href.split('#')[0];
-  const { error } = await sb.auth.signInWithOAuth({
-    provider:'google',
-    options:{ redirectTo }
-  });
-  if (error) showToast('Sign-in failed: ' + error.message);
+  window.location.href = SUPA_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo);
 }
 
 async function signOut() {
