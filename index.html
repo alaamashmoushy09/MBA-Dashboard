@@ -2308,13 +2308,15 @@ async function submitTask() {
       const t = state.tasks.find(t => t.id === editingTaskId);
       if (t) {
         t.title = title; t.due = due; t.phase = phase; t.notes = notes;
-        // Update or create calendar event if date/title/time changed
-        if (due && calendarConnected) {
+        // Update or create calendar event if a token is available
+        if (due && getProviderToken()) {
           if (t.calEventId) {
             await updateCalendarEvent(t.calEventId, title, due, notes, time);
+            showToast('Task & calendar updated ✓', 2500, true);
           } else {
             const calId = await createCalendarEvent(title, due, notes, time);
-            if (calId) await storeCalEventId(editingTaskId, calId);
+            if (calId) { await storeCalEventId(editingTaskId, calId); t.calEventId = calId; showToast('Task updated & added to calendar ✓', 2500, true); }
+            else showToast('Task updated (calendar sync failed — reconnect calendar)', 4000);
           }
         }
       }
