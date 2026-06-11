@@ -1523,21 +1523,17 @@ async function saveSettings() {
 async function syncMyCardToCloud(c) {
   const json = JSON.stringify(c);
   try {
-    if (state.settingsId) {
-      const r = await fetch(`${SUPA_URL}/rest/v1/settings?id=eq.${state.settingsId}`, {
-        method: 'PATCH',
-        headers: { ...apiHeaders(), 'Prefer': 'return=representation' },
-        body: JSON.stringify({ mycard: json })
-      });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        showToast('Card sync failed: ' + r.status + ' — ' + JSON.stringify(body).slice(0,80), 6000);
-        return;
-      }
-      showToast('Card synced to cloud ✓', 2000, true);
-    } else {
-      showToast('Card sync skipped — no settings row found', 4000);
+    const r = await fetch(`${SUPA_URL}/rest/v1/settings`, {
+      method: 'POST',
+      headers: { ...apiHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({ mycard: json })
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      showToast('Card sync failed: ' + r.status + ' — ' + JSON.stringify(body).slice(0,80), 6000);
+      return;
     }
+    showToast('Card synced to cloud ✓', 2000, true);
   } catch(e) {
     showToast('Card sync error: ' + e.message, 5000);
   }
