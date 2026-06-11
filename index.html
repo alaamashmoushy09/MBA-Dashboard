@@ -12,7 +12,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
@@ -2439,75 +2438,49 @@ function saveMyCard() {
   showMyCardQR(c);
   showToast('Card saved ✓', 2000, true);
 }
+function qrImg(data, color) {
+  return '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&color=' + (color||'0f2b5b') + '&data=' + encodeURIComponent(data) + '" style="border-radius:8px;width:200px;height:200px;" />';
+}
 function showMyCardQR(c) {
   const container = document.getElementById('mycard-modal-content');
-  // Build Instagram URL from handle
   const igHandle = (c.instagram||'').replace(/^@/,'').trim();
   const igUrl = igHandle ? 'https://instagram.com/' + igHandle : '';
   const liUrl = (c.linkedin||'').trim();
+  const slides = [
+    { label:'📇 Contact', sub: (c.phone||'') + (c.phone&&c.email?' · ':'') + (c.email||''), qr: qrImg(buildVCard(c), '0f2b5b') },
+    igUrl ? { label:'📸 Instagram', sub:'@'+igHandle, qr: qrImg(igUrl, '833ab4') } : null,
+    liUrl ? { label:'🔗 LinkedIn',  sub: liUrl.replace(/https?:\/\/(www\.)?/,'').split('/').slice(0,3).join('/'), qr: qrImg(liUrl, '0077b5') } : null
+  ].filter(Boolean);
+
+  const dots = slides.map((_,i) =>
+    `<span class="qr-dot" onclick="goToSlide(${i})" style="width:9px;height:9px;border-radius:50%;background:${i===0?'var(--gold)':'var(--text3)'};cursor:pointer;display:inline-block;transition:background .2s;"></span>`
+  ).join('');
+
+  const slideHTML = slides.map(s => `
+    <div style="min-width:100%;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;padding:0 4px;">
+      ${s.qr}
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-top:10px;">${s.label}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px;">${s.sub}</div>
+    </div>`).join('');
 
   container.innerHTML = `
     <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;margin-bottom:2px;">${c.name}</div>
-    ${c.title?`<div style="font-size:12px;color:var(--text3);margin-bottom:14px;">${c.title}</div>`:'<div style="margin-bottom:14px;"></div>'}
-    <!-- Dot indicators -->
-    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;">
-      <span class="qr-dot active" onclick="goToSlide(0)" style="width:8px;height:8px;border-radius:50%;background:var(--gold);cursor:pointer;transition:opacity .2s;display:inline-block;"></span>
-      ${igUrl?`<span class="qr-dot" onclick="goToSlide(1)" style="width:8px;height:8px;border-radius:50%;background:var(--text3);cursor:pointer;transition:opacity .2s;display:inline-block;"></span>`:''}
-      ${liUrl?`<span class="qr-dot" onclick="goToSlide(${igUrl?2:1})" style="width:8px;height:8px;border-radius:50%;background:var(--text3);cursor:pointer;transition:opacity .2s;display:inline-block;"></span>`:''}
-    </div>
-    <!-- Slides -->
-    <div id="qr-slides" style="display:flex;overflow-x:scroll;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;gap:0;width:100%;" onscroll="onQRScroll(this,${igUrl?1:0},${liUrl?1:0})">
-      <!-- Slide 1: Contact -->
-      <div style="min-width:100%;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;">
-        <div id="mc-qr-box-0" style="display:inline-block;padding:12px;background:#fff;border-radius:12px;margin-bottom:10px;"></div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">📇 Save contact</div>
-        <div style="font-size:12px;color:var(--text2);line-height:2;">
-          ${c.phone?`📱 ${c.phone}<br>`:''}${c.email?`✉️ ${c.email}<br>`:''}
-        </div>
-      </div>
-      ${igUrl?`
-      <!-- Slide 2: Instagram -->
-      <div style="min-width:100%;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;">
-        <div id="mc-qr-box-1" style="display:inline-block;padding:12px;background:#fff;border-radius:12px;margin-bottom:10px;"></div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">📸 Instagram</div>
-        <div style="font-size:13px;color:var(--text2);">@${igHandle}</div>
-      </div>`:''}
-      ${liUrl?`
-      <!-- Slide 3: LinkedIn -->
-      <div style="min-width:100%;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;">
-        <div id="mc-qr-box-${igUrl?2:1}" style="display:inline-block;padding:12px;background:#fff;border-radius:12px;margin-bottom:10px;"></div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">🔗 LinkedIn</div>
-        <div style="font-size:12px;color:var(--text2);word-break:break-all;">${liUrl.replace('https://','')}</div>
-      </div>`:''}
-    </div>
+    ${c.title?`<div style="font-size:12px;color:var(--text3);margin-bottom:14px;">${c.title}</div>`:'<div style="margin-bottom:10px;"></div>'}
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;" id="qr-dots">${dots}</div>
+    <div id="qr-slides" style="display:flex;overflow-x:scroll;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;width:100%;" onscroll="onQRScroll(this)">${slideHTML}</div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:18px;">
       <button onclick="showMyCardEditForm()" class="btn btn-secondary" style="font-size:11px;padding:6px 14px;">Edit</button>
       <button onclick="downloadMyCardQR()" class="btn btn-secondary" style="font-size:11px;padding:6px 14px;">⬇ Save QR</button>
     </div>`;
-
-  // Generate QR codes
-  if (window.QRCode) {
-    const box0 = document.getElementById('mc-qr-box-0');
-    if (box0) { box0.innerHTML=''; new QRCode(box0,{text:buildVCard(c),width:200,height:200,colorDark:'#0f2b5b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
-    if (igUrl) {
-      const box1 = document.getElementById('mc-qr-box-1');
-      if (box1) { box1.innerHTML=''; new QRCode(box1,{text:igUrl,width:200,height:200,colorDark:'#833ab4',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
-    }
-    if (liUrl) {
-      const liIdx = igUrl?2:1;
-      const box2 = document.getElementById('mc-qr-box-'+liIdx);
-      if (box2) { box2.innerHTML=''; new QRCode(box2,{text:liUrl,width:200,height:200,colorDark:'#0077b5',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }
-    }
-  }
 }
 function goToSlide(idx) {
   const slides = document.getElementById('qr-slides');
   if (!slides) return;
   slides.scrollTo({ left: slides.offsetWidth * idx, behavior: 'smooth' });
 }
-function onQRScroll(el, hasIg, hasLi) {
+function onQRScroll(el) {
   const idx = Math.round(el.scrollLeft / el.offsetWidth);
-  document.querySelectorAll('.qr-dot').forEach((d,i) => {
+  document.querySelectorAll('#qr-dots .qr-dot').forEach((d,i) => {
     d.style.background = i===idx ? 'var(--gold)' : 'var(--text3)';
   });
 }
@@ -2515,16 +2488,17 @@ function downloadMyCardQR() {
   const slides = document.getElementById('qr-slides');
   if (!slides) return;
   const idx = Math.round(slides.scrollLeft / slides.offsetWidth);
-  const box = document.getElementById('mc-qr-box-'+idx);
-  if (!box) return;
-  const img = box.querySelector('img');
-  const canvas = box.querySelector('canvas');
-  const a = document.createElement('a');
-  if (img) a.href = img.src;
-  else if (canvas) a.href = canvas.toDataURL('image/png');
-  else return;
-  a.download = ['contact','instagram','linkedin'][idx]||'qr' + '-qr.png';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  const slide = slides.children[idx];
+  if (!slide) return;
+  const img = slide.querySelector('img');
+  if (!img) return;
+  fetch(img.src).then(r=>r.blob()).then(blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = ['contact','instagram','linkedin'][idx]+'-qr.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }).catch(()=>showToast('Could not save — try screenshot instead.'));
 }
 function renderMyCard() {} // no-op — card is now modal-only
 
