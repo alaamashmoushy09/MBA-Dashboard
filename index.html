@@ -1487,6 +1487,9 @@ async function loadAllData() {
         if (kd.weatherLocation) state.weatherLocation = kd.weatherLocation;
       } catch {}
     }
+    if (sett.mycard) {
+      try { localStorage.setItem('mba-mycard', typeof sett.mycard === 'string' ? sett.mycard : JSON.stringify(sett.mycard)); } catch {}
+    }
   }
 
   if (state.budgetUSD) {
@@ -1497,15 +1500,23 @@ async function loadAllData() {
 
 async function saveSettings() {
   const theme = document.documentElement.getAttribute('data-theme');
+  const payload = {
+    budget_usd: state.budgetUSD,
+    display_cur: displayCur,
+    theme,
+    key_dates: JSON.stringify({ ...state.keyDates, milestones: state.milestones, checklist: state.checklist, weatherLocation: state.weatherLocation }),
+    mycard: localStorage.getItem('mba-mycard') || null,
+    updated_at: new Date().toISOString()
+  };
   try {
-    await apiUpsert('settings', {
-      budget_usd: state.budgetUSD,
-      display_cur: displayCur,
-      theme,
-      key_dates: JSON.stringify({ ...state.keyDates, milestones: state.milestones, checklist: state.checklist, weatherLocation: state.weatherLocation }),
-      updated_at: new Date().toISOString()
-    });
-  } catch { showToast('Could not save settings.'); }
+    await apiUpsert('settings', payload);
+  } catch {
+    // retry without mycard in case column doesn't exist yet
+    try {
+      const { mycard: _, ...rest } = payload;
+      await apiUpsert('settings', rest);
+    } catch { showToast('Could not save settings.'); }
+  }
 }
 
 // ── Google Calendar event ID — stored in Supabase (cross-device) ──
@@ -2438,6 +2449,7 @@ function saveMyCard() {
   document.getElementById('mycard-modal-edit').style.display = 'none';
   showMyCardQR(c);
   showToast('Card saved ✓', 2000, true);
+  saveSettings();
 }
 function qrImg(data, color) {
   try {
