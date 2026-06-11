@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
@@ -486,6 +486,32 @@ select option{background:var(--surface2);}
       Continue with Google
     </a>
     <div class="auth-note">Your data is private and only visible to you.</div>
+  </div>
+</div>
+
+<!-- My Card Modal -->
+<div id="mycard-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border-radius:20px;padding:28px 24px 24px;max-width:340px;width:100%;text-align:center;position:relative;max-height:90vh;overflow-y:auto;">
+    <button onclick="closeMyCard()" style="position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;line-height:1;">✕</button>
+    <div id="mycard-modal-content"></div>
+    <div id="mycard-modal-edit" style="display:none;text-align:left;margin-top:16px;">
+      <div class="form-row">
+        <div class="form-group" style="flex:2;"><label class="form-label">Full name</label><input type="text" id="mc-name" placeholder="Alaa Mashmoushy" /></div>
+        <div class="form-group"><label class="form-label">Title</label><input type="text" id="mc-title" placeholder="INSEAD MBA 2026" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="mc-phone" placeholder="+966 50 123 4567" /></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="mc-email" placeholder="alaa@example.com" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">LinkedIn URL</label><input type="text" id="mc-linkedin" placeholder="https://linkedin.com/in/..." /></div>
+        <div class="form-group"><label class="form-label">Instagram</label><input type="text" id="mc-instagram" placeholder="@handle" /></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="saveMyCard()">Save & show QR</button>
+        <button class="btn btn-secondary" onclick="cancelMyCardEdit()">Cancel</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1043,52 +1069,10 @@ select option{background:var(--surface2);}
           <div class="page-title">Networking</div>
           <div class="page-sub">Track contacts from your MBA journey</div>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <button class="btn btn-primary" onclick="openMyCard()" style="display:flex;align-items:center;gap:7px;white-space:nowrap;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="9" x2="10" y2="9"/><line x1="7" y1="13" x2="10" y2="13"/><rect x="13" y="8" width="5" height="5" rx="1"/></svg>
           My Card
-          <button onclick="toggleMyCard()" id="mycard-toggle-btn" class="btn btn-secondary" style="padding:5px 12px;font-size:11px;">Edit</button>
-        </div>
-        <div id="mycard-edit" style="display:none;">
-          <div class="form-row">
-            <div class="form-group" style="flex:2;">
-              <label class="form-label">Full name</label>
-              <input type="text" id="mc-name" placeholder="e.g. Alaa Mashmoushy" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Title / Role</label>
-              <input type="text" id="mc-title" placeholder="e.g. INSEAD MBA 2026" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Mobile</label>
-              <input type="tel" id="mc-phone" placeholder="+966 50 123 4567" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="email" id="mc-email" placeholder="alaa@example.com" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">LinkedIn URL</label>
-              <input type="text" id="mc-linkedin" placeholder="https://linkedin.com/in/yourname" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Instagram</label>
-              <input type="text" id="mc-instagram" placeholder="@yourhandle" />
-            </div>
-          </div>
-          <button class="btn btn-primary" onclick="saveMyCard()" style="margin-top:4px;">Save & Generate QR</button>
-        </div>
-        <div id="mycard-display" style="display:none;text-align:center;padding:8px 0;">
-          <canvas id="mycard-qr" style="border-radius:12px;max-width:200px;width:100%;"></canvas>
-          <div id="mycard-info" style="margin-top:12px;font-size:13px;color:var(--text2);line-height:1.8;"></div>
-          <div style="font-size:11px;color:var(--text3);margin-top:8px;">Scan with any phone camera to save contact</div>
-          <button onclick="downloadMyCardQR()" class="btn btn-secondary" style="margin-top:10px;font-size:11px;padding:6px 14px;">⬇ Save QR image</button>
-        </div>
-        <div id="mycard-empty" style="font-size:12px;color:var(--text3);padding:4px 0;">Tap Edit to set up your card.</div>
+        </button>
       </div>
       <div class="card">
         <div class="card-title" id="network-form-title">Add contact</div>
@@ -2401,79 +2385,95 @@ function toggleCompleted() { showCompleted = !showCompleted; renderTasks(); }
 function loadMyCard() {
   try { return JSON.parse(localStorage.getItem('mba-mycard') || 'null'); } catch { return null; }
 }
-function toggleMyCard() {
-  const edit = document.getElementById('mycard-edit');
-  const btn = document.getElementById('mycard-toggle-btn');
-  const open = edit.style.display === 'none';
-  edit.style.display = open ? '' : 'none';
-  btn.textContent = open ? 'Cancel' : 'Edit';
-  if (open) {
-    const c = loadMyCard() || {};
-    ['name','title','phone','email','linkedin','instagram'].forEach(k => {
-      const el = document.getElementById('mc-' + k);
-      if (el) el.value = c[k] || '';
-    });
+function buildVCard(c) {
+  const parts = c.name.trim().split(' ');
+  const last = parts.length > 1 ? parts.pop() : '';
+  const first = parts.join(' ');
+  return ['BEGIN:VCARD','VERSION:3.0',
+    'FN:'+c.name, 'N:'+last+';'+first+';;;',
+    c.title?'TITLE:'+c.title:'',
+    c.phone?'TEL;TYPE=CELL:'+c.phone:'',
+    c.email?'EMAIL:'+c.email:'',
+    c.linkedin?'URL;TYPE=LinkedIn:'+c.linkedin:'',
+    c.instagram?'X-SOCIALPROFILE;TYPE=instagram:'+c.instagram:'',
+    'END:VCARD'
+  ].filter(Boolean).join('\r\n');
+}
+function openMyCard() {
+  const modal = document.getElementById('mycard-modal');
+  modal.style.display = 'flex';
+  const c = loadMyCard();
+  if (!c || !c.name) {
+    showMyCardEditForm();
+  } else {
+    showMyCardQR(c);
   }
+}
+function closeMyCard() {
+  document.getElementById('mycard-modal').style.display = 'none';
+  document.getElementById('mycard-modal-edit').style.display = 'none';
+}
+function showMyCardEditForm() {
+  const c = loadMyCard() || {};
+  ['name','title','phone','email','linkedin','instagram'].forEach(k => {
+    const el = document.getElementById('mc-'+k);
+    if (el) el.value = c[k] || '';
+  });
+  document.getElementById('mycard-modal-content').innerHTML = '<div style="font-size:13px;color:var(--text3);margin-bottom:16px;">Set up your card details</div>';
+  document.getElementById('mycard-modal-edit').style.display = '';
+}
+function cancelMyCardEdit() {
+  const c = loadMyCard();
+  if (c && c.name) { showMyCardQR(c); }
+  else { closeMyCard(); }
 }
 function saveMyCard() {
   const c = {};
   ['name','title','phone','email','linkedin','instagram'].forEach(k => {
-    const el = document.getElementById('mc-' + k);
+    const el = document.getElementById('mc-'+k);
     c[k] = el ? el.value.trim() : '';
   });
   if (!c.name) { showToast('Name is required.'); return; }
   localStorage.setItem('mba-mycard', JSON.stringify(c));
-  document.getElementById('mycard-edit').style.display = 'none';
-  document.getElementById('mycard-toggle-btn').textContent = 'Edit';
-  renderMyCard(c);
+  document.getElementById('mycard-modal-edit').style.display = 'none';
+  showMyCardQR(c);
   showToast('Card saved ✓', 2000, true);
 }
-function renderMyCard(c) {
-  if (!c) c = loadMyCard();
-  const empty = document.getElementById('mycard-empty');
-  const display = document.getElementById('mycard-display');
-  if (!c || !c.name) { if (empty) empty.style.display = ''; if (display) display.style.display = 'none'; return; }
-  if (empty) empty.style.display = 'none';
-  if (display) display.style.display = '';
-  // Build vCard content for QR
-  const nameParts = c.name.trim().split(' ');
-  const last = nameParts.length > 1 ? nameParts.pop() : '';
-  const first = nameParts.join(' ');
-  const vcard = [
-    'BEGIN:VCARD', 'VERSION:3.0',
-    'FN:' + c.name,
-    'N:' + last + ';' + first + ';;;',
-    c.title ? 'TITLE:' + c.title : '',
-    c.phone ? 'TEL;TYPE=CELL:' + c.phone : '',
-    c.email ? 'EMAIL:' + c.email : '',
-    c.linkedin ? 'URL;TYPE=LinkedIn:' + c.linkedin : '',
-    c.instagram ? 'X-SOCIALPROFILE;TYPE=instagram:' + c.instagram : '',
-    'END:VCARD'
-  ].filter(Boolean).join('\r\n');
-  const canvas = document.getElementById('mycard-qr');
-  if (canvas && window.QRCode) {
-    QRCode.toCanvas(canvas, vcard, { width: 200, margin: 2, color: { dark: '#0f2b5b', light: '#ffffff' } }, () => {});
-  }
-  const info = document.getElementById('mycard-info');
-  if (info) {
-    info.innerHTML = [
-      `<strong>${c.name}</strong>`,
-      c.title ? `<span style="color:var(--text3)">${c.title}</span>` : '',
-      c.phone ? `📱 ${c.phone}` : '',
-      c.email ? `✉️ ${c.email}` : '',
-      c.linkedin ? `🔗 LinkedIn` : '',
-      c.instagram ? `📸 ${c.instagram}` : ''
-    ].filter(Boolean).join('<br>');
+function showMyCardQR(c) {
+  const container = document.getElementById('mycard-modal-content');
+  container.innerHTML = `
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;margin-bottom:4px;">${c.name}</div>
+    ${c.title?`<div style="font-size:12px;color:var(--text3);margin-bottom:16px;">${c.title}</div>`:''}
+    <div id="mc-qr-box" style="display:inline-block;padding:12px;background:#fff;border-radius:12px;margin-bottom:16px;"></div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Point any camera here to save contact</div>
+    <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:18px;">
+      ${c.phone?`📱 ${c.phone}<br>`:''}
+      ${c.email?`✉️ ${c.email}<br>`:''}
+      ${c.linkedin?`🔗 LinkedIn<br>`:''}
+      ${c.instagram?`📸 ${c.instagram}<br>`:''}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button onclick="showMyCardEditForm()" class="btn btn-secondary" style="font-size:11px;padding:6px 14px;">Edit</button>
+      <button onclick="downloadMyCardQR()" class="btn btn-secondary" style="font-size:11px;padding:6px 14px;">⬇ Save QR</button>
+    </div>`;
+  // Generate QR
+  const box = document.getElementById('mc-qr-box');
+  if (box && window.QRCode) {
+    box.innerHTML = '';
+    new QRCode(box, { text: buildVCard(c), width: 220, height: 220, colorDark: '#0f2b5b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
   }
 }
 function downloadMyCardQR() {
-  const canvas = document.getElementById('mycard-qr');
-  if (!canvas) return;
+  const img = document.querySelector('#mc-qr-box img');
+  const canvas = document.querySelector('#mc-qr-box canvas');
   const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
+  if (img) { a.href = img.src; }
+  else if (canvas) { a.href = canvas.toDataURL('image/png'); }
+  else return;
   a.download = 'my-contact-qr.png';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
+function renderMyCard() {} // no-op — card is now modal-only
 
 // ── CRUD: Networking ──
 function startEditNetwork(id) {
