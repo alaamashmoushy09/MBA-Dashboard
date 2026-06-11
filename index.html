@@ -1559,8 +1559,9 @@ async function updateCalendarEvent(calEventId, title, dateStr, notes, timeStr) {
       headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ summary: title, description: cleanNotes || '', start: startObj, end: endObj })
     });
-    if (r.status === 401 || r.status === 403) { calendarConnected = false; renderCalConnectHint(); }
-  } catch {}
+    if (r.status === 401 || r.status === 403) { calendarConnected = false; renderCalConnectHint(); return false; }
+    return r.ok;
+  } catch { return false; }
 }
 
 async function deleteCalendarEvent(calEventId) {
@@ -2308,16 +2309,20 @@ async function submitTask() {
       const t = state.tasks.find(t => t.id === editingTaskId);
       if (t) {
         t.title = title; t.due = due; t.phase = phase; t.notes = notes;
-        // Update or create calendar event if a token is available
-        if (due && getProviderToken()) {
-          if (t.calEventId) {
-            await updateCalendarEvent(t.calEventId, title, due, notes, time);
-            showToast('Task & calendar updated ✓', 2500, true);
-          } else {
-            const calId = await createCalendarEvent(title, due, notes, time);
-            if (calId) { await storeCalEventId(editingTaskId, calId); t.calEventId = calId; showToast('Task updated & added to calendar ✓', 2500, true); }
-            else showToast('Task updated (calendar sync failed — reconnect calendar)', 4000);
-          }
+        // Update or create calendar event
+        const pt = getProviderToken();
+        if (!due) {
+          // no date, skip
+        } else if (!pt) {
+          showToast('Task saved. Calendar not synced — tap Reconnect Calendar first.', 4000);
+        } else if (t.calEventId) {
+          const ok = await updateCalendarEvent(t.calEventId, title, due, notes, time);
+          if (ok) showToast('Task & calendar updated ✓', 2500, true);
+          else showToast('Task saved. Calendar update failed — token may be expired, tap Reconnect.', 4000);
+        } else {
+          const calId = await createCalendarEvent(title, due, notes, time);
+          if (calId) { await storeCalEventId(editingTaskId, calId); t.calEventId = calId; showToast('Task updated & added to calendar ✓', 2500, true); }
+          else showToast('Task saved. Could not add to calendar — tap Reconnect Calendar.', 4000);
         }
       }
       cancelEditTask();
