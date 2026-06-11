@@ -1472,6 +1472,7 @@ async function loadAllData() {
 
   const sett = settData[0] || null;
   if (sett) {
+    state.settingsId = sett.id;
     state.budgetUSD = sett.budget_usd || 0;
     displayCur = sett.display_cur || displayCur;
     const theme = sett.theme || savedTheme;
@@ -1517,6 +1518,17 @@ async function saveSettings() {
       await apiUpsert('settings', rest);
     } catch { showToast('Could not save settings.'); }
   }
+}
+
+async function syncMyCardToCloud(c) {
+  const json = JSON.stringify(c);
+  try {
+    if (state.settingsId) {
+      await apiPatch('settings', state.settingsId, { mycard: json });
+    } else {
+      await apiUpsert('settings', { mycard: json, updated_at: new Date().toISOString() });
+    }
+  } catch(e) { console.warn('mycard sync failed', e); }
 }
 
 // ── Google Calendar event ID — stored in Supabase (cross-device) ──
@@ -2418,7 +2430,7 @@ function openMyCard() {
     showMyCardEditForm();
   } else {
     showMyCardQR(c);
-    saveSettings();
+    syncMyCardToCloud(c);
   }
 }
 function closeMyCard() {
@@ -2450,7 +2462,7 @@ function saveMyCard() {
   document.getElementById('mycard-modal-edit').style.display = 'none';
   showMyCardQR(c);
   showToast('Card saved ✓', 2000, true);
-  saveSettings();
+  syncMyCardToCloud(c);
 }
 function qrImg(data, color) {
   try {
