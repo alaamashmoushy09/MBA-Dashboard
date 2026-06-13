@@ -1646,11 +1646,24 @@ function renderVault() {
     document.getElementById('vault-error').textContent = '';
     // show Face ID button if credential registered on this device
     const hasFaceId = !!localStorage.getItem('vault-webauthn-credId');
-    document.getElementById('vault-faceid-btn').style.display = hasFaceId ? '' : 'none';
-    // auto-trigger Face ID if available
+    const faceBtn = document.getElementById('vault-faceid-btn');
+    faceBtn.style.display = hasFaceId ? '' : 'none';
+    // on desktop (non-touch), auto-trigger Face ID via setTimeout (gesture allowed)
+    // on iOS, user must tap — so make button prominent and hide numpad to guide them
+    const isTouch = navigator.maxTouchPoints > 1;
     if (hasFaceId && localStorage.getItem('vault-pin-hash')) {
-      setTimeout(vaultFaceId, 300);
+      if (isTouch) {
+        // iOS: show Face ID as primary action, numpad secondary
+        faceBtn.style.cssText = 'width:100%;margin-bottom:14px;padding:14px;font-size:16px;font-weight:700;';
+        document.getElementById('vault-numpad').style.marginTop = '8px';
+        document.getElementById('vault-lock-sub').textContent = 'Tap below to use Face ID';
+      } else {
+        setTimeout(vaultFaceId, 300);
+      }
     }
+    // register keyboard handler
+    document.removeEventListener('keydown', _vaultKeyHandler);
+    document.addEventListener('keydown', _vaultKeyHandler);
     // if no PIN set yet, show setup prompt
     const pinHash = localStorage.getItem('vault-pin-hash');
     const sub = document.getElementById('vault-lock-sub');
@@ -1700,8 +1713,17 @@ async function vaultSubmitPin() {
   }
 }
 
+function _vaultKeyHandler(e) {
+  if (!document.getElementById('page-vault').classList.contains('active')) return;
+  if (vaultUnlocked) return;
+  if (e.key >= '0' && e.key <= '9') { e.preventDefault(); vaultPadPress(e.key); }
+  else if (e.key === 'Backspace') { e.preventDefault(); vaultPadDel(); }
+  else if (e.key === 'Delete') { e.preventDefault(); vaultPadClear(); }
+}
+
 async function vaultDoUnlock() {
   vaultUnlocked = true;
+  document.removeEventListener('keydown', _vaultKeyHandler);
   await loadVaultNotes();
   renderVault();
 }
