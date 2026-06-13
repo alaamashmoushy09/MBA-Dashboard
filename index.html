@@ -1934,22 +1934,40 @@ function renderCalConnectHint() {
   }
 }
 
+function _showCalBanner() {
+  let banner = document.getElementById('cal-auto-banner');
+  if (banner) return;
+  banner = document.createElement('div');
+  banner.id = 'cal-auto-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--amber);color:#000;text-align:center;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;';
+  banner.innerHTML = '🔗 Tap here to reconnect Google Calendar';
+  banner.onclick = () => { banner.remove(); _calAutoConnectPending = false; reconnectCalendar(); };
+  document.body.appendChild(banner);
+  setTimeout(() => { try { banner.remove(); } catch {} _calAutoConnectPending = false; }, 8000);
+}
+
 function _scheduleAutoReconnect() {
   if (_calAutoConnectPending) return;
   if (!localStorage.getItem('mba-cal-hasConnected')) return;
   _calAutoConnectPending = true;
-  // Show a prominent one-tap banner
-  let banner = document.getElementById('cal-auto-banner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'cal-auto-banner';
-    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--amber);color:#000;text-align:center;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;';
-    banner.innerHTML = '🔗 Tap here to reconnect Google Calendar';
-    banner.onclick = () => { banner.remove(); _calAutoConnectPending = false; reconnectCalendar(); };
-    document.body.appendChild(banner);
-    // Auto-dismiss after 8 seconds if not tapped
-    setTimeout(() => { try { banner.remove(); } catch {} _calAutoConnectPending = false; }, 8000);
+
+  // On iOS: try GIS silent refresh on first touch before showing any banner
+  if (navigator.maxTouchPoints > 1) {
+    const tryRefresh = () => {
+      if (calendarConnected === true) { _calAutoConnectPending = false; return; }
+      if (_gisTokenClient) {
+        _gisTokenClient.requestAccessToken({ prompt: '' });
+        // Wait 4s for GIS callback; if still not connected, show banner
+        setTimeout(() => { if (calendarConnected !== true) _showCalBanner(); }, 4000);
+      } else {
+        _showCalBanner();
+      }
+    };
+    document.addEventListener('touchstart', tryRefresh, { once: true, passive: true });
+    return;
   }
+
+  _showCalBanner();
 }
 const GIS_CLIENT_ID = '918271495993-blp74bf2varpfcdkutoi8hhbpph974u6.apps.googleusercontent.com';
 let _gisTokenClient = null;
@@ -1976,12 +1994,17 @@ function _onGisToken(response, silent) {
 
 function _silentRefreshCalendar() {
   if (!_gisTokenClient) return;
-  // On iOS, silent refresh needs a real user gesture (touch) — attach once to next touch
   if (navigator.maxTouchPoints > 1) {
-    const doRefresh = () => _gisTokenClient.requestAccessToken({ prompt: '' });
-    document.addEventListener('touchstart', doRefresh, { once: true, passive: true });
-    // Clean up after 30s if no touch happens; banner will show instead
-    setTimeout(() => document.removeEventListener('touchstart', doRefresh), 30000);
+    // iOS: attach to next touch event to satisfy user-gesture requirement
+    const doRefresh = () => {
+      _gisTokenClient.requestAccessToken({ prompt: '' });
+      setTimeout(() => { if (calendarConnected !== true) _scheduleAutoReconnect(); }, 4000);
+    };
+    const cleanup = setTimeout(() => {
+      document.removeEventListener('touchstart', doRefresh);
+      if (calendarConnected !== true) _scheduleAutoReconnect();
+    }, 60000);
+    document.addEventListener('touchstart', () => { clearTimeout(cleanup); doRefresh(); }, { once: true, passive: true });
   } else {
     _gisTokenClient.requestAccessToken({ prompt: '' });
   }
@@ -1999,11 +2022,9 @@ function initGoogleCalendarAuth() {
       silent = false;
     }
   });
-  // Try silent refresh — on iOS attach to first touch (user gesture required)
-  if (navigator.maxTouchPoints > 1) {
-    const doInit = () => _gisTokenClient.requestAccessToken({ prompt: '' });
-    document.addEventListener('touchstart', doInit, { once: true, passive: true });
-  } else {
+  // On desktop: try silent refresh immediately
+  // On iOS: _scheduleAutoReconnect handles the touch-gated refresh
+  if (navigator.maxTouchPoints <= 1) {
     _gisTokenClient.requestAccessToken({ prompt: '' });
   }
 }
