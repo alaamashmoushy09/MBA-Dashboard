@@ -582,7 +582,7 @@ select option{background:var(--surface2);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         Courses &amp; Grades
       </button>
-      <button class="nav-item" onclick="showPage('vault',this)">
+      <button class="nav-item" onclick="openVaultTab(this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Vault
       </button>
@@ -697,7 +697,7 @@ select option{background:var(--surface2);}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       Courses
     </button>
-    <button class="bnav-item" id="bnav-vault" onclick="showPage('vault',null);setBnavActive('bnav-vault')">
+    <button class="bnav-item" id="bnav-vault" onclick="openVaultTab()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       Vault
     </button>
@@ -1633,6 +1633,17 @@ async function hashPin(pin) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
+function openVaultTab(sidebarBtn) {
+  setBnavActive('bnav-vault');
+  showPage('vault', sidebarBtn || null);
+  // trigger Face ID immediately — must be in direct onclick chain for iOS
+  const hasFaceId = !!localStorage.getItem('vault-webauthn-credId');
+  const pinHash = localStorage.getItem('vault-pin-hash');
+  if (hasFaceId && pinHash) {
+    vaultFaceId();
+  }
+}
+
 function renderVault() {
   if (vaultUnlocked) {
     document.getElementById('vault-lock-screen').style.display = 'none';
@@ -1648,19 +1659,6 @@ function renderVault() {
     const hasFaceId = !!localStorage.getItem('vault-webauthn-credId');
     const faceBtn = document.getElementById('vault-faceid-btn');
     faceBtn.style.display = hasFaceId ? '' : 'none';
-    // on desktop (non-touch), auto-trigger Face ID via setTimeout (gesture allowed)
-    // on iOS, user must tap — so make button prominent and hide numpad to guide them
-    const isTouch = navigator.maxTouchPoints > 1;
-    if (hasFaceId && localStorage.getItem('vault-pin-hash')) {
-      if (isTouch) {
-        // iOS: show Face ID as primary action, numpad secondary
-        faceBtn.style.cssText = 'width:100%;margin-bottom:14px;padding:14px;font-size:16px;font-weight:700;';
-        document.getElementById('vault-numpad').style.marginTop = '8px';
-        document.getElementById('vault-lock-sub').textContent = 'Tap below to use Face ID';
-      } else {
-        setTimeout(vaultFaceId, 300);
-      }
-    }
     // register keyboard handler
     document.removeEventListener('keydown', _vaultKeyHandler);
     document.addEventListener('keydown', _vaultKeyHandler);
