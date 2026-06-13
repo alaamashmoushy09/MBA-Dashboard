@@ -356,6 +356,7 @@ select option{background:var(--surface2);}
 @media(min-width:1100px){
   .right-panel{display:flex;}
   .main{margin-right:330px;}
+  .rp-hidden-on-desktop{display:none!important;}
 }
 @media(max-width:720px){
   .mobile-panel{display:block;}
@@ -669,6 +670,36 @@ select option{background:var(--surface2);}
       </div>
       <button class="btn btn-primary" style="width:100%;padding:8px;" onclick="quickAddExpense()">Add expense</button>
     </div>
+
+    <!-- Currency converter (desktop right panel) -->
+    <div class="rp-card">
+      <div class="rp-label">
+        Currency converter
+        <span id="rp-conv-rate-date" style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;"></span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+        <input id="rp-conv-amount" type="number" placeholder="Amount" style="flex:1;font-size:13px;padding:6px 8px;" oninput="runConverter()" />
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
+        <select id="rp-conv-from" onchange="runConverter()" style="flex:1;font-size:12px;">
+          <option value="USD">USD $</option>
+          <option value="EUR">EUR €</option>
+          <option value="SAR" selected>SAR</option>
+          <option value="GBP">GBP £</option>
+          <option value="AED">AED</option>
+        </select>
+        <span style="color:var(--text3);">→</span>
+        <select id="rp-conv-to" onchange="runConverter()" style="flex:1;font-size:12px;">
+          <option value="USD">USD $</option>
+          <option value="EUR" selected>EUR €</option>
+          <option value="SAR">SAR</option>
+          <option value="GBP">GBP £</option>
+          <option value="AED">AED</option>
+        </select>
+      </div>
+      <div id="rp-conv-result" style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--primary);min-height:34px;"></div>
+      <div id="rp-conv-rate-line" style="font-size:10px;color:var(--text3);margin-top:2px;"></div>
+    </div>
   </aside>
 
   <!-- Mobile bottom nav -->
@@ -869,8 +900,8 @@ select option{background:var(--surface2);}
         </div>
       </div>
 
-      <!-- Currency converter -->
-      <div class="card">
+      <!-- Currency converter (mobile only — desktop shows in right panel) -->
+      <div class="card rp-hidden-on-desktop">
         <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
           Currency converter
           <span id="conv-rate-date" style="font-size:10px;color:var(--text3);font-weight:400;"></span>
@@ -1406,25 +1437,30 @@ async function fetchCurrencyRates() {
   } catch { /* silently fall back to hardcoded */ }
 }
 
-function runConverter() {
-  const amtEl = document.getElementById('conv-amount');
-  const fromEl = document.getElementById('conv-from');
-  const toEl = document.getElementById('conv-to');
-  const resEl = document.getElementById('conv-result');
-  const rateEl = document.getElementById('conv-rate-line');
-  const dateEl = document.getElementById('conv-rate-date');
-  if (!amtEl || !fromEl || !toEl || !resEl) return;
-  const amount = parseFloat(amtEl.value);
-  const from = fromEl.value;
-  const to = toEl.value;
-  if (dateEl && _rateDate) dateEl.textContent = 'rates as of ' + _rateDate;
-  if (!amount || isNaN(amount)) { resEl.textContent = ''; rateEl && (rateEl.textContent = ''); return; }
-  const usd = amount * TO_USD[from];
-  const result = usd / TO_USD[to];
-  const sym = SYM[to] || (to + ' ');
-  resEl.textContent = sym + (result >= 1000 ? Math.round(result).toLocaleString() : result.toFixed(2));
-  const rate1 = 1 / TO_USD[to] * TO_USD[from];
-  if (rateEl) rateEl.textContent = `1 ${from} = ${rate1 >= 1 ? rate1.toFixed(4) : rate1.toFixed(6)} ${to}`;
+function runConverter(src) {
+  // src = 'rp' (right panel) or 'ov' (overview card) or undefined (sync both)
+  const pairs = [
+    { amt:'conv-amount', from:'conv-from', to:'conv-to', res:'conv-result', rate:'conv-rate-line', date:'conv-rate-date' },
+    { amt:'rp-conv-amount', from:'rp-conv-from', to:'rp-conv-to', res:'rp-conv-result', rate:'rp-conv-rate-line', date:'rp-conv-rate-date' }
+  ];
+  pairs.forEach(p => {
+    const amtEl = document.getElementById(p.amt);
+    const fromEl = document.getElementById(p.from);
+    const toEl = document.getElementById(p.to);
+    const resEl = document.getElementById(p.res);
+    const rateEl = document.getElementById(p.rate);
+    const dateEl = document.getElementById(p.date);
+    if (!amtEl || !fromEl || !toEl || !resEl) return;
+    if (dateEl && _rateDate) dateEl.textContent = 'rates as of ' + _rateDate;
+    const amount = parseFloat(amtEl.value);
+    if (!amount || isNaN(amount)) { resEl.textContent = ''; if (rateEl) rateEl.textContent = ''; return; }
+    const from = fromEl.value, to = toEl.value;
+    const result = (amount * TO_USD[from]) / TO_USD[to];
+    const sym = SYM[to] || (to + ' ');
+    resEl.textContent = sym + (result >= 1000 ? Math.round(result).toLocaleString() : result.toFixed(2));
+    const rate1 = TO_USD[from] / TO_USD[to];
+    if (rateEl) rateEl.textContent = `1 ${from} = ${rate1 >= 1 ? rate1.toFixed(4) : rate1.toFixed(6)} ${to}`;
+  });
 }
 
 // ── Auth ──
