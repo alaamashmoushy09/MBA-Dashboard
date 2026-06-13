@@ -2070,7 +2070,7 @@ function showPage(p, btn) {
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   document.getElementById('page-' + p).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (p === 'vault') { renderVault(); return; }
+  if (p === 'vault') { vaultUnlocked = false; renderVault(); return; }
   render();
 }
 
