@@ -3513,16 +3513,6 @@ function renderBudget() {
         </div>`).join('')
     : '<div class="empty">No expense data yet</div>';
 
-  const monthlyData = {};
-  state.expenses.forEach(e => {
-    const d = new Date(e.date + 'T00:00:00');
-    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-    const label = d.toLocaleString('default',{month:'short',year:'numeric'});
-    if (!monthlyData[key]) monthlyData[key]={label,total:0};
-    monthlyData[key].total += e.usdAmt;
-  });
-  const months = Object.values(monthlyData).sort((a,b)=>a.label>b.label?1:-1);
-  const maxM = Math.max(...months.map(m=>m.total),1);
   renderSavings();
   renderBudgetTargets();
   renderSpendingChart();
@@ -3532,7 +3522,6 @@ function renderSpendingChart() {
   const el = document.getElementById('spending-chart-wrap');
   if (!el) return;
   const CAT_COLORS = { housing:'#4a90d9', food:'#48bb78', transport:'#ed8936', travel:'#667eea', books:'#9f7aea', social:'#f687b3', health:'#38b2ac', other:'#a0aec0' };
-  const fmt = v => displayCur === 'USD' ? '$'+Math.round(v).toLocaleString() : Math.round(fromUSD(v,displayCur)).toLocaleString()+' '+displayCur;
 
   // Group by month, track per-category totals
   const byMonth = {};
