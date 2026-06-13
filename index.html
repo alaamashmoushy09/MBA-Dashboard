@@ -1647,6 +1647,10 @@ function renderVault() {
     // show Face ID button if credential registered on this device
     const hasFaceId = !!localStorage.getItem('vault-webauthn-credId');
     document.getElementById('vault-faceid-btn').style.display = hasFaceId ? '' : 'none';
+    // auto-trigger Face ID if available
+    if (hasFaceId && localStorage.getItem('vault-pin-hash')) {
+      setTimeout(vaultFaceId, 300);
+    }
     // if no PIN set yet, show setup prompt
     const pinHash = localStorage.getItem('vault-pin-hash');
     const sub = document.getElementById('vault-lock-sub');
