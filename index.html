@@ -452,7 +452,15 @@ select option{background:var(--surface2);}
 .donut-legend-val{margin-left:auto;font-weight:500;color:var(--text);}
 .task-overdue{color:var(--red)!important;}
 .task-urgent{color:var(--amber)!important;}
-
+.vault-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--text3);display:inline-block;transition:background .15s;}
+.vault-dot.filled{background:var(--primary);border-color:var(--primary);}
+.vault-key{background:var(--surface2);border:none;border-radius:12px;font-size:20px;font-weight:600;padding:16px;cursor:pointer;color:var(--text);transition:background .15s;}
+.vault-key:active{background:var(--primary);color:#fff;}
+.vault-key-clear{font-size:14px;font-weight:700;color:var(--red);}
+.vault-key-del{font-size:16px;}
+.vault-note-card{background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:12px;}
+.vault-note-card-title{font-weight:700;font-size:15px;margin-bottom:6px;}
+.vault-note-card-body{font-size:13px;color:var(--text2);white-space:pre-wrap;word-break:break-word;}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
@@ -573,6 +581,10 @@ select option{background:var(--surface2);}
       <button class="nav-item" onclick="showPage('courses',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         Courses &amp; Grades
+      </button>
+      <button class="nav-item" onclick="showPage('vault',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Vault
       </button>
     </div>
     <div class="sidebar-footer">
@@ -1177,6 +1189,73 @@ select option{background:var(--surface2);}
       <div class="card"><div id="course-list"></div></div>
     </div>
 
+    <!-- ── Vault ── -->
+    <div id="page-vault" class="page">
+      <div class="page-header">
+        <div class="page-header-text">
+          <div class="page-title">🔒 Vault</div>
+          <div class="page-sub">Private notes protected by PIN &amp; Face ID</div>
+        </div>
+      </div>
+
+      <!-- Lock screen -->
+      <div id="vault-lock-screen" class="card" style="max-width:340px;margin:0 auto;text-align:center;padding:32px 24px;">
+        <div id="vault-lock-icon" style="font-size:48px;margin-bottom:8px;">🔒</div>
+        <div id="vault-lock-title" style="font-size:17px;font-weight:700;margin-bottom:4px;">Vault Locked</div>
+        <div id="vault-lock-sub" style="font-size:13px;color:var(--text3);margin-bottom:24px;">Enter your 6-digit PIN</div>
+
+        <!-- PIN dots display -->
+        <div id="vault-pin-dots" style="display:flex;justify-content:center;gap:10px;margin-bottom:24px;">
+          <span class="vault-dot"></span><span class="vault-dot"></span><span class="vault-dot"></span>
+          <span class="vault-dot"></span><span class="vault-dot"></span><span class="vault-dot"></span>
+        </div>
+
+        <!-- Number pad -->
+        <div id="vault-numpad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto 16px;">
+          <button class="vault-key" onclick="vaultPadPress('1')">1</button>
+          <button class="vault-key" onclick="vaultPadPress('2')">2</button>
+          <button class="vault-key" onclick="vaultPadPress('3')">3</button>
+          <button class="vault-key" onclick="vaultPadPress('4')">4</button>
+          <button class="vault-key" onclick="vaultPadPress('5')">5</button>
+          <button class="vault-key" onclick="vaultPadPress('6')">6</button>
+          <button class="vault-key" onclick="vaultPadPress('7')">7</button>
+          <button class="vault-key" onclick="vaultPadPress('8')">8</button>
+          <button class="vault-key" onclick="vaultPadPress('9')">9</button>
+          <button class="vault-key vault-key-clear" onclick="vaultPadClear()">C</button>
+          <button class="vault-key" onclick="vaultPadPress('0')">0</button>
+          <button class="vault-key vault-key-del" onclick="vaultPadDel()">⌫</button>
+        </div>
+
+        <button id="vault-faceid-btn" onclick="vaultFaceId()" style="display:none;width:100%;margin-bottom:10px;" class="btn btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          Use Face ID
+        </button>
+        <div id="vault-error" style="color:#e53e3e;font-size:13px;min-height:18px;"></div>
+      </div>
+
+      <!-- Unlocked view -->
+      <div id="vault-unlocked" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
+          <button class="btn btn-secondary" onclick="lockVault()">🔒 Lock</button>
+          <button class="btn btn-primary" onclick="openVaultNoteModal()">+ Add Note</button>
+        </div>
+        <div id="vault-notes-list"></div>
+      </div>
+    </div>
+
+    <!-- Vault note modal -->
+    <div id="vault-note-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:20px;">
+      <div style="background:var(--surface);border-radius:16px;padding:24px;max-width:480px;width:100%;position:relative;">
+        <button onclick="closeVaultNoteModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);">✕</button>
+        <div style="font-weight:700;font-size:16px;margin-bottom:16px;" id="vault-note-modal-title">New Note</div>
+        <input id="vault-note-title-input" type="text" placeholder="Title" style="width:100%;margin-bottom:10px;" />
+        <textarea id="vault-note-body-input" placeholder="Write anything confidential here..." style="width:100%;min-height:160px;resize:vertical;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-secondary" onclick="closeVaultNoteModal()" style="flex:1;">Cancel</button>
+          <button class="btn btn-primary" onclick="saveVaultNote()" style="flex:1;">Save</button>
+        </div>
+      </div>
+    </div>
 
   </main>
 </div>
@@ -1539,6 +1618,224 @@ async function syncMyCardToCloud(c) {
   }
 }
 
+// ── Vault ──────────────────────────────────────────────────────────
+let vaultUnlocked = false;
+let _vaultPin = '';       // digits entered so far
+let _vaultNotes = [];     // loaded from Supabase
+let _vaultEditId = null;  // null = new note, else index
+
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function renderVault() {
+  if (vaultUnlocked) {
+    document.getElementById('vault-lock-screen').style.display = 'none';
+    document.getElementById('vault-unlocked').style.display = '';
+    renderVaultNotes();
+  } else {
+    document.getElementById('vault-lock-screen').style.display = '';
+    document.getElementById('vault-unlocked').style.display = 'none';
+    _vaultPin = '';
+    updateVaultDots();
+    document.getElementById('vault-error').textContent = '';
+    // show Face ID button if credential registered on this device
+    const hasFaceId = !!localStorage.getItem('vault-webauthn-credId');
+    document.getElementById('vault-faceid-btn').style.display = hasFaceId ? '' : 'none';
+    // if no PIN set yet, show setup prompt
+    const pinHash = localStorage.getItem('vault-pin-hash');
+    const sub = document.getElementById('vault-lock-sub');
+    if (!pinHash) {
+      sub.textContent = 'Set a new 6-digit PIN';
+      document.getElementById('vault-lock-title').textContent = 'Create PIN';
+      document.getElementById('vault-lock-icon').textContent = '🔐';
+    } else {
+      sub.textContent = 'Enter your 6-digit PIN';
+      document.getElementById('vault-lock-title').textContent = 'Vault Locked';
+      document.getElementById('vault-lock-icon').textContent = '🔒';
+    }
+  }
+}
+
+function updateVaultDots() {
+  document.querySelectorAll('.vault-dot').forEach((d, i) => {
+    d.classList.toggle('filled', i < _vaultPin.length);
+  });
+}
+
+function vaultPadPress(d) {
+  if (_vaultPin.length >= 6) return;
+  _vaultPin += d;
+  updateVaultDots();
+  if (_vaultPin.length === 6) setTimeout(vaultSubmitPin, 120);
+}
+function vaultPadDel() { _vaultPin = _vaultPin.slice(0,-1); updateVaultDots(); }
+function vaultPadClear() { _vaultPin = ''; updateVaultDots(); }
+
+async function vaultSubmitPin() {
+  const hash = await hashPin(_vaultPin);
+  const stored = localStorage.getItem('vault-pin-hash');
+  if (!stored) {
+    // first time — save this as the PIN
+    localStorage.setItem('vault-pin-hash', hash);
+    showToast('PIN set ✓ You can also set up Face ID in the unlocked view.', 4000, true);
+    await vaultDoUnlock();
+    // offer face id setup
+    setTimeout(offerFaceIdSetup, 800);
+  } else if (hash === stored) {
+    await vaultDoUnlock();
+  } else {
+    document.getElementById('vault-error').textContent = 'Incorrect PIN. Try again.';
+    _vaultPin = '';
+    updateVaultDots();
+  }
+}
+
+async function vaultDoUnlock() {
+  vaultUnlocked = true;
+  await loadVaultNotes();
+  renderVault();
+}
+
+function lockVault() {
+  vaultUnlocked = false;
+  renderVault();
+}
+
+// Face ID / WebAuthn
+async function offerFaceIdSetup() {
+  if (!window.PublicKeyCredential) return;
+  const supported = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+  if (!supported) return;
+  if (localStorage.getItem('vault-webauthn-credId')) return;
+  if (confirm('Set up Face ID for faster Vault access?')) setupFaceId();
+}
+
+async function setupFaceId() {
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: 'MBA Dashboard', id: location.hostname },
+      user: { id: new Uint8Array(16), name: 'alaa', displayName: 'Alaa' },
+      pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+      timeout: 60000
+    }});
+    const idB64 = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+    localStorage.setItem('vault-webauthn-credId', idB64);
+    showToast('Face ID set up ✓', 2000, true);
+    renderVault();
+  } catch(e) {
+    showToast('Face ID setup cancelled or not available.', 3000);
+  }
+}
+
+async function vaultFaceId() {
+  const stored = localStorage.getItem('vault-pin-hash');
+  if (!stored) { showToast('Set a PIN first.', 2000); return; }
+  try {
+    await navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rpId: location.hostname,
+      userVerification: 'required',
+      timeout: 60000
+    }});
+    await vaultDoUnlock();
+  } catch(e) {
+    document.getElementById('vault-error').textContent = 'Face ID failed. Use your PIN.';
+  }
+}
+
+// Notes CRUD
+async function loadVaultNotes() {
+  try {
+    const data = await apiGet('settings', 'limit=1');
+    const raw = data[0]?.vault_notes;
+    _vaultNotes = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : [];
+  } catch { _vaultNotes = []; }
+}
+
+async function saveVaultNotes() {
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/settings`, {
+      method: 'POST',
+      headers: { ...apiHeaders(), 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ vault_notes: JSON.stringify(_vaultNotes) })
+    });
+  } catch {}
+}
+
+function renderVaultNotes() {
+  const el = document.getElementById('vault-notes-list');
+  if (!_vaultNotes.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px 0;font-size:14px;">No notes yet. Tap + Add Note.</div>';
+    return;
+  }
+  el.innerHTML = _vaultNotes.map((n, i) => `
+    <div class="vault-note-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div class="vault-note-card-title">${escHtml(n.title || 'Untitled')}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="editVaultNote(${i})" style="background:none;border:none;cursor:pointer;font-size:15px;">✏️</button>
+          <button onclick="deleteVaultNote(${i})" style="background:none;border:none;cursor:pointer;font-size:15px;">🗑️</button>
+        </div>
+      </div>
+      <div class="vault-note-card-body">${escHtml(n.body || '')}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">${n.updatedAt ? new Date(n.updatedAt).toLocaleString() : ''}</div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function openVaultNoteModal(idx) {
+  _vaultEditId = (idx !== undefined) ? idx : null;
+  const modal = document.getElementById('vault-note-modal');
+  modal.style.display = 'flex';
+  if (_vaultEditId !== null) {
+    const n = _vaultNotes[_vaultEditId];
+    document.getElementById('vault-note-modal-title').textContent = 'Edit Note';
+    document.getElementById('vault-note-title-input').value = n.title || '';
+    document.getElementById('vault-note-body-input').value = n.body || '';
+  } else {
+    document.getElementById('vault-note-modal-title').textContent = 'New Note';
+    document.getElementById('vault-note-title-input').value = '';
+    document.getElementById('vault-note-body-input').value = '';
+  }
+}
+
+function closeVaultNoteModal() {
+  document.getElementById('vault-note-modal').style.display = 'none';
+}
+
+async function saveVaultNote() {
+  const title = document.getElementById('vault-note-title-input').value.trim();
+  const body = document.getElementById('vault-note-body-input').value.trim();
+  if (!title && !body) { showToast('Note is empty.', 2000); return; }
+  const note = { title, body, updatedAt: new Date().toISOString() };
+  if (_vaultEditId !== null) {
+    _vaultNotes[_vaultEditId] = note;
+  } else {
+    _vaultNotes.unshift(note);
+  }
+  await saveVaultNotes();
+  closeVaultNoteModal();
+  renderVaultNotes();
+  showToast('Note saved ✓', 1500, true);
+}
+
+function editVaultNote(i) { openVaultNoteModal(i); }
+
+async function deleteVaultNote(i) {
+  if (!confirm('Delete this note?')) return;
+  _vaultNotes.splice(i, 1);
+  await saveVaultNotes();
+  renderVaultNotes();
+}
+
 // ── Google Calendar event ID — stored in Supabase (cross-device) ──
 async function storeCalEventId(taskId, calEventId) {
   const t = state.tasks.find(t => t.id === taskId);
@@ -1769,6 +2066,7 @@ function showPage(p, btn) {
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   document.getElementById('page-' + p).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (p === 'vault') { renderVault(); return; }
   render();
 }
 
