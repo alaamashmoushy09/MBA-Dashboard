@@ -869,6 +869,34 @@ select option{background:var(--surface2);}
         </div>
       </div>
 
+      <!-- Currency converter -->
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          Currency converter
+          <span id="conv-rate-date" style="font-size:10px;color:var(--text3);font-weight:400;"></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input id="conv-amount" type="number" placeholder="Amount" style="flex:1;min-width:80px;" oninput="runConverter()" />
+          <select id="conv-from" onchange="runConverter()" style="flex:1;min-width:80px;">
+            <option value="USD">USD $</option>
+            <option value="EUR">EUR €</option>
+            <option value="SAR" selected>SAR</option>
+            <option value="GBP">GBP £</option>
+            <option value="AED">AED</option>
+          </select>
+          <span style="font-size:18px;color:var(--text3);">→</span>
+          <select id="conv-to" onchange="runConverter()" style="flex:1;min-width:80px;">
+            <option value="USD">USD $</option>
+            <option value="EUR" selected>EUR €</option>
+            <option value="SAR">SAR</option>
+            <option value="GBP">GBP £</option>
+            <option value="AED">AED</option>
+          </select>
+        </div>
+        <div id="conv-result" style="margin-top:12px;font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;color:var(--primary);min-height:40px;"></div>
+        <div id="conv-rate-line" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+      </div>
+
       <!-- Google Calendar this week -->
       <div class="card">
         <div class="card-title">This week</div>
@@ -1360,6 +1388,7 @@ function fmt(usd, cur) {
 }
 
 // ── Live currency rates ──
+let _rateDate = null;
 async function fetchCurrencyRates() {
   try {
     const r = await fetch('https://open.er-api.com/v6/latest/USD');
@@ -1371,8 +1400,31 @@ async function fetchCurrencyRates() {
       if (rates.EUR) TO_USD.EUR = 1 / rates.EUR;
       if (rates.GBP) TO_USD.GBP = 1 / rates.GBP;
       if (rates.AED) TO_USD.AED = 1 / rates.AED;
+      _rateDate = data.time_last_update_utc ? new Date(data.time_last_update_utc).toLocaleDateString('default',{month:'short',day:'numeric'}) : 'today';
+      runConverter();
     }
   } catch { /* silently fall back to hardcoded */ }
+}
+
+function runConverter() {
+  const amtEl = document.getElementById('conv-amount');
+  const fromEl = document.getElementById('conv-from');
+  const toEl = document.getElementById('conv-to');
+  const resEl = document.getElementById('conv-result');
+  const rateEl = document.getElementById('conv-rate-line');
+  const dateEl = document.getElementById('conv-rate-date');
+  if (!amtEl || !fromEl || !toEl || !resEl) return;
+  const amount = parseFloat(amtEl.value);
+  const from = fromEl.value;
+  const to = toEl.value;
+  if (dateEl && _rateDate) dateEl.textContent = 'rates as of ' + _rateDate;
+  if (!amount || isNaN(amount)) { resEl.textContent = ''; rateEl && (rateEl.textContent = ''); return; }
+  const usd = amount * TO_USD[from];
+  const result = usd / TO_USD[to];
+  const sym = SYM[to] || (to + ' ');
+  resEl.textContent = sym + (result >= 1000 ? Math.round(result).toLocaleString() : result.toFixed(2));
+  const rate1 = 1 / TO_USD[to] * TO_USD[from];
+  if (rateEl) rateEl.textContent = `1 ${from} = ${rate1 >= 1 ? rate1.toFixed(4) : rate1.toFixed(6)} ${to}`;
 }
 
 // ── Auth ──
