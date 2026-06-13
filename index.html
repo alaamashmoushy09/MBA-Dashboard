@@ -1008,8 +1008,8 @@ select option{background:var(--surface2);}
         <div id="budget-targets-progress" style="margin-top:18px;"></div>
       </div>
       <div class="card">
-        <div class="card-title">Monthly totals</div>
-        <div id="budget-monthly"></div>
+        <div class="card-title">Monthly spending trends</div>
+        <div id="spending-chart-wrap"></div>
       </div>
     </div>
 
@@ -3525,19 +3525,63 @@ function renderBudget() {
   const maxM = Math.max(...months.map(m=>m.total),1);
   renderSavings();
   renderBudgetTargets();
-  document.getElementById('budget-monthly').innerHTML = months.map(m => {
+  renderSpendingChart();
+}
+
+function renderSpendingChart() {
+  const el = document.getElementById('spending-chart-wrap');
+  if (!el) return;
+  const CAT_COLORS = { housing:'#4a90d9', food:'#48bb78', transport:'#ed8936', travel:'#667eea', books:'#9f7aea', social:'#f687b3', health:'#38b2ac', other:'#a0aec0' };
+  const fmt = v => displayCur === 'USD' ? '$'+Math.round(v).toLocaleString() : Math.round(fromUSD(v,displayCur)).toLocaleString()+' '+displayCur;
+
+  // Group by month, track per-category totals
+  const byMonth = {};
+  state.expenses.forEach(e => {
+    const d = new Date(e.date + 'T12:00:00');
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    const label = d.toLocaleString('default',{month:'short',year:'2-digit'});
+    if (!byMonth[key]) byMonth[key] = { label, cats: {}, total: 0 };
+    byMonth[key].cats[e.cat] = (byMonth[key].cats[e.cat]||0) + e.usdAmt;
+    byMonth[key].total += e.usdAmt;
+  });
+
+  const months = Object.values(byMonth).sort((a,b)=>a.label>b.label?1:-1);
+  if (!months.length) { el.innerHTML = '<div class="empty">No expense data yet</div>'; return; }
+
+  const maxVal = Math.max(...months.map(m=>m.total), 1);
+  const catKeys = Object.keys(CATS);
+  const barW = Math.max(32, Math.min(56, Math.floor(280 / months.length)));
+  const chartH = 160;
+
+  const bars = months.map(m => {
+    let yOff = chartH;
+    const segs = catKeys.filter(k => m.cats[k]).map(k => {
+      const h = Math.round((m.cats[k] / maxVal) * chartH);
+      yOff -= h;
+      return `<rect x="0" y="${yOff}" width="${barW-4}" height="${h}" fill="${CAT_COLORS[k]||'#a0aec0'}" rx="2">
+        <title>${CATS[k]}: ${fmt(m.cats[k])}</title></rect>`;
+    });
     const over = state.budgetUSD && m.total > state.budgetUSD;
-    return `<div class="budget-bar-row">
-      <div class="budget-bar-top">
-        <span style="color:var(--text2);font-size:13px;">${m.label}</span>
-        <div>
-          <span style="font-weight:500;font-size:13px;${over?'color:var(--red)':''}">${fmt(m.total)}</span>
-          ${state.budgetUSD?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${Math.round(m.total/state.budgetUSD*100)}% of budget</span>`:''}
-        </div>
-      </div>
-      <div class="budget-bar-bg"><div class="budget-bar-fill${over?' over':''}" style="width:${Math.round(m.total/maxM*100)}%"></div></div>
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:${barW}px;max-width:72px;">
+      <div style="font-size:10px;font-weight:600;color:${over?'var(--red)':'var(--text2)'};">${fmt(m.total)}</div>
+      <svg width="${barW-4}" height="${chartH}" style="overflow:visible;">${segs.join('')}
+        ${state.budgetUSD ? `<line x1="0" y1="${Math.round((1-state.budgetUSD/maxVal)*chartH)}" x2="${barW-4}" y2="${Math.round((1-state.budgetUSD/maxVal)*chartH)}" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.6"/>` : ''}
+      </svg>
+      <div style="font-size:10px;color:var(--text3);text-align:center;">${m.label}</div>
     </div>`;
-  }).join('') || '<div class="empty">No expense data yet</div>';
+  }).join('');
+
+  const legend = catKeys.filter(k => state.expenses.some(e=>e.cat===k)).map(k =>
+    `<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);">
+      <span style="width:10px;height:10px;border-radius:2px;background:${CAT_COLORS[k]};flex-shrink:0;display:inline-block;"></span>${CATS[k]}
+    </div>`
+  ).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:6px;overflow-x:auto;padding-bottom:4px;">${bars}</div>
+    ${state.budgetUSD ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;">— red dashed line = monthly budget</div>` : ''}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">${legend}</div>
+  `;
 }
 
 function renderCourses() {
