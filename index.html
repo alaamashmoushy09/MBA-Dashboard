@@ -1975,7 +1975,16 @@ function _onGisToken(response, silent) {
 }
 
 function _silentRefreshCalendar() {
-  if (_gisTokenClient) _gisTokenClient.requestAccessToken({ prompt: '' });
+  if (!_gisTokenClient) return;
+  // On iOS, silent refresh needs a real user gesture (touch) — attach once to next touch
+  if (navigator.maxTouchPoints > 1) {
+    const doRefresh = () => _gisTokenClient.requestAccessToken({ prompt: '' });
+    document.addEventListener('touchstart', doRefresh, { once: true, passive: true });
+    // Clean up after 30s if no touch happens; banner will show instead
+    setTimeout(() => document.removeEventListener('touchstart', doRefresh), 30000);
+  } else {
+    _gisTokenClient.requestAccessToken({ prompt: '' });
+  }
 }
 
 function initGoogleCalendarAuth() {
@@ -1990,8 +1999,13 @@ function initGoogleCalendarAuth() {
       silent = false;
     }
   });
-  // Try silent refresh immediately — works if user already granted consent
-  _gisTokenClient.requestAccessToken({ prompt: '' });
+  // Try silent refresh — on iOS attach to first touch (user gesture required)
+  if (navigator.maxTouchPoints > 1) {
+    const doInit = () => _gisTokenClient.requestAccessToken({ prompt: '' });
+    document.addEventListener('touchstart', doInit, { once: true, passive: true });
+  } else {
+    _gisTokenClient.requestAccessToken({ prompt: '' });
+  }
 }
 
 function reconnectCalendar() {
