@@ -1300,6 +1300,7 @@ select option{background:var(--surface2);}
       <div id="vault-unlocked" style="display:none;">
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
           <button class="btn btn-secondary" onclick="lockVault()">🔒 Lock</button>
+          <button class="btn btn-secondary" onclick="startChangePIN()">Change PIN</button>
           <button class="btn btn-primary" onclick="openVaultNoteModal()">+ Add Note</button>
         </div>
         <div id="vault-notes-list"></div>
@@ -1781,6 +1782,7 @@ function vaultPadDel() { _vaultPin = _vaultPin.slice(0,-1); updateVaultDots(); }
 function vaultPadClear() { _vaultPin = ''; updateVaultDots(); }
 
 async function vaultSubmitPin() {
+  if (_changePINStep) { await _handleChangePIN(); return; }
   const hash = await hashPin(_vaultPin);
   const stored = localStorage.getItem('vault-pin-hash');
   if (!stored) {
@@ -1817,6 +1819,46 @@ async function vaultDoUnlock() {
 function lockVault() {
   vaultUnlocked = false;
   renderVault();
+}
+
+let _changePINStep = null; // 'new' or 'confirm'
+let _newPINHash = null;
+function startChangePIN() {
+  _changePINStep = 'new';
+  _newPINHash = null;
+  _vaultPin = '';
+  document.getElementById('vault-unlocked').style.display = 'none';
+  document.getElementById('vault-lock-screen').style.display = '';
+  document.getElementById('vault-lock-icon').textContent = '🔑';
+  document.getElementById('vault-lock-title').textContent = 'Change PIN';
+  document.getElementById('vault-lock-sub').textContent = 'Enter your new 6-digit PIN';
+  document.getElementById('vault-faceid-btn').style.display = 'none';
+  document.getElementById('vault-error').textContent = '';
+  updateVaultDots();
+}
+async function _handleChangePIN() {
+  const hash = await hashPin(_vaultPin);
+  if (_changePINStep === 'new') {
+    _newPINHash = hash;
+    _changePINStep = 'confirm';
+    _vaultPin = '';
+    updateVaultDots();
+    document.getElementById('vault-lock-sub').textContent = 'Confirm your new PIN';
+    document.getElementById('vault-error').textContent = '';
+  } else {
+    if (hash === _newPINHash) {
+      localStorage.setItem('vault-pin-hash', _newPINHash);
+      _changePINStep = null; _newPINHash = null;
+      showToast('PIN changed ✓', 2000, true);
+      vaultUnlocked = true;
+      renderVault();
+    } else {
+      document.getElementById('vault-error').textContent = 'PINs don\'t match. Try again.';
+      _changePINStep = 'new'; _newPINHash = null; _vaultPin = '';
+      updateVaultDots();
+      document.getElementById('vault-lock-sub').textContent = 'Enter your new 6-digit PIN';
+    }
+  }
 }
 
 // Face ID / WebAuthn
@@ -2248,6 +2290,17 @@ function greeting() {
 }
 function greetingSub() {
   const h = new Date().getHours();
+  const today = new Date().toISOString().split('T')[0];
+  const overdue = state.tasks.filter(t => !t.done && t.due && t.due < today).length;
+  const dueToday = state.tasks.filter(t => !t.done && t.due && t.due === today).length;
+  const daysToLOA = state.keyDates?.loa ? Math.ceil((new Date(state.keyDates.loa) - new Date()) / 86400000) : null;
+  const daysToMBA = state.keyDates?.mba ? Math.ceil((new Date(state.keyDates.mba) - new Date()) / 86400000) : null;
+  if (overdue > 0) return `You have ${overdue} overdue task${overdue>1?'s':''} — let\'s clear them today.`;
+  if (dueToday > 0) return `${dueToday} task${dueToday>1?'s':''} due today — you\'ve got this.`;
+  const streak = state.tasks.filter(t => t.done).length;
+  if (streak >= 10) return `${streak} tasks completed so far — you\'re on a roll 🔥`;
+  if (daysToLOA !== null && daysToLOA > 0 && daysToLOA <= 14) return `${daysToLOA} days to LOA — time to wrap things up!`;
+  if (daysToMBA !== null && daysToMBA > 0 && daysToMBA <= 30) return `${daysToMBA} days to INSEAD — almost there!`;
   if (h < 12) return 'Start the day strong — your MBA dream is getting closer.';
   if (h < 17) return 'Keep the momentum going.';
   if (h < 21) return 'Winding down? Check what\'s next on your list.';
@@ -2821,6 +2874,7 @@ async function toggleTask(id) {
     t.done = newDone;
     // If just completed and has a repeat setting, create next occurrence
     if (newDone) {
+      fireConfetti();
       const repeat = parseTaskRepeat(t.notes);
       if (repeat && t.due) {
         const [y, mo, d] = t.due.split('-').map(Number);
@@ -3661,6 +3715,43 @@ function renderSpendingChart() {
   `;
 }
 
+// ── Confetti ──────────────────────────────────────────────────────────
+function fireConfetti() {
+  const colors = ['#4a90d9','#48bb78','#ed8936','#9f7aea','#f687b3','#ffd700','#38b2ac'];
+  const count = 60;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    const size = 6 + Math.random() * 6;
+    el.style.cssText = `position:fixed;pointer-events:none;z-index:99999;border-radius:${Math.random()>0.5?'50%':'2px'};
+      width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:${20+Math.random()*60}%;top:${30+Math.random()*20}%;opacity:1;`;
+    document.body.appendChild(el);
+    const tx = (Math.random()-0.5)*300, ty = -(80+Math.random()*200), rot = Math.random()*720;
+    el.animate([
+      {transform:'translate(0,0) rotate(0deg)',opacity:1},
+      {transform:`translate(${tx}px,${ty}px) rotate(${rot}deg)`,opacity:0}
+    ], { duration: 900+Math.random()*600, easing:'cubic-bezier(0,0.9,0.57,1)', fill:'forwards' })
+    .onfinish = () => el.remove();
+  }
+}
+
+// ── Budget alert (fires once per month crossing 80%) ──────────────────
+let _budgetAlertShown = '';
+function checkBudgetAlert() {
+  if (!state.budgetUSD) return;
+  const today = new Date();
+  const monthKey = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  if (_budgetAlertShown === monthKey) return;
+  const monthSpent = state.expenses
+    .filter(e => e.date && e.date.startsWith(monthKey))
+    .reduce((s,e) => s+e.usdAmt, 0);
+  const pct = monthSpent / state.budgetUSD;
+  if (pct >= 0.8) {
+    _budgetAlertShown = monthKey;
+    showToast(`⚠️ You've used ${Math.round(pct*100)}% of your monthly budget (${fmt(monthSpent)} of ${fmt(state.budgetUSD)})`, 7000);
+  }
+}
+
 function renderCourses() {
   const periods = ['P1','P2','P3','P4','P5','elective'];
   const PNAMES = {P1:'Period 1',P2:'Period 2',P3:'Period 3',P4:'Period 4',P5:'Period 5',elective:'Electives'};
@@ -3700,6 +3791,7 @@ function render() {
   renderBudget();
   renderCourses();
   renderRightPanel();
+  checkBudgetAlert();
   setTimeout(fixIOSDateInputs, 50);
 }
 
