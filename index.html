@@ -2514,28 +2514,33 @@ async function fetchWeather() {
   try {
     let latitude, longitude;
     if (_pendingLatLon) {
-      // Use lat/lon from autocomplete selection — skip re-geocoding
       ({ latitude, longitude } = _pendingLatLon);
       _pendingLatLon = null;
+      console.log('[weather] using cached lat/lon:', latitude, longitude);
     } else {
-      // Geocode by city name (first part before comma)
       const cityName = loc.split(',')[0].trim();
+      console.log('[weather] geocoding:', cityName);
       const geoR = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(cityName) + '&count=1&language=en&format=json');
-      if (!geoR.ok) { state.weatherData = null; return; }
+      console.log('[weather] geo status:', geoR.status);
+      if (!geoR.ok) { state.weatherData = null; renderWeather(); return; }
       const geoData = await geoR.json();
+      console.log('[weather] geo result:', geoData);
       const place = geoData.results?.[0];
-      if (!place) { state.weatherData = null; return; }
+      if (!place) { console.log('[weather] no place found'); state.weatherData = null; renderWeather(); return; }
       ({ latitude, longitude } = place);
     }
-    // Fetch current weather
+    console.log('[weather] fetching forecast for', latitude, longitude);
     const wR = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,relative_humidity_2m,weather_code&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto');
-    if (!wR.ok) { state.weatherData = null; return; }
+    console.log('[weather] forecast status:', wR.status);
+    if (!wR.ok) { state.weatherData = null; renderWeather(); return; }
     const wData = await wR.json();
+    console.log('[weather] forecast data:', wData);
     const c = wData.current;
-    if (!c) { state.weatherData = null; return; }
+    if (!c) { state.weatherData = null; renderWeather(); return; }
     const code = c.weather_code;
     state.weatherData = { code, tempC: Math.round(c.temperature_2m), humidity: c.relative_humidity_2m, desc: WMO_DESC[code] || 'Unknown' };
-  } catch { state.weatherData = null; }
+    console.log('[weather] success:', state.weatherData);
+  } catch(e) { console.error('[weather] error:', e); state.weatherData = null; }
 }
 function weatherHTML(d) {
   if (!d) return '<div style="font-size:12px;color:var(--text3);">Weather unavailable</div>';
