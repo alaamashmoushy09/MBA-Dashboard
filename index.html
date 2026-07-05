@@ -1298,9 +1298,9 @@ select option{background:var(--surface2);}
 
       <!-- Unlocked view -->
       <div id="vault-unlocked" style="display:none;">
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
+        <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-bottom:12px;">
           <button class="btn btn-secondary" onclick="lockVault()">🔒 Lock</button>
-          <button class="btn btn-secondary" onclick="startChangePIN()">Change PIN</button>
+          <button class="btn btn-secondary" onclick="startChangePIN()">🔑 Change PIN</button>
           <button class="btn btn-primary" onclick="openVaultNoteModal()">+ Add Note</button>
         </div>
         <div id="vault-notes-list"></div>
@@ -2295,7 +2295,7 @@ function greetingSub() {
   const dueToday = state.tasks.filter(t => !t.done && t.due && t.due === today).length;
   const daysToLOA = state.keyDates?.loa ? Math.ceil((new Date(state.keyDates.loa) - new Date()) / 86400000) : null;
   const daysToMBA = state.keyDates?.mba ? Math.ceil((new Date(state.keyDates.mba) - new Date()) / 86400000) : null;
-  if (overdue > 0) return `You have ${overdue} overdue task${overdue>1?'s':''} — let\'s clear them today.`;
+  if (overdue > 0 && state.tasks.length) return `You have ${overdue} overdue task${overdue>1?'s':''} — let\'s clear them today.`;
   if (dueToday > 0) return `${dueToday} task${dueToday>1?'s':''} due today — you\'ve got this.`;
   const streak = state.tasks.filter(t => t.done).length;
   if (streak >= 10) return `${streak} tasks completed so far — you\'re on a roll 🔥`;
@@ -3718,20 +3718,24 @@ function renderSpendingChart() {
 // ── Confetti ──────────────────────────────────────────────────────────
 function fireConfetti() {
   const colors = ['#4a90d9','#48bb78','#ed8936','#9f7aea','#f687b3','#ffd700','#38b2ac'];
-  const count = 60;
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < 60; i++) {
     const el = document.createElement('div');
-    const size = 6 + Math.random() * 6;
-    el.style.cssText = `position:fixed;pointer-events:none;z-index:99999;border-radius:${Math.random()>0.5?'50%':'2px'};
-      width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};
-      left:${20+Math.random()*60}%;top:${30+Math.random()*20}%;opacity:1;`;
+    const size = Math.round(6 + Math.random() * 6);
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const radius = Math.random() > 0.5 ? '50%' : '2px';
+    const left = Math.round(20 + Math.random() * 60);
+    const top = Math.round(30 + Math.random() * 20);
+    el.style.cssText = 'position:fixed;pointer-events:none;z-index:99999;border-radius:' + radius + ';width:' + size + 'px;height:' + size + 'px;background:' + color + ';left:' + left + '%;top:' + top + '%;';
     document.body.appendChild(el);
-    const tx = (Math.random()-0.5)*300, ty = -(80+Math.random()*200), rot = Math.random()*720;
-    el.animate([
-      {transform:'translate(0,0) rotate(0deg)',opacity:1},
-      {transform:`translate(${tx}px,${ty}px) rotate(${rot}deg)`,opacity:0}
-    ], { duration: 900+Math.random()*600, easing:'cubic-bezier(0,0.9,0.57,1)', fill:'forwards' })
-    .onfinish = () => el.remove();
+    const tx = Math.round((Math.random() - 0.5) * 300);
+    const ty = -Math.round(80 + Math.random() * 200);
+    const rot = Math.round(Math.random() * 720);
+    const dur = Math.round(900 + Math.random() * 600);
+    const anim = el.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+      { transform: 'translate(' + tx + 'px,' + ty + 'px) rotate(' + rot + 'deg)', opacity: 0 }
+    ], { duration: dur, easing: 'cubic-bezier(0,0.9,0.57,1)', fill: 'forwards' });
+    anim.onfinish = function() { el.remove(); };
   }
 }
 
