@@ -307,6 +307,18 @@ select option{background:var(--surface2);}
 [data-theme="light"] .budget-bar-fill{background:var(--navy);}
 .budget-bar-fill.over{background:var(--red);}
 
+/* ── Kanban board ── */
+.kanban-board{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start;}
+@media(max-width:700px){.kanban-board{grid-template-columns:1fr;}}
+.kanban-col{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.kanban-col-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.kanban-col-count{background:var(--border2);color:var(--text2);border-radius:10px;padding:1px 7px;font-size:10px;}
+.kanban-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:box-shadow .12s;}
+.kanban-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.kanban-card-title{font-size:13px;color:var(--text);margin-bottom:4px;}
+.kanban-card-meta{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.kanban-overdue{color:var(--red)!important;}
+
 /* ── Phase tabs ── */
 .phase-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
 .ptab{padding:5px 14px;border-radius:20px;font-size:11px;font-family:'Inter',sans-serif;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;transition:all .12s;font-weight:500;letter-spacing:.03em;}
@@ -1176,14 +1188,18 @@ select option{background:var(--surface2);}
           <span id="cal-connect-hint" style="font-size:11px;color:var(--text3);margin-left:4px;"></span>
         </div>
       </div>
-      <div class="phase-tabs">
-        <button class="ptab active" onclick="filterTasks('all',this)">All</button>
-        <button class="ptab" onclick="filterTasks('now',this)">Pre-LOA</button>
-        <button class="ptab" onclick="filterTasks('loa',this)">Pre-MBA summer</button>
-        <button class="ptab" onclick="filterTasks('mba',this)">MBA start</button>
-        <button class="ptab" onclick="filterTasks('summer',this)">Summer break</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+        <div class="phase-tabs" style="margin-bottom:0;" id="task-phase-tabs">
+          <button class="ptab active" onclick="filterTasks('all',this)">All</button>
+          <button class="ptab" onclick="filterTasks('now',this)">Pre-LOA</button>
+          <button class="ptab" onclick="filterTasks('loa',this)">Pre-MBA summer</button>
+          <button class="ptab" onclick="filterTasks('mba',this)">MBA start</button>
+          <button class="ptab" onclick="filterTasks('summer',this)">Summer break</button>
+        </div>
+        <button id="kanban-toggle-btn" class="btn btn-secondary" onclick="toggleKanban()" style="font-size:12px;padding:5px 12px;white-space:nowrap;">⊞ Board view</button>
       </div>
-      <div class="card"><div id="task-list"></div></div>
+      <div class="card" id="task-list-card"><div id="task-list"></div></div>
+      <div id="kanban-board" style="display:none;"></div>
     </div>
 
     <!-- NETWORKING -->
@@ -3546,7 +3562,7 @@ function renderOverview() {
     }).join('');
   }
   if (state.calendarEvents && state.calendarEvents.length) {
-    const taskTitles = new Set(weekTasks.map(t => t.title.trim().toLowerCase()));
+    const taskTitles = new Set((state.tasks || []).map(t => t.title.trim().toLowerCase()));
     html += state.calendarEvents.filter(ev => {
       const title = (ev.summary || '').trim().toLowerCase();
       return !taskTitles.has(title);
@@ -3667,6 +3683,74 @@ function renderExpenses() {
   }).join('') || '<div class="empty">No expenses yet. Add your first one above.</div>';
 }
 
+// ── Kanban board ──────────────────────────────────────────────────────
+let _kanbanMode = false;
+function toggleKanban() {
+  _kanbanMode = !_kanbanMode;
+  const btn = document.getElementById('kanban-toggle-btn');
+  const tabs = document.getElementById('task-phase-tabs');
+  const listCard = document.getElementById('task-list-card');
+  const board = document.getElementById('kanban-board');
+  if (_kanbanMode) {
+    if (btn) btn.textContent = '☰ List view';
+    if (tabs) tabs.style.display = 'none';
+    if (listCard) listCard.style.display = 'none';
+    if (board) board.style.display = '';
+    renderKanban();
+  } else {
+    if (btn) btn.textContent = '⊞ Board view';
+    if (tabs) tabs.style.display = '';
+    if (listCard) listCard.style.display = '';
+    if (board) board.style.display = 'none';
+  }
+}
+
+function renderKanban() {
+  const board = document.getElementById('kanban-board');
+  if (!board) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const todo = state.tasks.filter(t => !t.done && (!t.due || t.due > today));
+  const overdue = state.tasks.filter(t => !t.done && t.due && t.due < today);
+  const done = state.tasks.filter(t => t.done).slice(0, 20);
+
+  function taskCard(t) {
+    const isOverdue = !t.done && t.due && t.due < today;
+    return `<div class="kanban-card" onclick="scrollToTask(${t.id})">
+      <div class="kanban-card-title">${t.title}</div>
+      <div class="kanban-card-meta">
+        <span class="phase-badge ${PHASE_CLASS[t.phase]}">${PHASE_LABEL[t.phase]}</span>
+        ${t.due ? '<span class="' + (isOverdue ? 'kanban-overdue' : '') + '">' + t.due + '</span>' : ''}
+      </div>
+    </div>`;
+  }
+
+  const allTodo = [...overdue, ...todo];
+  board.innerHTML = `<div class="kanban-board">
+    <div class="kanban-col">
+      <div class="kanban-col-title">To Do <span class="kanban-col-count">${allTodo.length}</span></div>
+      ${allTodo.map(taskCard).join('') || '<div class="empty" style="font-size:12px;">Nothing pending</div>'}
+    </div>
+    <div class="kanban-col">
+      <div class="kanban-col-title" style="color:var(--amber);">In Progress <span class="kanban-col-count">${overdue.length}</span></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Overdue tasks</div>
+      ${overdue.map(taskCard).join('') || '<div class="empty" style="font-size:12px;">None overdue</div>'}
+    </div>
+    <div class="kanban-col">
+      <div class="kanban-col-title" style="color:var(--green);">Done <span class="kanban-col-count">${done.length}</span></div>
+      ${done.map(taskCard).join('') || '<div class="empty" style="font-size:12px;">Nothing completed yet</div>'}
+    </div>
+  </div>`;
+}
+
+function scrollToTask(id) {
+  _kanbanMode = false;
+  toggleKanban();
+  setTimeout(() => {
+    const el = document.querySelector('[data-task-id="' + id + '"]');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
 function renderTasks() {
   const filtered = taskFilter==='all' ? state.tasks : state.tasks.filter(t=>t.phase===taskFilter);
   const pending = filtered.filter(t=>!t.done);
@@ -3679,7 +3763,7 @@ function renderTasks() {
     const urgencyClass = !t.done && diffDays !== null ? (diffDays < 0 ? 'task-overdue' : diffDays <= 3 ? 'task-urgent' : '') : '';
     const dueDisplay = t.due ? (' · ' + dueDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + (time ? ' at ' + (() => { const [h,m]=time.split(':'); const h12=+h%12||12; return h12+':'+m+' '+(+h<12?'AM':'PM'); })() : '')) : '';
     const overdueLabel = !t.done && diffDays !== null && diffDays < 0 ? ' (overdue)' : (!t.done && diffDays === 0 ? ' (today)' : '');
-    return `<div class="task-row">
+    return `<div class="task-row" data-task-id="${t.id}">
       <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask(${t.id})" />
       <div style="flex:1;">
         <div style="font-size:14px;" class="${t.done?'task-done-text':''}">${t.title}</div>
@@ -3707,6 +3791,7 @@ function renderTasks() {
   }
   document.getElementById('task-list').innerHTML = html;
   renderCalConnectHint();
+  if (_kanbanMode) renderKanban();
 }
 
 function renderNetwork() {
