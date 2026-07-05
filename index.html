@@ -1455,7 +1455,7 @@ let countersAnimated = false;
 let state = {
   expenses:[], tasks:[], courses:[], budgetUSD:0, network:[],
   keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' },
-  milestones:[], checklist:[], weatherLocation:'Fontainebleau, France',
+  milestones:[], checklist:[], weatherLocation:'Fontainebleau, France', weatherLat:null, weatherLon:null,
   calendarEvents: null, weatherData: null
 };
 
@@ -1537,7 +1537,7 @@ function signInWithGoogle() {
 
 async function signOut() {
   await sb.auth.signOut();
-  state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, milestones:[], checklist:[], weatherLocation:'Fontainebleau, France', calendarEvents:null, weatherData:null };
+  state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, milestones:[], checklist:[], weatherLocation:'Fontainebleau, France', weatherLat:null, weatherLon:null, calendarEvents:null, weatherData:null };
   countersAnimated = false;
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-overlay').classList.remove('hidden');
@@ -1723,6 +1723,8 @@ async function loadAllData() {
         if (Array.isArray(kd.milestones)) state.milestones = kd.milestones;
         if (Array.isArray(kd.checklist)) state.checklist = kd.checklist;
         if (kd.weatherLocation) state.weatherLocation = kd.weatherLocation;
+        if (kd.weatherLat) state.weatherLat = kd.weatherLat;
+        if (kd.weatherLon) state.weatherLon = kd.weatherLon;
       } catch {}
     }
     if (sett.mycard) {
@@ -1742,7 +1744,7 @@ async function saveSettings() {
     budget_usd: state.budgetUSD,
     display_cur: displayCur,
     theme,
-    key_dates: JSON.stringify({ ...state.keyDates, milestones: state.milestones, checklist: state.checklist, weatherLocation: state.weatherLocation }),
+    key_dates: JSON.stringify({ ...state.keyDates, milestones: state.milestones, checklist: state.checklist, weatherLocation: state.weatherLocation, weatherLat: state.weatherLat, weatherLon: state.weatherLon }),
     mycard: localStorage.getItem('mba-mycard') || null,
     updated_at: new Date().toISOString()
   };
@@ -2514,33 +2516,35 @@ async function fetchWeather() {
   try {
     let latitude, longitude;
     if (_pendingLatLon) {
+      // Fresh pick from autocomplete — use those coords and persist them
       ({ latitude, longitude } = _pendingLatLon);
       _pendingLatLon = null;
-      console.log('[weather] using cached lat/lon:', latitude, longitude);
+      state.weatherLat = latitude;
+      state.weatherLon = longitude;
+    } else if (state.weatherLat && state.weatherLon) {
+      // Use previously persisted coords — no geocoding needed
+      latitude = state.weatherLat;
+      longitude = state.weatherLon;
     } else {
+      // Last resort: geocode by city name
       const cityName = loc.split(',')[0].trim();
-      console.log('[weather] geocoding:', cityName);
       const geoR = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(cityName) + '&count=1&language=en&format=json');
-      console.log('[weather] geo status:', geoR.status);
-      if (!geoR.ok) { state.weatherData = null; renderWeather(); return; }
+      if (!geoR.ok) { state.weatherData = null; return; }
       const geoData = await geoR.json();
-      console.log('[weather] geo result:', geoData);
       const place = geoData.results?.[0];
-      if (!place) { console.log('[weather] no place found'); state.weatherData = null; renderWeather(); return; }
+      if (!place) { state.weatherData = null; return; }
       ({ latitude, longitude } = place);
+      state.weatherLat = latitude;
+      state.weatherLon = longitude;
     }
-    console.log('[weather] fetching forecast for', latitude, longitude);
     const wR = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,relative_humidity_2m,weather_code&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto');
-    console.log('[weather] forecast status:', wR.status);
-    if (!wR.ok) { state.weatherData = null; renderWeather(); return; }
+    if (!wR.ok) { state.weatherData = null; return; }
     const wData = await wR.json();
-    console.log('[weather] forecast data:', wData);
     const c = wData.current;
-    if (!c) { state.weatherData = null; renderWeather(); return; }
+    if (!c) { state.weatherData = null; return; }
     const code = c.weather_code;
     state.weatherData = { code, tempC: Math.round(c.temperature_2m), humidity: c.relative_humidity_2m, desc: WMO_DESC[code] || 'Unknown' };
-    console.log('[weather] success:', state.weatherData);
-  } catch(e) { console.error('[weather] error:', e); state.weatherData = null; }
+  } catch(e) { state.weatherData = null; }
 }
 function weatherHTML(d) {
   if (!d) return '<div style="font-size:12px;color:var(--text3);">Weather unavailable</div>';
@@ -2611,6 +2615,7 @@ async function saveWeatherLocation() {
   const val = document.getElementById('rp-loc-input').value.trim();
   if (!val) return;
   state.weatherLocation = val;
+  if (!_pendingLatLon) { state.weatherLat = null; state.weatherLon = null; }
   document.getElementById('rp-autocomplete').style.display = 'none';
   toggleWeatherEdit();
   await fetchWeather(); renderWeather(); saveSettings();
@@ -2619,6 +2624,7 @@ async function saveWeatherLocationMobile() {
   const val = document.getElementById('mob-loc-input').value.trim();
   if (!val) return;
   state.weatherLocation = val;
+  if (!_pendingLatLon) { state.weatherLat = null; state.weatherLon = null; }
   document.getElementById('mob-autocomplete').style.display = 'none';
   toggleWeatherEditMobile();
   await fetchWeather(); renderWeather(); saveSettings();
@@ -4206,7 +4212,7 @@ sb.auth.onAuthStateChange((event, session) => {
   } else if (event === 'SIGNED_OUT') {
     appReady = false;
     countersAnimated = false;
-    state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, milestones:[], checklist:[], weatherLocation:'Fontainebleau, France', calendarEvents:null, weatherData:null };
+    state = { expenses:[], tasks:[], courses:[], budgetUSD:0, network:[], keyDates:{ loa:'2026-07-10', summerPre:'2026-07-11', mba:'2026-08-21', summer:'2027-06-01' }, milestones:[], checklist:[], weatherLocation:'Fontainebleau, France', weatherLat:null, weatherLon:null, calendarEvents:null, weatherData:null };
     document.getElementById('app').style.display = 'none';
     document.getElementById('auth-overlay').classList.remove('hidden');
   }
