@@ -900,6 +900,15 @@ select option{background:var(--surface2);}
         </div>
       </div>
 
+      <!-- Streak -->
+      <div id="streak-bar" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">🔥</span>
+        <div>
+          <span id="streak-count" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--text);"></span>
+          <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="streak-label"></span>
+        </div>
+      </div>
+
       <!-- Currency converter (mobile only — desktop shows in right panel) -->
       <div class="card rp-hidden-on-desktop">
         <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
@@ -926,6 +935,15 @@ select option{background:var(--surface2);}
         </div>
         <div id="conv-result" style="margin-top:12px;font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;color:var(--primary);min-height:40px;"></div>
         <div id="conv-rate-line" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+      </div>
+
+      <!-- Scratchpad -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="card-title" style="margin-bottom:0;">Today's notes</div>
+          <span id="scratchpad-saved" style="font-size:10px;color:var(--text3);transition:opacity .3s;opacity:0;">Saved</span>
+        </div>
+        <textarea id="scratchpad" placeholder="Quick thoughts, reminders, today's focus…" style="width:100%;min-height:80px;resize:vertical;font-size:13px;" oninput="saveScratchpad()"></textarea>
       </div>
 
       <!-- Google Calendar this week -->
@@ -1006,7 +1024,23 @@ select option{background:var(--surface2);}
         <button class="btn btn-primary" onclick="addExpense()">Add expense</button>
       </div>
       <div class="card">
-        <div class="card-title">All expenses</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;">All expenses</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="exp-search" type="text" placeholder="Search…" style="width:140px;font-size:13px;" oninput="renderExpenses()" />
+            <select id="exp-filter-cat" style="font-size:12px;width:auto;" onchange="renderExpenses()">
+              <option value="">All categories</option>
+              <option value="housing">🏠 Housing</option>
+              <option value="food">🍽️ Food</option>
+              <option value="transport">🚗 Transport</option>
+              <option value="travel">✈️ Travel</option>
+              <option value="books">📚 Books</option>
+              <option value="social">🎉 Social</option>
+              <option value="health">💊 Health</option>
+              <option value="other">📦 Other</option>
+            </select>
+          </div>
+        </div>
         <div id="expense-list"></div>
       </div>
     </div>
@@ -3470,10 +3504,24 @@ function renderOverview() {
       <div style="flex:1;font-size:14px;">${t.title}</div>
       ${t.due?`<span style="font-size:11px;color:var(--text3);">${t.due}</span>`:''}
     </div>`).join('') || '<div class="empty">All caught up</div>';
+
+  updateStreak();
+  setTimeout(addCountdownRings, 100);
 }
 
 function renderExpenses() {
-  document.getElementById('expense-list').innerHTML = state.expenses.map(e => {
+  const searchQ = (document.getElementById('exp-search')?.value || '').toLowerCase().trim();
+  const filterCat = document.getElementById('exp-filter-cat')?.value || '';
+  const filtered = state.expenses.filter(e => {
+    if (filterCat && e.cat !== filterCat) return false;
+    if (searchQ && !e.desc.toLowerCase().includes(searchQ) && !(e.notes||'').toLowerCase().includes(searchQ)) return false;
+    return true;
+  });
+  if (!filtered.length && (searchQ || filterCat)) {
+    document.getElementById('expense-list').innerHTML = '<div class="empty">No expenses match your search.</div>';
+    return;
+  }
+  document.getElementById('expense-list').innerHTML = filtered.map(e => {
     if (_editingExpenseId === e.id) {
       // Inline edit row
       const catOptions = Object.entries(CATS).map(([k,v]) =>
@@ -3756,6 +3804,78 @@ function checkBudgetAlert() {
   }
 }
 
+// ── Scratchpad ────────────────────────────────────────────────────────
+let _scratchTimer = null;
+function saveScratchpad() {
+  const el = document.getElementById('scratchpad');
+  const saved = document.getElementById('scratchpad-saved');
+  if (!el) return;
+  try { localStorage.setItem('mba-scratchpad', el.value); } catch {}
+  if (saved) { saved.style.opacity = '1'; clearTimeout(_scratchTimer); _scratchTimer = setTimeout(() => { saved.style.opacity = '0'; }, 1500); }
+}
+function loadScratchpad() {
+  const el = document.getElementById('scratchpad');
+  if (!el) return;
+  try { el.value = localStorage.getItem('mba-scratchpad') || ''; } catch {}
+}
+
+// ── Activity streak ────────────────────────────────────────────────────
+function updateStreak() {
+  const today = new Date().toISOString().split('T')[0];
+  const log = JSON.parse(localStorage.getItem('mba-activity-log') || '[]');
+  if (!log.includes(today)) { log.push(today); try { localStorage.setItem('mba-activity-log', JSON.stringify(log.slice(-365))); } catch {} }
+  // Count consecutive days ending today
+  let streak = 0, check = new Date();
+  while (true) {
+    const d = check.toISOString().split('T')[0];
+    if (!log.includes(d)) break;
+    streak++;
+    check.setDate(check.getDate() - 1);
+    if (streak > 365) break;
+  }
+  const bar = document.getElementById('streak-bar');
+  const cnt = document.getElementById('streak-count');
+  const lbl = document.getElementById('streak-label');
+  if (!bar) return;
+  if (streak >= 2) {
+    bar.style.display = 'flex';
+    if (cnt) cnt.textContent = streak;
+    if (lbl) lbl.textContent = streak === 1 ? 'day streak' : 'day streak — keep it up!';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+// ── Countdown rings ────────────────────────────────────────────────────
+function addCountdownRings() {
+  document.querySelectorAll('.cd-card').forEach(card => {
+    if (card.querySelector('.cd-ring')) return;
+    const numEl = card.querySelector('.cd-num');
+    if (!numEl) return;
+    const days = parseInt(numEl.textContent);
+    if (isNaN(days) || days <= 0) return;
+    // Figure out total days for this card by finding the date label
+    const dateLabel = card.querySelector('.cd-date');
+    if (!dateLabel) return;
+    try {
+      const target = new Date(dateLabel.textContent);
+      const now = new Date();
+      // Rough total from Jan 1 this year
+      const total = Math.round((target - new Date(now.getFullYear(), 0, 1)) / 86400000);
+      if (total <= 0) return;
+      const pct = Math.max(0, Math.min(1, days / total));
+      const urgency = days <= 14 ? 'var(--red)' : days <= 30 ? 'var(--amber)' : 'var(--green)';
+      const r = 22, circ = 2 * Math.PI * r;
+      const dash = pct * circ;
+      const ring = document.createElement('div');
+      ring.className = 'cd-ring';
+      ring.style.cssText = 'position:absolute;top:10px;right:10px;width:52px;height:52px;';
+      ring.innerHTML = `<svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--border2)" stroke-width="3"/><circle cx="26" cy="26" r="${r}" fill="none" stroke="${urgency}" stroke-width="3" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" stroke-dashoffset="${(circ/4).toFixed(1)}" stroke-linecap="round" style="transition:stroke-dasharray .6s ease;"/></svg>`;
+      card.appendChild(ring);
+    } catch {}
+  });
+}
+
 function renderCourses() {
   const periods = ['P1','P2','P3','P4','P5','elective'];
   const PNAMES = {P1:'Period 1',P2:'Period 2',P3:'Period 3',P4:'Period 4',P5:'Period 5',elective:'Electives'};
@@ -3837,6 +3957,7 @@ async function bootApp() {
     initGoogleCalendarAuth();
     appReady = true;
     render();
+    loadScratchpad();
     showApp();
   } catch (err) {
     console.error('Failed to load data:', err);
