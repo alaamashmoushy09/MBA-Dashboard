@@ -1583,7 +1583,7 @@ async function checkCalendarConnection() {
   renderCalConnectHint();
 }
 
-async function createCalendarEvent(title, dateStr, notes, timeStr) {
+async function createCalendarEvent(title, dateStr, notes, timeStr, colorId) {
   const pt = getProviderToken();
   if (!pt || !dateStr) return null;
   const { notes: cleanNotes } = parseTaskTime(notes || '');
@@ -1614,7 +1614,7 @@ async function createCalendarEvent(title, dateStr, notes, timeStr) {
   }
 
   try {
-    const body = { summary: title, description: cleanNotes || '', start: startObj, end: endObj };
+    const body = { summary: title, description: cleanNotes || '', start: startObj, end: endObj, colorId: colorId || '5' };
     const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
@@ -2075,7 +2075,7 @@ async function storeCalEventId(taskId, calEventId) {
   if (t) t.calEventId = calEventId;
   try { await apiPatch('tasks', taskId, { cal_event_id: calEventId }); } catch {}
 }
-async function updateCalendarEvent(calEventId, title, dateStr, notes, timeStr) {
+async function updateCalendarEvent(calEventId, title, dateStr, notes, timeStr, colorId) {
   const pt = getProviderToken();
   if (!pt || !calEventId || !dateStr) return;
   const { notes: cleanNotes } = parseTaskTime(notes || '');
@@ -2102,7 +2102,7 @@ async function updateCalendarEvent(calEventId, title, dateStr, notes, timeStr) {
     const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(calEventId)}`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ summary: title, description: cleanNotes || '', start: startObj, end: endObj })
+      body: JSON.stringify({ summary: title, description: cleanNotes || '', start: startObj, end: endObj, colorId: colorId || '5' })
     });
     if (r.status === 401 || r.status === 403) { calendarConnected = false; renderCalConnectHint(); return false; }
     return r.ok;
@@ -3036,11 +3036,11 @@ async function submitTask() {
         } else if (!pt) {
           showToast('Task saved. Calendar not synced — tap Reconnect Calendar first.', 4000);
         } else if (t.calEventId) {
-          const ok = await updateCalendarEvent(t.calEventId, title, due, notes, time);
+          const ok = await updateCalendarEvent(t.calEventId, title, due, notes, time, PRIORITY_CAL_COLOR[priority] || '5');
           if (ok) showToast('Task & calendar updated ✓', 2500, true);
           else showToast('Task saved. Calendar update failed — token may be expired, tap Reconnect.', 4000);
         } else {
-          const calId = await createCalendarEvent(title, due, notes, time);
+          const calId = await createCalendarEvent(title, due, notes, time, PRIORITY_CAL_COLOR[priority] || '5');
           if (calId) { await storeCalEventId(editingTaskId, calId); t.calEventId = calId; showToast('Task updated & added to calendar ✓', 2500, true); }
           else showToast('Task saved. Could not add to calendar — tap Reconnect Calendar.', 4000);
         }
@@ -3059,10 +3059,9 @@ async function submitTask() {
       document.getElementById('task-notes').value = '';
       document.getElementById('task-priority').value = 'important';
       if (due) {
-        const calId = await createCalendarEvent(title, due, notes, time);
+        const calId = await createCalendarEvent(title, due, notes, time, PRIORITY_CAL_COLOR[priority] || '5');
         if (calId) {
           await storeCalEventId(row.id, calId);
-          setCalendarEventColor(calId, PRIORITY_CAL_COLOR[priority] || '5');
           showToast('Task saved + added to Google Calendar ✓', 3000, true);
         }
         else if (!getProviderToken()) showToast('Task saved. Connect Google Calendar below to enable sync.');
