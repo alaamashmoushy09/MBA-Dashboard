@@ -1614,7 +1614,8 @@ async function createCalendarEvent(title, dateStr, notes, timeStr, colorId) {
   }
 
   try {
-    const body = { summary: title, description: cleanNotes || '', start: startObj, end: endObj, colorId: colorId || '5' };
+    const body = { summary: title, description: cleanNotes || '', start: startObj, end: endObj };
+    if (colorId) body.colorId = String(colorId);
     const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
@@ -2102,7 +2103,7 @@ async function updateCalendarEvent(calEventId, title, dateStr, notes, timeStr, c
     const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(calEventId)}`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${pt}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ summary: title, description: cleanNotes || '', start: startObj, end: endObj, colorId: colorId || '5' })
+      body: JSON.stringify(Object.assign({ summary: title, description: cleanNotes || '', start: startObj, end: endObj }, colorId ? { colorId: String(colorId) } : {}))
     });
     if (r.status === 401 || r.status === 403) { calendarConnected = false; renderCalConnectHint(); return false; }
     return r.ok;
