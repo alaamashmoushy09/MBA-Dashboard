@@ -2512,14 +2512,21 @@ const WMO_DESC = {0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
 async function fetchWeather() {
   const loc = state.weatherLocation || 'Fontainebleau, France';
   try {
-    // Geocode location name → lat/lon (use city name only, strip region/country suffixes)
-    const cityName = loc.split(',')[0].trim();
-    const geoR = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(cityName) + '&count=1&language=en&format=json');
-    if (!geoR.ok) { state.weatherData = null; return; }
-    const geoData = await geoR.json();
-    const place = geoData.results?.[0];
-    if (!place) { state.weatherData = null; return; }
-    const { latitude, longitude } = place;
+    let latitude, longitude;
+    if (_pendingLatLon) {
+      // Use lat/lon from autocomplete selection — skip re-geocoding
+      ({ latitude, longitude } = _pendingLatLon);
+      _pendingLatLon = null;
+    } else {
+      // Geocode by city name (first part before comma)
+      const cityName = loc.split(',')[0].trim();
+      const geoR = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(cityName) + '&count=1&language=en&format=json');
+      if (!geoR.ok) { state.weatherData = null; return; }
+      const geoData = await geoR.json();
+      const place = geoData.results?.[0];
+      if (!place) { state.weatherData = null; return; }
+      ({ latitude, longitude } = place);
+    }
     // Fetch current weather
     const wR = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,relative_humidity_2m,weather_code&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto');
     if (!wR.ok) { state.weatherData = null; return; }
@@ -2565,7 +2572,9 @@ function toggleWeatherEditMobile() {
   if (!isEdit) { const inp = document.getElementById('mob-loc-input'); inp.value = state.weatherLocation; inp.focus(); }
 }
 let _acTimer = null;
+let _pendingLatLon = null; // cached lat/lon from autocomplete selection
 async function fetchLocationSuggestions(query, source='rp') {
+  _pendingLatLon = null; // reset when user types
   const dropId = source === 'mob' ? 'mob-autocomplete' : 'rp-autocomplete';
   const drop = document.getElementById(dropId);
   if (!drop) return;
@@ -2580,14 +2589,16 @@ async function fetchLocationSuggestions(query, source='rp') {
       drop.innerHTML = results.map(res => {
         const parts = res.display_name.split(',');
         const short = parts.slice(0,3).join(',').trim();
-        return `<div class="rp-autocomplete-item" onmousedown="event.preventDefault();applyLocation('${short.replace(/'/g,"\\'")}','${source}')">${short}</div>`;
+        const lat = res.lat, lon = res.lon;
+        return `<div class="rp-autocomplete-item" onmousedown="event.preventDefault();applyLocation('${short.replace(/'/g,"\\'")}','${source}',${lat},${lon})">${short}</div>`;
       }).join('');
     } catch { drop.style.display = 'none'; }
   }, 280);
 }
-function applyLocation(name, source) {
+function applyLocation(name, source, lat, lon) {
   const inp = document.getElementById(source === 'mob' ? 'mob-loc-input' : 'rp-loc-input');
   if (inp) inp.value = name;
+  if (lat && lon) _pendingLatLon = { latitude: parseFloat(lat), longitude: parseFloat(lon) };
   const drop = document.getElementById(source === 'mob' ? 'mob-autocomplete' : 'rp-autocomplete');
   if (drop) drop.style.display = 'none';
 }
