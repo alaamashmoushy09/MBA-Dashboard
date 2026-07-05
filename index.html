@@ -1170,6 +1170,14 @@ select option{background:var(--surface2);}
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label">Priority</label>
+            <select id="task-priority">
+              <option value="important">🟡 Important</option>
+              <option value="critical">🔴 Critical</option>
+              <option value="nice">🔵 Nice to have</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Notes (optional)</label>
             <input type="text" id="task-notes" placeholder="Any details..." />
           </div>
@@ -2943,12 +2951,32 @@ function parseTaskRepeat(notes) {
   const m = notes.match(/\[repeat:(weekly|monthly)\]/);
   return m ? m[1] : '';
 }
-function buildTaskNotes(notes, time, repeat) {
+function parseTaskPriority(notes) {
+  if (!notes) return 'important';
+  const m = notes.match(/\[priority:(critical|important|nice)\]/);
+  return m ? m[1] : 'important';
+}
+function buildTaskNotes(notes, time, repeat, priority) {
   let base = notes.trim();
-  // Remove any existing repeat tag first
   base = base.replace(/\s*\[repeat:(?:weekly|monthly)\]/g, '').trim();
+  base = base.replace(/\s*\[priority:(?:critical|important|nice)\]/g, '').trim();
+  if (priority && priority !== 'important') base = base ? base + ' [priority:' + priority + ']' : '[priority:' + priority + ']';
   if (repeat) base = base ? base + ' [repeat:' + repeat + ']' : '[repeat:' + repeat + ']';
   return time ? (base ? base + ' [⏰' + time + ']' : '[⏰' + time + ']') : base;
+}
+const PRIORITY_COLOR = { critical: '#e53e3e', important: '#d69e2e', nice: '#3182ce' };
+const PRIORITY_CAL_COLOR = { critical: '11', important: '5', nice: '7', done: '8' };
+// Google Calendar colorId: 11=Tomato, 5=Banana, 7=Peacock, 8=Graphite
+async function setCalendarEventColor(calEventId, colorId) {
+  const pt = getProviderToken();
+  if (!pt || !calEventId) return;
+  try {
+    await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + encodeURIComponent(calEventId), {
+      method: 'PATCH',
+      headers: { 'Authorization': 'Bearer ' + pt, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ colorId })
+    });
+  } catch {}
 }
 function startEditTask(id) {
   const t = state.tasks.find(t => t.id === id);
@@ -2956,11 +2984,13 @@ function startEditTask(id) {
   editingTaskId = id;
   const { time, notes: notesWithTime } = parseTaskTime(t.notes);
   const repeat = parseTaskRepeat(notesWithTime);
-  const notes = notesWithTime.replace(/\s*\[repeat:(?:weekly|monthly)\]/g, '').trim();
+  const priority = parseTaskPriority(notesWithTime);
+  const notes = notesWithTime.replace(/\s*\[repeat:(?:weekly|monthly)\]/g, '').replace(/\s*\[priority:(?:critical|important|nice)\]/g, '').trim();
   document.getElementById('task-title').value = t.title;
   document.getElementById('task-due').value = t.due;
   document.getElementById('task-time').value = time;
   document.getElementById('task-phase').value = t.phase;
+  document.getElementById('task-priority').value = priority;
   document.getElementById('task-notes').value = notes;
   document.getElementById('task-repeat').value = repeat;
   document.getElementById('task-form-title').textContent = 'Edit task';
@@ -2975,6 +3005,7 @@ function cancelEditTask() {
   document.getElementById('task-due').value = todayStr;
   document.getElementById('task-time').value = '';
   document.getElementById('task-phase').value = 'now';
+  document.getElementById('task-priority').value = 'important';
   document.getElementById('task-notes').value = '';
   document.getElementById('task-repeat').value = '';
   document.getElementById('task-form-title').textContent = 'Add task';
@@ -2987,9 +3018,10 @@ async function submitTask() {
   const due = document.getElementById('task-due').value;
   const time = document.getElementById('task-time').value;
   const phase = document.getElementById('task-phase').value;
+  const priority = document.getElementById('task-priority').value;
   const rawNotes = document.getElementById('task-notes').value.trim();
   const repeat = document.getElementById('task-repeat').value;
-  const notes = buildTaskNotes(rawNotes, time, repeat);
+  const notes = buildTaskNotes(rawNotes, time, repeat, priority);
   if (!title) return;
   if (editingTaskId !== null) {
     try {
@@ -3025,9 +3057,14 @@ async function submitTask() {
       document.getElementById('task-title').value = '';
       document.getElementById('task-time').value = '';
       document.getElementById('task-notes').value = '';
+      document.getElementById('task-priority').value = 'important';
       if (due) {
         const calId = await createCalendarEvent(title, due, notes, time);
-        if (calId) { await storeCalEventId(row.id, calId); showToast('Task saved + added to Google Calendar ✓', 3000, true); }
+        if (calId) {
+          await storeCalEventId(row.id, calId);
+          setCalendarEventColor(calId, PRIORITY_CAL_COLOR[priority] || '5');
+          showToast('Task saved + added to Google Calendar ✓', 3000, true);
+        }
         else if (!getProviderToken()) showToast('Task saved. Connect Google Calendar below to enable sync.');
         // else: createCalendarEvent already showed a specific error toast
       }
@@ -3043,6 +3080,11 @@ async function toggleTask(id) {
   try {
     await apiPatch('tasks', id, { done: newDone });
     t.done = newDone;
+    // Update calendar event color based on completion / priority
+    if (t.calEventId) {
+      const colorId = newDone ? PRIORITY_CAL_COLOR.done : (PRIORITY_CAL_COLOR[parseTaskPriority(t.notes)] || '5');
+      setCalendarEventColor(t.calEventId, colorId);
+    }
     // If just completed and has a repeat setting, create next occurrence
     if (newDone) {
       fireConfetti();
@@ -3796,12 +3838,16 @@ function renderTasks() {
     const urgencyClass = !t.done && diffDays !== null ? (diffDays < 0 ? 'task-overdue' : diffDays <= 3 ? 'task-urgent' : '') : '';
     const dueDisplay = t.due ? (' · ' + dueDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + (time ? ' at ' + (() => { const [h,m]=time.split(':'); const h12=+h%12||12; return h12+':'+m+' '+(+h<12?'AM':'PM'); })() : '')) : '';
     const overdueLabel = !t.done && diffDays !== null && diffDays < 0 ? ' (overdue)' : (!t.done && diffDays === 0 ? ' (today)' : '');
-    return `<div class="task-row" data-task-id="${t.id}">
+    const priority = parseTaskPriority(t.notes);
+    const priorityColor = t.done ? 'var(--text3)' : (PRIORITY_COLOR[priority] || PRIORITY_COLOR.important);
+    const priorityLabel = { critical:'Critical', important:'Important', nice:'Nice to have' }[priority] || '';
+    return `<div class="task-row" data-task-id="${t.id}" style="border-left:3px solid ${priorityColor};padding-left:10px;">
       <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask(${t.id})" />
       <div style="flex:1;">
         <div style="font-size:14px;" class="${t.done?'task-done-text':''}">${t.title}</div>
         <div class="task-due ${urgencyClass}">
           <span class="phase-badge ${PHASE_CLASS[t.phase]}">${PHASE_LABEL[t.phase]}</span>
+          <span style="font-size:10px;color:${priorityColor};font-weight:600;">${priorityLabel}</span>
           ${dueDisplay}${overdueLabel}${cleanNotes?' · '+cleanNotes:''}
         </div>
       </div>
