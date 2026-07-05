@@ -2512,8 +2512,9 @@ const WMO_DESC = {0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
 async function fetchWeather() {
   const loc = state.weatherLocation || 'Fontainebleau, France';
   try {
-    // Geocode location name → lat/lon
-    const geoR = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(loc) + '&count=1&language=en&format=json');
+    // Geocode location name → lat/lon (use city name only, strip region/country suffixes)
+    const cityName = loc.split(',')[0].trim();
+    const geoR = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(cityName) + '&count=1&language=en&format=json');
     if (!geoR.ok) { state.weatherData = null; return; }
     const geoData = await geoR.json();
     const place = geoData.results?.[0];
