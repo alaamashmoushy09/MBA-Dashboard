@@ -1021,8 +1021,23 @@ select option{background:var(--surface2);}
             <input type="file" id="exp-receipt-img" accept="image/*" style="font-size:13px;color:var(--text2);" />
           </div>
         </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;">
+            <input type="checkbox" id="exp-recurring" style="width:15px;height:15px;" />
+            Recurring monthly
+          </label>
+        </div>
         <button class="btn btn-primary" onclick="addExpense()">Add expense</button>
       </div>
+      <!-- Recurring expenses -->
+      <div class="card" id="recurring-card" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div class="card-title" style="margin-bottom:0;">🔁 Recurring monthly</div>
+          <span id="recurring-next-date" style="font-size:12px;color:var(--text3);"></span>
+        </div>
+        <div id="recurring-list"></div>
+      </div>
+
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
           <div class="card-title" style="margin-bottom:0;">All expenses</div>
@@ -2712,6 +2727,7 @@ async function addExpense() {
   const date = document.getElementById('exp-date').value;
   const notes = document.getElementById('exp-notes').value.trim();
   const imgFile = document.getElementById('exp-receipt-img').files[0];
+  const isRecurring = document.getElementById('exp-recurring')?.checked;
   if (!desc || isNaN(rawAmt) || rawAmt <= 0 || !date) { showToast('Please fill in description, amount, and date.'); return; }
   const usdAmt = await toUSDOnDate(rawAmt, cur, date);
 
@@ -2747,12 +2763,84 @@ async function addExpense() {
     const rows = await apiPost('expenses', { description:desc, usd_amt:usdAmt, orig_amt:rawAmt, orig_cur:cur, cat, date, notes: fullNotes });
     const row = rows[0];
     state.expenses.unshift({ id:row.id, desc, usdAmt, origAmt:rawAmt, origCur:cur, cat, date, notes, receiptUrl: receiptUrl || null });
+    if (isRecurring) {
+      const list = getRecurring();
+      list.push({ desc, usdAmt, origAmt: rawAmt, origCur: cur, cat });
+      saveRecurring(list);
+      showToast('Added as recurring — will auto-apply each month 🔁', 3500, true);
+      document.getElementById('exp-recurring').checked = false;
+    }
     document.getElementById('exp-desc').value = '';
     document.getElementById('exp-amt').value = '';
     document.getElementById('exp-notes').value = '';
     document.getElementById('exp-receipt-img').value = '';
     render();
   } catch { showToast('Could not save expense. Check your connection.'); }
+}
+
+// ── Recurring expenses ────────────────────────────────────────────────
+function getRecurring() {
+  try { return JSON.parse(localStorage.getItem('mba-recurring') || '[]'); } catch { return []; }
+}
+function saveRecurring(list) {
+  try { localStorage.setItem('mba-recurring', JSON.stringify(list)); } catch {}
+}
+
+function renderRecurring() {
+  const list = getRecurring();
+  const card = document.getElementById('recurring-card');
+  const el = document.getElementById('recurring-list');
+  if (!card || !el) return;
+  if (!list.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const now = new Date();
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const nextLabel = nextMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const nd = document.getElementById('recurring-next-date');
+  if (nd) nd.textContent = 'Auto-applies ' + nextLabel;
+  el.innerHTML = list.map((r, i) => `
+    <div class="exp-row" style="align-items:center;">
+      <span class="exp-cat cat-${r.cat}">${CAT_ICONS[r.cat]||'📦'} ${CATS[r.cat]||r.cat}</span>
+      <div style="flex:1;min-width:0;margin-left:8px;">
+        <div class="exp-desc">${r.desc}</div>
+        <div class="exp-note">${SYM[r.origCur]}${r.origAmt.toLocaleString()} ${r.origCur} · every month</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <div class="exp-amount">${fmt(r.usdAmt)}</div>
+        <button onclick="deleteRecurring(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 4px;" title="Remove">×</button>
+      </div>
+    </div>`).join('');
+}
+
+function deleteRecurring(i) {
+  if (!confirm('Remove this recurring expense?')) return;
+  const list = getRecurring();
+  list.splice(i, 1);
+  saveRecurring(list);
+  renderRecurring();
+}
+
+function applyRecurringExpenses() {
+  const list = getRecurring();
+  if (!list.length) return;
+  const now = new Date();
+  const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const appliedKey = 'mba-recurring-applied-' + monthKey;
+  if (localStorage.getItem(appliedKey)) return;
+  const applied = [];
+  list.forEach(r => {
+    const date = monthKey + '-01';
+    apiPost('expenses', { description: r.desc, usd_amt: r.usdAmt, orig_amt: r.origAmt, orig_cur: r.origCur, cat: r.cat, date, notes: '[recurring]' })
+      .then(rows => {
+        if (rows && rows[0]) {
+          state.expenses.unshift({ id: rows[0].id, desc: r.desc, usdAmt: r.usdAmt, origAmt: r.origAmt, origCur: r.origCur, cat: r.cat, date, notes: '[recurring]', receiptUrl: null });
+          renderExpenses();
+          renderBudget();
+        }
+      }).catch(() => {});
+  });
+  try { localStorage.setItem(appliedKey, '1'); } catch {}
+  if (list.length) showToast('🔁 ' + list.length + ' recurring expense' + (list.length > 1 ? 's' : '') + ' added for ' + now.toLocaleDateString('en-US', { month: 'long' }), 4000, true);
 }
 
 async function deleteExpense(id) {
@@ -3909,6 +3997,7 @@ function renderRightPanel() {
 function render() {
   renderOverview();
   renderExpenses();
+  renderRecurring();
   renderTasks();
   renderNetwork();
   renderMyCard();
@@ -3916,6 +4005,7 @@ function render() {
   renderCourses();
   renderRightPanel();
   checkBudgetAlert();
+  applyRecurringExpenses();
   setTimeout(fixIOSDateInputs, 50);
 }
 
