@@ -2506,21 +2506,32 @@ function exportCSV() {
 }
 
 // ── Weather ──
-const WEATHER_ICONS = {113:'☀️',116:'⛅',119:'☁️',122:'☁️',143:'🌫️',176:'🌦️',179:'🌨️',182:'🌧️',185:'🌧️',200:'⛈️',227:'❄️',230:'❄️',248:'🌫️',260:'🌫️',263:'🌦️',266:'🌦️',281:'🌧️',284:'🌧️',293:'🌦️',296:'🌦️',299:'🌧️',302:'🌧️',305:'🌧️',308:'🌧️',311:'🌨️',314:'🌨️',317:'🌨️',320:'🌨️',323:'🌨️',326:'🌨️',329:'❄️',332:'❄️',335:'❄️',338:'❄️',350:'🌧️',353:'🌦️',356:'🌧️',359:'🌧️',362:'🌨️',365:'🌨️',368:'🌨️',371:'❄️',374:'🌧️',377:'🌧️',386:'⛈️',389:'⛈️',392:'⛈️',395:'❄️'};
+// WMO weather code → emoji + label
+const WMO_ICONS = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',77:'🌨️',80:'🌦️',81:'🌧️',82:'🌧️',85:'🌨️',86:'❄️',95:'⛈️',96:'⛈️',99:'⛈️'};
+const WMO_DESC = {0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Light showers',81:'Showers',82:'Heavy showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm & hail',99:'Thunderstorm & hail'};
 async function fetchWeather() {
   const loc = state.weatherLocation || 'Fontainebleau, France';
   try {
-    const r = await fetch(`https://wttr.in/${encodeURIComponent(loc)}?format=j1`);
-    if (!r.ok) { state.weatherData = null; return; }
-    const data = await r.json();
-    const c = data.current_condition?.[0];
+    // Geocode location name → lat/lon
+    const geoR = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(loc) + '&count=1&language=en&format=json');
+    if (!geoR.ok) { state.weatherData = null; return; }
+    const geoData = await geoR.json();
+    const place = geoData.results?.[0];
+    if (!place) { state.weatherData = null; return; }
+    const { latitude, longitude } = place;
+    // Fetch current weather
+    const wR = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,relative_humidity_2m,weather_code&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto');
+    if (!wR.ok) { state.weatherData = null; return; }
+    const wData = await wR.json();
+    const c = wData.current;
     if (!c) { state.weatherData = null; return; }
-    state.weatherData = { code: parseInt(c.weatherCode), tempC: c.temp_C, tempF: c.temp_F, humidity: c.humidity, desc: c.weatherDesc?.[0]?.value || '' };
+    const code = c.weather_code;
+    state.weatherData = { code, tempC: Math.round(c.temperature_2m), humidity: c.relative_humidity_2m, desc: WMO_DESC[code] || 'Unknown' };
   } catch { state.weatherData = null; }
 }
 function weatherHTML(d) {
   if (!d) return '<div style="font-size:12px;color:var(--text3);">Weather unavailable</div>';
-  const icon = WEATHER_ICONS[d.code] || '🌤️';
+  const icon = WMO_ICONS[d.code] || '🌤️';
   return `<div class="rp-weather-main"><span class="rp-weather-icon">${icon}</span><span class="rp-weather-temp">${d.tempC}°C</span></div><div class="rp-weather-desc">${d.desc}</div><div style="font-size:11px;color:var(--text3);margin-top:3px;">Humidity ${d.humidity}%</div>`;
 }
 function renderWeather() {
