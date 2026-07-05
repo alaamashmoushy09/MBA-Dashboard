@@ -3837,7 +3837,7 @@ function updateStreak() {
   const cnt = document.getElementById('streak-count');
   const lbl = document.getElementById('streak-label');
   if (!bar) return;
-  if (streak >= 2) {
+  if (streak >= 1) {
     bar.style.display = 'flex';
     if (cnt) cnt.textContent = streak;
     if (lbl) lbl.textContent = streak === 1 ? 'day streak' : 'day streak — keep it up!';
