@@ -2581,9 +2581,9 @@ function toggleWeatherEditMobile() {
   if (!isEdit) { const inp = document.getElementById('mob-loc-input'); inp.value = state.weatherLocation; inp.focus(); }
 }
 let _acTimer = null;
-let _pendingLatLon = null; // cached lat/lon from autocomplete selection
+let _pendingLatLon = null;
 async function fetchLocationSuggestions(query, source='rp') {
-  _pendingLatLon = null; // reset when user types
+  _pendingLatLon = null;
   const dropId = source === 'mob' ? 'mob-autocomplete' : 'rp-autocomplete';
   const drop = document.getElementById(dropId);
   if (!drop) return;
@@ -2591,15 +2591,14 @@ async function fetchLocationSuggestions(query, source='rp') {
   clearTimeout(_acTimer);
   _acTimer = setTimeout(async () => {
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`, { headers:{'Accept-Language':'en'} });
-      const results = await r.json();
+      const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query) + '&count=5&language=en&format=json');
+      const data = await r.json();
+      const results = data.results || [];
       if (!results.length) { drop.style.display = 'none'; return; }
       drop.style.display = 'block';
       drop.innerHTML = results.map(res => {
-        const parts = res.display_name.split(',');
-        const short = parts.slice(0,3).join(',').trim();
-        const lat = res.lat, lon = res.lon;
-        return `<div class="rp-autocomplete-item" onmousedown="event.preventDefault();applyLocation('${short.replace(/'/g,"\\'")}','${source}',${lat},${lon})">${short}</div>`;
+        const label = [res.name, res.admin1, res.country].filter(Boolean).join(', ');
+        return `<div class="rp-autocomplete-item" onmousedown="event.preventDefault();applyLocation('${label.replace(/'/g,"\\'")}','${source}',${res.latitude},${res.longitude})">${label}</div>`;
       }).join('');
     } catch { drop.style.display = 'none'; }
   }, 280);
